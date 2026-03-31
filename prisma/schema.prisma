@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Ontology {
+  id          String        @id @default(cuid())
+  userId      String        @map("user_id")
+  name        String
+  description String         @default("")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  nodes       OntologyNode[]
+
+  @@index([userId])
+  @@map("ontology")
+}
+
+model NodeType {
+  id              String        @id
+  userId          String?       @map("user_id")
+  label           String
+  color           String        @default("#6b7280")
+  allowedParents  String        @default("[]") @map("allowed_parents")
+  allowedChildren String        @default("[]") @map("allowed_children")
+  lifecycleStates String        @default("[]") @map("lifecycle_states")
+  fieldSchema     String        @default("[]") @map("field_schema")
+  isPreset        Boolean       @default(false) @map("is_preset")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  nodes           OntologyNode[]
+
+  @@index([userId])
+  @@index([isPreset, label])
+  @@map("node_type")
+}
+
+model OntologyNode {
+  id             String         @id @default(cuid())
+  ontologyId     String         @map("ontology_id")
+  ontology       Ontology       @relation(fields: [ontologyId], references: [id], onDelete: Cascade)
+  type           String
+  nodeType       NodeType?      @relation(fields: [type], references: [id])
+  title          String         @default("")
+  parentId       String?        @map("parent_id")
+  parent         OntologyNode?  @relation("NodeTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children       OntologyNode[] @relation("NodeTree")
+  fields         String         @default("{}")
+  notes          String         @default("")
+  lifecycleState String?        @map("lifecycle_state")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  positionX      Float          @default(0) @map("position_x")
+  positionY      Float          @default(0) @map("position_y")
+  isExpanded     Boolean        @default(true) @map("is_expanded")
+
+  @@index([ontologyId, parentId])
+  @@index([ontologyId])
+  @@index([type])
+  @@map("ontology_node")
+}
