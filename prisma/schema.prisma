@@ -7,58 +7,274 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Ontology {
-  id          String        @id @default(cuid())
-  userId      String        @map("user_id")
+enum SpydrNodeType {
+  project
+  task
+  idea
+  note
+  decision
+  resource
+  inbox_item
+  person
+
+  @@map("spydr_node_type")
+}
+
+enum SpydrNodeStatus {
+  active
+  inactive
+  completed
+  archived
+  blocked
+  waiting
+  snoozed
+
+  @@map("spydr_node_status")
+}
+
+enum SpydrPriority {
+  low
+  medium
+  high
+  critical
+
+  @@map("spydr_priority")
+}
+
+enum SpydrRelationshipType {
+  belongs_to
+  depends_on
+  blocks
+  references
+  spawned
+  supports
+  related_to
+  decided_by
+
+  @@map("spydr_relationship_type")
+}
+
+enum SpydrOutlookType {
+  today
+  week
+  work
+  personal
+  strategic
+  project
+
+  @@map("spydr_outlook_type")
+}
+
+enum SpydrOutlookSection {
+  focus_areas
+  critical_tasks
+  operational_risks
+  stale_projects
+  recent_decisions
+  inbox_pressure
+  calendar_awareness
+
+  @@map("spydr_outlook_section")
+}
+
+model SpydrNode {
+  id                         String                     @id(map: "spydr_nodes_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                     String                     @map("user_id")
+  nodeType                   SpydrNodeType              @map("node_type")
+  title                      String
+  body                       String                     @default("")
+  status                     SpydrNodeStatus            @default(active)
+  priority                   SpydrPriority              @default(medium)
+  area                       String?
+  tags                       String[]                   @default([])
+  createdAt                  DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                  DateTime                   @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
+  archivedAt                 DateTime?                  @map("archived_at") @db.Timestamptz(6)
+  decisionDetails            SpydrDecisionDetails?      @relation("DecisionDetailsNode")
+  supersededDecisionDetails  SpydrDecisionDetails[]     @relation("SupersededDecisionNode")
+  ideaDetails                SpydrIdeaDetails?          @relation("IdeaDetailsNode")
+  promotedIdeaDetails        SpydrIdeaDetails[]         @relation("PromotedProjectNode")
+  inboxItem                  SpydrInboxItem?
+  sourceRelationships        SpydrNodeRelationship[]    @relation("RelationshipSourceNode")
+  targetRelationships        SpydrNodeRelationship[]    @relation("RelationshipTargetNode")
+  outlookSnapshotItems       SpydrOutlookSnapshotItem[]
+  personDetails              SpydrPersonDetails?
+  projectDetails             SpydrProjectDetails?
+  resourceDetails            SpydrResourceDetails?
+  taskDetails                SpydrTaskDetails?
+
+  @@index([tags], map: "idx_spydr_nodes_tags", type: Gin)
+  @@index([userId, status], map: "idx_spydr_nodes_user_status")
+  @@index([userId, nodeType], map: "idx_spydr_nodes_user_type")
+  @@map("spydr_nodes")
+}
+
+model SpydrDecisionDetails {
+  nodeId                   String     @id(map: "spydr_decision_details_pkey") @map("node_id") @db.Uuid
+  node                     SpydrNode  @relation("DecisionDetailsNode", fields: [nodeId], references: [id], onDelete: Cascade, map: "spydr_decision_details_node_id_fkey")
+  rationale                String     @default("")
+  impact                   String     @default("")
+  decidedAt                DateTime   @default(now()) @map("decided_at") @db.Timestamptz(6)
+  supersedesDecisionNodeId String?    @map("supersedes_decision_node_id") @db.Uuid
+  supersedesDecisionNode   SpydrNode? @relation("SupersededDecisionNode", fields: [supersedesDecisionNodeId], references: [id], onDelete: SetNull, map: "spydr_decision_details_supersedes_decision_node_id_fkey")
+  createdAt                DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime   @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("spydr_decision_details")
+}
+
+model SpydrIdeaDetails {
+  nodeId                  String         @id(map: "spydr_idea_details_pkey") @map("node_id") @db.Uuid
+  node                    SpydrNode      @relation("IdeaDetailsNode", fields: [nodeId], references: [id], onDelete: Cascade, map: "spydr_idea_details_node_id_fkey")
+  confidence              Decimal?       @db.Decimal(5, 2)
+  potentialValue          SpydrPriority  @default(medium) @map("potential_value")
+  promotedToProjectNodeId String?        @map("promoted_to_project_node_id") @db.Uuid
+  promotedToProjectNode   SpydrNode?     @relation("PromotedProjectNode", fields: [promotedToProjectNodeId], references: [id], onDelete: SetNull, map: "spydr_idea_details_promoted_to_project_node_id_fkey")
+  createdAt               DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime       @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("spydr_idea_details")
+}
+
+model SpydrInboxItem {
+  nodeId        String         @id(map: "spydr_inbox_items_pkey") @map("node_id") @db.Uuid
+  node          SpydrNode      @relation(fields: [nodeId], references: [id], onDelete: Cascade, map: "spydr_inbox_items_node_id_fkey")
+  rawCapture    String         @map("raw_capture")
+  suggestedType SpydrNodeType? @map("suggested_type")
+  processedAt   DateTime?      @map("processed_at") @db.Timestamptz(6)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([processedAt], map: "idx_spydr_inbox_unprocessed")
+  @@map("spydr_inbox_items")
+}
+
+model SpydrNodeRelationship {
+  id               String                @id(map: "spydr_node_relationships_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String                @map("user_id")
+  sourceNodeId     String                @map("source_node_id") @db.Uuid
+  sourceNode       SpydrNode             @relation("RelationshipSourceNode", fields: [sourceNodeId], references: [id], onDelete: Cascade, map: "spydr_node_relationships_source_node_id_fkey")
+  targetNodeId     String                @map("target_node_id") @db.Uuid
+  targetNode       SpydrNode             @relation("RelationshipTargetNode", fields: [targetNodeId], references: [id], onDelete: Cascade, map: "spydr_node_relationships_target_node_id_fkey")
+  relationshipType SpydrRelationshipType @map("relationship_type")
+  reason           String?
+  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([sourceNodeId, targetNodeId, relationshipType], map: "spydr_unique_relationship")
+  @@index([sourceNodeId], map: "idx_spydr_relationships_source")
+  @@index([targetNodeId], map: "idx_spydr_relationships_target")
+  @@index([relationshipType], map: "idx_spydr_relationships_type")
+  @@map("spydr_node_relationships")
+}
+
+model SpydrOutlookSnapshotItem {
+  id             String               @id(map: "spydr_outlook_snapshot_items_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  snapshotId     String               @map("snapshot_id") @db.Uuid
+  snapshot       SpydrOutlookSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade, map: "spydr_outlook_snapshot_items_snapshot_id_fkey")
+  nodeId         String?              @map("node_id") @db.Uuid
+  node           SpydrNode?           @relation(fields: [nodeId], references: [id], onDelete: SetNull, map: "spydr_outlook_snapshot_items_node_id_fkey")
+  nodeType       SpydrNodeType?       @map("node_type")
+  section        SpydrOutlookSection
+  title          String?
+  reason         String?
+  reasonCode     String?              @map("reason_code")
+  rank           Decimal              @default(0) @db.Decimal(10, 2)
+  dismissed      Boolean              @default(false)
+  pinned         Boolean              @default(false)
+  acknowledged   Boolean              @default(false)
+  snoozedUntil   DateTime?            @map("snoozed_until") @db.Timestamptz(6)
+  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([nodeId], map: "idx_spydr_outlook_items_node")
+  @@index([snapshotId, section, rank], map: "idx_spydr_outlook_items_snapshot_section")
+  @@map("spydr_outlook_snapshot_items")
+}
+
+model SpydrOutlookSnapshot {
+  id              String                       @id(map: "spydr_outlook_snapshots_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String                       @map("user_id")
+  templateId      String?                      @map("template_id") @db.Uuid
+  template        SpydrOutlookTemplate?        @relation(fields: [templateId], references: [id], onDelete: SetNull, map: "spydr_outlook_snapshots_template_id_fkey")
+  outlookType     SpydrOutlookType             @map("outlook_type")
+  title           String
+  timeframeStart  DateTime?                    @map("timeframe_start") @db.Timestamptz(6)
+  timeframeEnd    DateTime?                    @map("timeframe_end") @db.Timestamptz(6)
+  summary         String?
+  focusSummary    String?                      @map("focus_summary")
+  generatedAt     DateTime                     @default(now()) @map("generated_at") @db.Timestamptz(6)
+  createdByEngine String                       @default("heuristic_v1") @map("created_by_engine")
+  items           SpydrOutlookSnapshotItem[]
+
+  @@index([userId, outlookType, generatedAt], map: "idx_spydr_outlook_snapshots_user_type_generated")
+  @@map("spydr_outlook_snapshots")
+}
+
+model SpydrOutlookTemplate {
+  id          String                   @id(map: "spydr_outlook_templates_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String                   @map("user_id")
+  outlookType SpydrOutlookType         @map("outlook_type")
   name        String
-  description String         @default("")
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
-  nodes       OntologyNode[]
+  scope       Json                     @default("{}") @db.JsonB
+  rules       Json                     @default("{}") @db.JsonB
+  isDefault   Boolean                  @default(false) @map("is_default")
+  createdAt   DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime                 @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
+  snapshots   SpydrOutlookSnapshot[]
 
-  @@index([userId])
-  @@map("ontology")
+  @@index([userId, outlookType], map: "idx_spydr_outlook_templates_user_type")
+  @@map("spydr_outlook_templates")
 }
 
-model NodeType {
-  id              String        @id
-  userId          String?       @map("user_id")
-  label           String
-  color           String        @default("#6b7280")
-  allowedParents  String        @default("[]") @map("allowed_parents")
-  allowedChildren String        @default("[]") @map("allowed_children")
-  lifecycleStates String        @default("[]") @map("lifecycle_states")
-  fieldSchema     String        @default("[]") @map("field_schema")
-  isPreset        Boolean       @default(false) @map("is_preset")
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
-  nodes           OntologyNode[]
+model SpydrPersonDetails {
+  nodeId              String    @id(map: "spydr_person_details_pkey") @map("node_id") @db.Uuid
+  node                SpydrNode @relation(fields: [nodeId], references: [id], onDelete: Cascade, map: "spydr_person_details_node_id_fkey")
+  fullName            String    @map("full_name")
+  email               String?
+  title               String?
+  organization        String?
+  relationshipContext String?   @map("relationship_context")
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  @@index([userId])
-  @@index([isPreset, label])
-  @@map("node_type")
+  @@map("spydr_person_details")
 }
 
-model OntologyNode {
-  id             String         @id @default(cuid())
-  ontologyId     String         @map("ontology_id")
-  ontology       Ontology       @relation(fields: [ontologyId], references: [id], onDelete: Cascade)
-  type           String
-  nodeType       NodeType?      @relation(fields: [type], references: [id])
-  title          String         @default("")
-  parentId       String?        @map("parent_id")
-  parent         OntologyNode?  @relation("NodeTree", fields: [parentId], references: [id], onDelete: Cascade)
-  children       OntologyNode[] @relation("NodeTree")
-  fields         String         @default("{}")
-  notes          String         @default("")
-  lifecycleState String?        @map("lifecycle_state")
-  createdAt      DateTime       @default(now()) @map("created_at")
-  positionX      Float          @default(0) @map("position_x")
-  positionY      Float          @default(0) @map("position_y")
-  isExpanded     Boolean        @default(true) @map("is_expanded")
+model SpydrProjectDetails {
+  nodeId         String         @id(map: "spydr_project_details_pkey") @map("node_id") @db.Uuid
+  node           SpydrNode      @relation(fields: [nodeId], references: [id], onDelete: Cascade, map: "spydr_project_details_node_id_fkey")
+  outcome        String?
+  startDate      DateTime?      @map("start_date") @db.Date
+  targetDate     DateTime?      @map("target_date") @db.Date
+  riskLevel      SpydrPriority  @default(medium) @map("risk_level")
+  lastActivityAt DateTime?      @map("last_activity_at") @db.Timestamptz(6)
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime       @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  @@index([ontologyId, parentId])
-  @@index([ontologyId])
-  @@index([type])
-  @@map("ontology_node")
+  @@map("spydr_project_details")
+}
+
+model SpydrResourceDetails {
+  nodeId         String    @id(map: "spydr_resource_details_pkey") @map("node_id") @db.Uuid
+  node           SpydrNode @relation(fields: [nodeId], references: [id], onDelete: Cascade, map: "spydr_resource_details_node_id_fkey")
+  resourceType   String?   @map("resource_type")
+  url            String?
+  fileRef        String?   @map("file_ref")
+  externalSource String?   @map("external_source")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("spydr_resource_details")
+}
+
+model SpydrTaskDetails {
+  nodeId           String    @id(map: "spydr_task_details_pkey") @map("node_id") @db.Uuid
+  node             SpydrNode @relation(fields: [nodeId], references: [id], onDelete: Cascade, map: "spydr_task_details_node_id_fkey")
+  dueDate          DateTime? @map("due_date") @db.Date
+  completedAt      DateTime? @map("completed_at") @db.Timestamptz(6)
+  isBlocked        Boolean   @default(false) @map("is_blocked")
+  estimatedMinutes Int?      @map("estimated_minutes")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@index([dueDate], map: "idx_spydr_task_due_date")
+  @@map("spydr_task_details")
 }

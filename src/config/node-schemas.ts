@@ -7,7 +7,7 @@ export type LifecycleState =
   | "done"
   | null;
 
-export interface NodeSchema {
+export interface INodeSchema {
   type: string;
   label: string;
   allowedParents: (string | null)[];
@@ -26,7 +26,7 @@ export const builtInTypes = [
 ] as const;
 export type BuiltInNodeType = (typeof builtInTypes)[number];
 
-export const schemas: Record<BuiltInNodeType, NodeSchema> = {
+export const schemas: Record<BuiltInNodeType, INodeSchema> = {
   thought: {
     type: "thought",
     label: "Thought",
@@ -85,12 +85,12 @@ export const schemas: Record<BuiltInNodeType, NodeSchema> = {
   },
 };
 
-export function getSchema(type: string): NodeSchema | undefined {
+export function getSchema(type: string): INodeSchema | undefined {
   return builtInTypes.includes(type as BuiltInNodeType)
     ? schemas[type as BuiltInNodeType]
     : undefined;
 }
 
-export function getAllSchemas(): NodeSchema[] {
+export function getAllSchemas(): INodeSchema[] {
   return Object.values(schemas);
 }
