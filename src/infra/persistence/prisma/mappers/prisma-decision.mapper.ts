@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { DecisionDetails, DecisionNode } from "../../../../domain/models/decisions/index.js";
 import type { IDecisionDetailsProps } from "../../../../domain/models/decisions/index.js";
 import type { IDomainMapper } from "../../../../domain/mappers/index.js";
+import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
 
 export type PrismaDecisionWithDetails = Prisma.SpydrNodeGetPayload<{
   include: { decisionDetails: true };
@@ -28,6 +29,7 @@ export class PrismaDecisionMapper
       createdAt: persistence.createdAt,
       updatedAt: persistence.updatedAt,
       archivedAt: persistence.archivedAt,
+      ...readNodeLifecycle(persistence),
       details: persistence.decisionDetails
         ? new DecisionDetails({
             rationale: persistence.decisionDetails.rationale,
@@ -56,6 +58,7 @@ export class PrismaDecisionMapper
       createdAt: domain.createdAt,
       updatedAt: domain.updatedAt,
       archivedAt: domain.archivedAt,
+      ...writeNodeLifecycle(domain),
     };
   }
 

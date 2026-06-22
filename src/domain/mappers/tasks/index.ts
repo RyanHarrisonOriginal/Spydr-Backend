@@ -2,18 +2,27 @@ import { randomUUID } from "node:crypto";
 import type { IDomainMapper } from "../mapper.js";
 import { TaskNode } from "../../models/tasks/index.js";
 import {
-  spydrNodeStatuses,
   spydrPriorities,
-  type SpydrNodeStatus,
+  type TaskStatus,
   type SpydrPriority,
+  isTaskStatus,
 } from "../../models/shared.js";
 
 export type TaskNodeMapper<TPersistence = unknown> = IDomainMapper<TPersistence, TaskNode>;
 
+export interface ITaskUpdateModelInput {
+  title?: string;
+  body?: string;
+  status?: TaskStatus;
+  priority?: SpydrPriority;
+  dueDate?: string | null;
+  estimatedMinutes?: number | null;
+}
+
 export interface ITaskCreateModelInput {
   title: string;
   body?: string;
-  status?: SpydrNodeStatus;
+  status?: TaskStatus;
   priority?: SpydrPriority;
   dueDate?: string | null;
   estimatedMinutes?: number | null;
@@ -47,6 +56,8 @@ export class TaskMapper {
       createdAt: now,
       updatedAt: now,
       archivedAt: null,
+      isDeleted: false,
+      deletedAt: null,
       details: {
         dueDate: this.parseDate(input.dueDate),
         completedAt: null,
@@ -58,9 +69,54 @@ export class TaskMapper {
     });
   }
 
-  private normalizeStatus(status: SpydrNodeStatus | undefined): SpydrNodeStatus {
+  updateToModel(
+    existing: TaskNode,
+    input: ITaskUpdateModelInput,
+    now = new Date()
+  ): TaskNode {
+    const title = input.title?.trim() ?? existing.title;
+    if (!title) {
+      throw new Error("Task title is required");
+    }
+
+    const dueDate =
+      input.dueDate !== undefined
+        ? this.parseDate(input.dueDate)
+        : existing.details?.dueDate ?? null;
+
+    return new TaskNode({
+      id: existing.id,
+      userId: existing.userId,
+      title,
+      body: input.body !== undefined ? input.body.trim() : existing.body,
+      status: input.status ? this.normalizeStatus(input.status) : existing.status,
+      priority: input.priority
+        ? this.normalizePriority(input.priority)
+        : existing.priority,
+      area: existing.area,
+      tags: existing.tags,
+      createdAt: existing.createdAt,
+      updatedAt: now,
+      archivedAt: existing.archivedAt,
+      isDeleted: existing.isDeleted,
+      deletedAt: existing.deletedAt,
+      details: {
+        dueDate,
+        completedAt: existing.details?.completedAt ?? null,
+        isBlocked: existing.details?.isBlocked ?? false,
+        estimatedMinutes:
+          input.estimatedMinutes !== undefined
+            ? input.estimatedMinutes
+            : existing.details?.estimatedMinutes ?? null,
+        createdAt: existing.details?.createdAt ?? now,
+        updatedAt: now,
+      },
+    });
+  }
+
+  private normalizeStatus(status: TaskStatus | undefined): TaskStatus {
     if (!status) return "active";
-    if (spydrNodeStatuses.includes(status)) return status;
+    if (isTaskStatus(status)) return status;
     throw new Error("Invalid task status");
   }
 

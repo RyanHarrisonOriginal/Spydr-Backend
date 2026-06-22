@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { TaskDetails, TaskNode } from "../../../../domain/models/tasks/index.js";
 import type { ITaskDetailsProps } from "../../../../domain/models/tasks/index.js";
 import type { IDomainMapper } from "../../../../domain/mappers/index.js";
+import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
 
 export type PrismaTaskWithDetails = Prisma.SpydrNodeGetPayload<{
   include: { taskDetails: true };
@@ -28,6 +29,7 @@ export class PrismaTaskMapper
       createdAt: persistence.createdAt,
       updatedAt: persistence.updatedAt,
       archivedAt: persistence.archivedAt,
+      ...readNodeLifecycle(persistence),
       details: persistence.taskDetails
         ? new TaskDetails({
             dueDate: persistence.taskDetails.dueDate,
@@ -55,6 +57,7 @@ export class PrismaTaskMapper
       createdAt: domain.createdAt,
       updatedAt: domain.updatedAt,
       archivedAt: domain.archivedAt,
+      ...writeNodeLifecycle(domain),
     };
   }
 

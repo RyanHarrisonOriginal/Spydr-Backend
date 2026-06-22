@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import { NoteNode } from "../../../../domain/models/notes/index.js";
 import type { IDomainMapper } from "../../../../domain/mappers/index.js";
+import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
 
 export type PrismaNote = Prisma.SpydrNodeGetPayload<Record<string, never>>;
 
@@ -25,6 +26,7 @@ export class PrismaNoteMapper
       createdAt: persistence.createdAt,
       updatedAt: persistence.updatedAt,
       archivedAt: persistence.archivedAt,
+      ...readNodeLifecycle(persistence),
       details: null,
     });
   }
@@ -43,6 +45,7 @@ export class PrismaNoteMapper
       createdAt: domain.createdAt,
       updatedAt: domain.updatedAt,
       archivedAt: domain.archivedAt,
+      ...writeNodeLifecycle(domain),
     };
   }
 }

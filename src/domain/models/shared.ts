@@ -19,6 +19,11 @@ export const spydrNodeStatuses = [
   "snoozed",
 ] as const;
 
+/** Canonical statuses assignable to task nodes. */
+export const taskStatuses = ["active", "waiting", "blocked", "completed"] as const;
+
+export const taskStatusBuckets = ["open", "closed", "blocked"] as const;
+
 export const spydrPriorities = ["low", "medium", "high", "critical"] as const;
 
 export const spydrRelationshipTypes = [
@@ -49,8 +54,20 @@ export const spydrRelationshipTypes = [
 
 export type SpydrNodeType = (typeof spydrNodeTypes)[number];
 export type SpydrNodeStatus = (typeof spydrNodeStatuses)[number];
+export type TaskStatus = (typeof taskStatuses)[number];
+export type TaskStatusBucket = (typeof taskStatusBuckets)[number];
 export type SpydrPriority = (typeof spydrPriorities)[number];
 export type SpydrRelationshipType = (typeof spydrRelationshipTypes)[number];
+
+export function getTaskStatusBucket(status: SpydrNodeStatus): TaskStatusBucket {
+  if (status === "blocked") return "blocked";
+  if (status === "completed" || status === "archived") return "closed";
+  return "open";
+}
+
+export function isTaskStatus(status: string): status is TaskStatus {
+  return (taskStatuses as readonly string[]).includes(status);
+}
 
 export interface IDomainNodeProps<TType extends SpydrNodeType = SpydrNodeType> {
   id: string;
@@ -65,6 +82,8 @@ export interface IDomainNodeProps<TType extends SpydrNodeType = SpydrNodeType> {
   createdAt: Date;
   updatedAt: Date;
   archivedAt: Date | null;
+  isDeleted?: boolean;
+  deletedAt?: Date | null;
 }
 
 export class DomainNode<TType extends SpydrNodeType = SpydrNodeType>
@@ -82,6 +101,8 @@ export class DomainNode<TType extends SpydrNodeType = SpydrNodeType>
   readonly createdAt: Date;
   readonly updatedAt: Date;
   readonly archivedAt: Date | null;
+  readonly isDeleted: boolean;
+  readonly deletedAt: Date | null;
   readonly relationships: {
     type: SpydrRelationshipType;
     targetNode: string;
@@ -101,6 +122,8 @@ export class DomainNode<TType extends SpydrNodeType = SpydrNodeType>
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
     this.archivedAt = props.archivedAt;
+    this.isDeleted = props.isDeleted ?? false;
+    this.deletedAt = props.deletedAt ?? null;
     this.relationships = [];
   }
 

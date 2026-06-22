@@ -1,5 +1,6 @@
 import type { DecisionNode } from "../../../domain/models/decisions/index.js";
 import type { IRepresentationMapper } from "../../../domain/mappers/index.js";
+import { nodeLifecycleResponse } from "./node-lifecycle-response.js";
 
 export interface IDecisionResponse {
   id: string;
@@ -14,6 +15,8 @@ export interface IDecisionResponse {
   createdAt: string;
   updatedAt: string;
   archivedAt: string | null;
+  isDeleted: boolean;
+  deletedAt: string | null;
   details: {
     rationale: string;
     impact: string;
@@ -41,6 +44,7 @@ export class DecisionResponseMapper
       createdAt: domain.createdAt.toISOString(),
       updatedAt: domain.updatedAt.toISOString(),
       archivedAt: domain.archivedAt?.toISOString() ?? null,
+      ...nodeLifecycleResponse(domain),
       details: domain.details
         ? {
             rationale: domain.details.rationale,

@@ -29,7 +29,7 @@ export class PostgresTaskRepository implements ITaskRepository {
 
   async listByUser(userId: string): Promise<TaskNode[]> {
     const rows = await this.db.spydrNode.findMany({
-      where: { userId, nodeType: "task" },
+      where: { userId, nodeType: "task", isDeleted: false },
       include: { taskDetails: true },
       orderBy: { updatedAt: "desc" },
     });

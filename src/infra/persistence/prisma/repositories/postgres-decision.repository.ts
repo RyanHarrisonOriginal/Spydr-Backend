@@ -29,7 +29,7 @@ export class PostgresDecisionRepository implements IDecisionRepository {
 
   async listByUser(userId: string): Promise<DecisionNode[]> {
     const rows = await this.db.spydrNode.findMany({
-      where: { userId, nodeType: "decision" },
+      where: { userId, nodeType: "decision", isDeleted: false },
       include: { decisionDetails: true },
       orderBy: { updatedAt: "desc" },
     });

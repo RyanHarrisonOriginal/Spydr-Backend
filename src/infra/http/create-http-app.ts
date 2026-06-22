@@ -2,12 +2,10 @@ import express, { type Express } from "express";
 import cors from "cors";
 import { clerkMiddleware } from "@clerk/express";
 import { requireAuthApi } from "../../middleware/auth.js";
-import { nodeTypesRouter } from "../../routes/node-types.js";
-import { nodeRouter } from "../../routes/nodes.js";
-import { ontologyRouter } from "../../routes/ontology.js";
 import type { ICommandBus } from "../../domain/cqrs/commands/index.js";
 import type { IQueryBus } from "../../domain/cqrs/queries/index.js";
 import { createDecisionsRouter } from "./routes/decisions.router.js";
+import { createIdeasRouter } from "./routes/ideas.router.js";
 import { createNotesRouter } from "./routes/notes.router.js";
 import { createProjectsRouter } from "./routes/projects.router.js";
 import { createResourcesRouter } from "./routes/resources.router.js";
@@ -28,10 +26,8 @@ export function createHttpApp(options: IHttpAppOptions): Express {
   app.use(clerkMiddleware());
 
   app.use(apiPrefix, requireAuthApi);
-  app.use(`${apiPrefix}/ontologies`, nodeRouter);
-  app.use(`${apiPrefix}/ontologies`, ontologyRouter);
-  app.use(`${apiPrefix}/node-types`, nodeTypesRouter);
   app.use(`${apiPrefix}/decisions`, createDecisionsRouter(options.queryBus));
+  app.use(`${apiPrefix}/ideas`, createIdeasRouter(options.queryBus));
   app.use(`${apiPrefix}/notes`, createNotesRouter(options.queryBus));
   app.use(
     `${apiPrefix}/projects`,

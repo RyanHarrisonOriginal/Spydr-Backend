@@ -5,6 +5,7 @@ import {
   type SpydrNodeType,
 } from "../../../../domain/models/index.js";
 import type { IDomainMapper } from "../../../../domain/mappers/index.js";
+import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
 
 export class PrismaSpydrNodeMapper
   implements
@@ -28,6 +29,7 @@ export class PrismaSpydrNodeMapper
       createdAt: persistence.createdAt,
       updatedAt: persistence.updatedAt,
       archivedAt: persistence.archivedAt,
+      ...readNodeLifecycle(persistence),
     });
   }
 
@@ -45,6 +47,7 @@ export class PrismaSpydrNodeMapper
       createdAt: domain.createdAt,
       updatedAt: domain.updatedAt,
       archivedAt: domain.archivedAt,
+      ...writeNodeLifecycle(domain),
     };
   }
 }

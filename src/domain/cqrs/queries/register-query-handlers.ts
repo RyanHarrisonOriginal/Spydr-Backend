@@ -1,6 +1,7 @@
 import type { IPersistenceRepositories } from "../../../infra/persistence/index.js";
 import type { IQueryBus } from "./query-bus.js";
 import { ListDecisionsQueryHandler } from "./decisions/index.js";
+import { ListIdeasQueryHandler } from "./ideas/index.js";
 import { ListNotesQueryHandler } from "./notes/index.js";
 import {
   GetProjectQueryHandler,
@@ -15,6 +16,7 @@ export function registerQueryHandlers(
 ): void {
   queryBus.registerMany([
     new ListDecisionsQueryHandler(repositories.decisions),
+    new ListIdeasQueryHandler(repositories.ideas),
     new ListNotesQueryHandler(repositories.notes),
     new GetProjectQueryHandler(repositories.projects),
     new ListProjectsQueryHandler(repositories.projects),

@@ -1,5 +1,6 @@
 import type { NoteNode } from "../../../domain/models/notes/index.js";
 import type { IRepresentationMapper } from "../../../domain/mappers/index.js";
+import { nodeLifecycleResponse } from "./node-lifecycle-response.js";
 
 export interface INoteResponse {
   id: string;
@@ -14,6 +15,8 @@ export interface INoteResponse {
   createdAt: string;
   updatedAt: string;
   archivedAt: string | null;
+  isDeleted: boolean;
+  deletedAt: string | null;
   details: null;
 }
 
@@ -34,6 +37,7 @@ export class NoteResponseMapper
       createdAt: domain.createdAt.toISOString(),
       updatedAt: domain.updatedAt.toISOString(),
       archivedAt: domain.archivedAt?.toISOString() ?? null,
+      ...nodeLifecycleResponse(domain),
       details: null,
     };
   }

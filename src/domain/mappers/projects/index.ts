@@ -82,6 +82,8 @@ export class ProjectMapper {
       createdAt: now,
       updatedAt: now,
       archivedAt: null,
+      isDeleted: false,
+      deletedAt: null,
       details: {
         outcome: this.nullableTrim(input.outcome),
         startDate: this.parseDate(input.startDate),
@@ -115,6 +117,18 @@ export class ProjectMapper {
       createdAt: existing.createdAt,
       updatedAt: now,
       archivedAt: existing.archivedAt,
+      isDeleted: existing.isDeleted,
+      deletedAt: existing.deletedAt,
+      tasks: existing.tasks,
+      decisions: existing.decisions,
+      ideas: existing.ideas,
+      notes: existing.notes,
+      resources: existing.resources,
+      deletedTasks: existing.deletedTasks,
+      deletedDecisions: existing.deletedDecisions,
+      deletedIdeas: existing.deletedIdeas,
+      deletedNotes: existing.deletedNotes,
+      deletedResources: existing.deletedResources,
       details: {
         outcome: existing.details?.outcome ?? null,
         startDate:

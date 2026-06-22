@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { ProjectDetails, ProjectNode } from "../../../../domain/models/projects/index.js";
 import type { IProjectDetailsProps } from "../../../../domain/models/projects/index.js";
 import type { IDomainMapper } from "../../../../domain/mappers/index.js";
+import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
 
 export type PrismaProjectWithDetails = Prisma.SpydrNodeGetPayload<{
   include: { projectDetails: true };
@@ -28,6 +29,7 @@ export class PrismaProjectMapper
       createdAt: persistence.createdAt,
       updatedAt: persistence.updatedAt,
       archivedAt: persistence.archivedAt,
+      ...readNodeLifecycle(persistence),
       details: persistence.projectDetails
         ? new ProjectDetails({
             outcome: persistence.projectDetails.outcome,
@@ -56,6 +58,7 @@ export class PrismaProjectMapper
       createdAt: domain.createdAt,
       updatedAt: domain.updatedAt,
       archivedAt: domain.archivedAt,
+      ...writeNodeLifecycle(domain),
     };
   }
 

@@ -1,5 +1,6 @@
 import type { ResourceNode } from "../../../domain/models/resources/index.js";
 import type { IRepresentationMapper } from "../../../domain/mappers/index.js";
+import { nodeLifecycleResponse } from "./node-lifecycle-response.js";
 
 export interface IResourceResponse {
   id: string;
@@ -14,6 +15,8 @@ export interface IResourceResponse {
   createdAt: string;
   updatedAt: string;
   archivedAt: string | null;
+  isDeleted: boolean;
+  deletedAt: string | null;
   details: {
     resourceType: string | null;
     url: string | null;
@@ -41,6 +44,7 @@ export class ResourceResponseMapper
       createdAt: domain.createdAt.toISOString(),
       updatedAt: domain.updatedAt.toISOString(),
       archivedAt: domain.archivedAt?.toISOString() ?? null,
+      ...nodeLifecycleResponse(domain),
       details: domain.details
         ? {
             resourceType: domain.details.resourceType,

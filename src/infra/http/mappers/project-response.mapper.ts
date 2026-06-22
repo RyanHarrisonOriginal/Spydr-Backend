@@ -4,6 +4,8 @@ import {
   DecisionResponseMapper,
   type IDecisionResponse,
 } from "./decision-response.mapper.js";
+import { IdeaResponseMapper } from "./idea-response.mapper.js";
+import { nodeLifecycleResponse } from "./node-lifecycle-response.js";
 import { NoteResponseMapper, type INoteResponse } from "./note-response.mapper.js";
 import {
   ResourceResponseMapper,
@@ -24,6 +26,8 @@ export interface IProjectResponse {
   createdAt: string;
   updatedAt: string;
   archivedAt: string | null;
+  isDeleted: boolean;
+  deletedAt: string | null;
   details: {
     outcome: string | null;
     startDate: string | null;
@@ -38,6 +42,13 @@ export interface IProjectResponse {
   ideas: IIdeaResponse[];
   notes: INoteResponse[];
   resources: IResourceResponse[];
+  deleted: {
+    tasks: ITaskResponse[];
+    decisions: IDecisionResponse[];
+    ideas: IIdeaResponse[];
+    notes: INoteResponse[];
+    resources: IResourceResponse[];
+  };
 }
 
 export interface IIdeaResponse {
@@ -53,6 +64,8 @@ export interface IIdeaResponse {
   createdAt: string;
   updatedAt: string;
   archivedAt: string | null;
+  isDeleted: boolean;
+  deletedAt: string | null;
   details: {
     confidence: number | null;
     potentialValue: string;
@@ -69,7 +82,8 @@ export class ProjectResponseMapper
     private readonly taskMapper = new TaskResponseMapper(),
     private readonly decisionMapper = new DecisionResponseMapper(),
     private readonly noteMapper = new NoteResponseMapper(),
-    private readonly resourceMapper = new ResourceResponseMapper()
+    private readonly resourceMapper = new ResourceResponseMapper(),
+    private readonly ideaMapper = new IdeaResponseMapper()
   ) {}
 
   toRepresentation(domain: ProjectNode): IProjectResponse {
@@ -86,6 +100,7 @@ export class ProjectResponseMapper
       createdAt: domain.createdAt.toISOString(),
       updatedAt: domain.updatedAt.toISOString(),
       archivedAt: domain.archivedAt?.toISOString() ?? null,
+      ...nodeLifecycleResponse(domain),
       details: domain.details
         ? {
             outcome: domain.details.outcome,
@@ -101,33 +116,28 @@ export class ProjectResponseMapper
       decisions: domain.decisions.map((decision) =>
         this.decisionMapper.toRepresentation(decision)
       ),
-      ideas: domain.ideas.map((idea) => ({
-        id: idea.id,
-        userId: idea.userId,
-        nodeType: idea.nodeType,
-        title: idea.title,
-        body: idea.body,
-        status: idea.status,
-        priority: idea.priority,
-        area: idea.area,
-        tags: idea.tags,
-        createdAt: idea.createdAt.toISOString(),
-        updatedAt: idea.updatedAt.toISOString(),
-        archivedAt: idea.archivedAt?.toISOString() ?? null,
-        details: idea.details
-          ? {
-              confidence: idea.details.confidence,
-              potentialValue: idea.details.potentialValue,
-              promotedToProjectNodeId: idea.details.promotedToProjectNodeId,
-              createdAt: idea.details.createdAt.toISOString(),
-              updatedAt: idea.details.updatedAt.toISOString(),
-            }
-          : null,
-      })),
+      ideas: domain.ideas.map((idea) => this.ideaMapper.toRepresentation(idea)),
       notes: domain.notes.map((note) => this.noteMapper.toRepresentation(note)),
       resources: domain.resources.map((resource) =>
         this.resourceMapper.toRepresentation(resource)
       ),
+      deleted: {
+        tasks: domain.deletedTasks.map((task) =>
+          this.taskMapper.toRepresentation(task)
+        ),
+        decisions: domain.deletedDecisions.map((decision) =>
+          this.decisionMapper.toRepresentation(decision)
+        ),
+        ideas: domain.deletedIdeas.map((idea) =>
+          this.ideaMapper.toRepresentation(idea)
+        ),
+        notes: domain.deletedNotes.map((note) =>
+          this.noteMapper.toRepresentation(note)
+        ),
+        resources: domain.deletedResources.map((resource) =>
+          this.resourceMapper.toRepresentation(resource)
+        ),
+      },
     };
   }
 

@@ -2,7 +2,7 @@ import type { IProjectRepository } from "../../../interfaces/index.js";
 import { TaskMapper } from "../../../mappers/tasks/index.js";
 import type { TaskNode } from "../../../models/tasks/index.js";
 import {
-  type SpydrNodeStatus,
+  type TaskStatus,
   type SpydrPriority,
 } from "../../../models/shared.js";
 import type { ICommand, ICommandHandler } from "../command.js";
@@ -10,7 +10,7 @@ import type { ICommand, ICommandHandler } from "../command.js";
 export interface IAddTaskToProjectInput {
   title: string;
   body?: string;
-  status?: SpydrNodeStatus;
+  status?: TaskStatus;
   priority?: SpydrPriority;
   dueDate?: string | null;
   estimatedMinutes?: number | null;

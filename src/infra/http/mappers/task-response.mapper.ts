@@ -1,5 +1,6 @@
 import type { TaskNode } from "../../../domain/models/tasks/index.js";
 import type { IRepresentationMapper } from "../../../domain/mappers/index.js";
+import { nodeLifecycleResponse } from "./node-lifecycle-response.js";
 
 export interface ITaskResponse {
   id: string;
@@ -14,6 +15,8 @@ export interface ITaskResponse {
   createdAt: string;
   updatedAt: string;
   archivedAt: string | null;
+  isDeleted: boolean;
+  deletedAt: string | null;
   details: {
     dueDate: string | null;
     completedAt: string | null;
@@ -41,6 +44,7 @@ export class TaskResponseMapper
       createdAt: domain.createdAt.toISOString(),
       updatedAt: domain.updatedAt.toISOString(),
       archivedAt: domain.archivedAt?.toISOString() ?? null,
+      ...nodeLifecycleResponse(domain),
       details: domain.details
         ? {
             dueDate: this.toDateOnly(domain.details.dueDate),

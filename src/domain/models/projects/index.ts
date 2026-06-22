@@ -59,6 +59,11 @@ export class ProjectNode extends DomainNode<"project"> {
   readonly ideas: IdeaNode[];
   readonly notes: NoteNode[];
   readonly resources: ResourceNode[];
+  readonly deletedTasks: TaskNode[];
+  readonly deletedDecisions: DecisionNode[];
+  readonly deletedIdeas: IdeaNode[];
+  readonly deletedNotes: NoteNode[];
+  readonly deletedResources: ResourceNode[];
 
   constructor(props: IProjectNodeProps) {
     super({ ...props, nodeType: "project" });
@@ -68,6 +73,11 @@ export class ProjectNode extends DomainNode<"project"> {
     this.ideas = props.ideas ?? [];
     this.notes = props.notes ?? [];
     this.resources = props.resources ?? [];
+    this.deletedTasks = props.deletedTasks ?? [];
+    this.deletedDecisions = props.deletedDecisions ?? [];
+    this.deletedIdeas = props.deletedIdeas ?? [];
+    this.deletedNotes = props.deletedNotes ?? [];
+    this.deletedResources = props.deletedResources ?? [];
   }
 
   addProjectOwner(ownerNode: DomainNode<"person">): void {
@@ -90,8 +100,9 @@ export class ProjectNode extends DomainNode<"project"> {
     this.addRelationship("related_to", editorNode, "Project editor");
   }
 
-  addNote(noteNode: DomainNode<"note">): void {
+  addNote(noteNode: NoteNode): void {
     this.addRelationship("related_to", noteNode, "Project note");
+    this.notes.push(noteNode);
   }
 
   addTask(taskNode: TaskNode): void {
@@ -99,16 +110,19 @@ export class ProjectNode extends DomainNode<"project"> {
     this.tasks.push(taskNode);
   }
 
-  addReference(referenceNode: DomainNode<"resource">): void {
+  addReference(referenceNode: ResourceNode): void {
     this.addRelationship("related_to", referenceNode, "Project reference");
+    this.resources.push(referenceNode);
   }
 
-  addIdea(ideaNode: DomainNode<"idea">): void {
+  addIdea(ideaNode: IdeaNode): void {
     this.addRelationship("related_to", ideaNode, "Project idea");
+    this.ideas.push(ideaNode);
   }
 
-  addDecision(decisionNode: DomainNode<"decision">): void {
+  addDecision(decisionNode: DecisionNode): void {
     this.addRelationship("related_to", decisionNode, "Project decision");
+    this.decisions.push(decisionNode);
   }
 
   setOutcome(outcome: string | null): void {

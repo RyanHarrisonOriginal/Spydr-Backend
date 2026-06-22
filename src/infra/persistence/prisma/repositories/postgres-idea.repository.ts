@@ -1,43 +1,43 @@
 import type { PrismaClient } from "@prisma/client";
-import type { IResourceRepository } from "../../../../domain/interfaces/index.js";
-import type { ResourceNode } from "../../../../domain/models/resources/index.js";
-import { PrismaResourceMapper } from "../mappers/prisma-resource.mapper.js";
+import type { IIdeaRepository } from "../../../../domain/interfaces/index.js";
+import type { IdeaNode } from "../../../../domain/models/ideas/index.js";
+import { PrismaIdeaMapper } from "../mappers/prisma-idea.mapper.js";
 
-export class PostgresResourceRepository implements IResourceRepository {
+export class PostgresIdeaRepository implements IIdeaRepository {
   constructor(
     private readonly db: PrismaClient,
-    private readonly mapper = new PrismaResourceMapper()
+    private readonly mapper = new PrismaIdeaMapper()
   ) {}
 
-  async findById(id: string): Promise<ResourceNode | null> {
+  async findById(id: string): Promise<IdeaNode | null> {
     const row = await this.db.spydrNode.findUnique({
       where: { id },
-      include: { resourceDetails: true },
+      include: { ideaDetails: true },
     });
 
-    return row && row.nodeType === "resource" ? this.mapper.toDomain(row) : null;
+    return row && row.nodeType === "idea" ? this.mapper.toDomain(row) : null;
   }
 
-  async findByIdForUser(id: string, userId: string): Promise<ResourceNode | null> {
+  async findByIdForUser(id: string, userId: string): Promise<IdeaNode | null> {
     const row = await this.db.spydrNode.findFirst({
-      where: { id, userId, nodeType: "resource" },
-      include: { resourceDetails: true },
+      where: { id, userId, nodeType: "idea" },
+      include: { ideaDetails: true },
     });
 
     return row ? this.mapper.toDomain(row) : null;
   }
 
-  async listByUser(userId: string): Promise<ResourceNode[]> {
+  async listByUser(userId: string): Promise<IdeaNode[]> {
     const rows = await this.db.spydrNode.findMany({
-      where: { userId, nodeType: "resource", isDeleted: false },
-      include: { resourceDetails: true },
+      where: { userId, nodeType: "idea", isDeleted: false },
+      include: { ideaDetails: true },
       orderBy: { updatedAt: "desc" },
     });
 
     return rows.map((row) => this.mapper.toDomain(row));
   }
 
-  async save(entity: ResourceNode): Promise<ResourceNode> {
+  async save(entity: IdeaNode): Promise<IdeaNode> {
     const nodeData = this.mapper.toPersistence(entity);
     const { id, ...nodeUpdateData } = nodeData;
 
@@ -50,13 +50,13 @@ export class PostgresResourceRepository implements IResourceRepository {
 
       if (!entity.details) return;
 
-      const detailsData = this.mapper.toResourceDetailsPersistence(
+      const detailsData = this.mapper.toIdeaDetailsPersistence(
         entity.id,
         entity.details
       );
       const { nodeId, ...detailsUpdateData } = detailsData;
 
-      await tx.spydrResourceDetails.upsert({
+      await tx.spydrIdeaDetails.upsert({
         where: { nodeId },
         create: detailsData,
         update: detailsUpdateData,
@@ -64,7 +64,7 @@ export class PostgresResourceRepository implements IResourceRepository {
     });
 
     const saved = await this.findById(entity.id);
-    if (!saved) throw new Error("Failed to save resource");
+    if (!saved) throw new Error("Failed to save idea");
     return saved;
   }
 

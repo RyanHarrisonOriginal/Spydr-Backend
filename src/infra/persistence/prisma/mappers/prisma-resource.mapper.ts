@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { ResourceDetails, ResourceNode } from "../../../../domain/models/resources/index.js";
 import type { IResourceDetailsProps } from "../../../../domain/models/resources/index.js";
 import type { IDomainMapper } from "../../../../domain/mappers/index.js";
+import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
 
 export type PrismaResourceWithDetails = Prisma.SpydrNodeGetPayload<{
   include: { resourceDetails: true };
@@ -28,6 +29,7 @@ export class PrismaResourceMapper
       createdAt: persistence.createdAt,
       updatedAt: persistence.updatedAt,
       archivedAt: persistence.archivedAt,
+      ...readNodeLifecycle(persistence),
       details: persistence.resourceDetails
         ? new ResourceDetails({
             resourceType: persistence.resourceDetails.resourceType,
@@ -55,6 +57,7 @@ export class PrismaResourceMapper
       createdAt: domain.createdAt,
       updatedAt: domain.updatedAt,
       archivedAt: domain.archivedAt,
+      ...writeNodeLifecycle(domain),
     };
   }
 

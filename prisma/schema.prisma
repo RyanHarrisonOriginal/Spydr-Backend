@@ -90,6 +90,8 @@ model SpydrNode {
   createdAt                  DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                  DateTime                   @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
   archivedAt                 DateTime?                  @map("archived_at") @db.Timestamptz(6)
+  isDeleted                  Boolean                    @default(false) @map("is_deleted")
+  deletedAt                  DateTime?                  @map("deleted_at") @db.Timestamptz(6)
   decisionDetails            SpydrDecisionDetails?      @relation("DecisionDetailsNode")
   supersededDecisionDetails  SpydrDecisionDetails[]     @relation("SupersededDecisionNode")
   ideaDetails                SpydrIdeaDetails?          @relation("IdeaDetailsNode")
@@ -106,6 +108,7 @@ model SpydrNode {
   @@index([tags], map: "idx_spydr_nodes_tags", type: Gin)
   @@index([userId, status], map: "idx_spydr_nodes_user_status")
   @@index([userId, nodeType], map: "idx_spydr_nodes_user_type")
+  @@index([userId, isDeleted], map: "idx_spydr_nodes_user_deleted")
   @@map("spydr_nodes")
 }
 

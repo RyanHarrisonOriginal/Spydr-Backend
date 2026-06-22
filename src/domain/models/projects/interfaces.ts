@@ -20,4 +20,9 @@ export interface IProjectNodeProps extends Omit<IDomainNodeProps<"project">, "no
   ideas?: IdeaNode[];
   notes?: NoteNode[];
   resources?: ResourceNode[];
+  deletedTasks?: TaskNode[];
+  deletedDecisions?: DecisionNode[];
+  deletedIdeas?: IdeaNode[];
+  deletedNotes?: NoteNode[];
+  deletedResources?: ResourceNode[];
 }
