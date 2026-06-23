@@ -22,6 +22,9 @@ export class IdeasController {
       const ideas = await this.queryBus.execute<ListIdeasQuery, IdeaNode[]>(
         new ListIdeasQuery(userId)
       );
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`[ideas.list] user=${userId} count=${ideas.length}`);
+      }
       res.json(ideas.map((idea) => this.mapper.toRepresentation(idea)));
     } catch (error) {
       console.error(error);
