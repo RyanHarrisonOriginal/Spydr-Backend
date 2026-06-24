@@ -3,4 +3,5 @@ export { CommandHandlerNotFoundError } from "./command.js";
 export type { ICommandBus } from "./command-bus.js";
 export { CommandBus } from "./command-bus.js";
 export { registerCommandHandlers } from "./register-command-handlers.js";
+export * from "./project-areas/index.js";
 export * from "./projects/index.js";

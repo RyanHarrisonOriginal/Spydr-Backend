@@ -3,6 +3,7 @@ export type { IIdeaRepository } from "./idea-repository.js";
 export type { IInboxItemRepository } from "./inbox-item-repository.js";
 export type { INoteRepository } from "./note-repository.js";
 export type { IPersonRepository } from "./person-repository.js";
+export type { IProjectAreaRepository } from "./project-area-repository.js";
 export type { IProjectRepository } from "./project-repository.js";
 export type { IRepository } from "./repository.js";
 export type { IResourceRepository } from "./resource-repository.js";

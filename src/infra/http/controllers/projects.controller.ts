@@ -113,6 +113,10 @@ export class ProjectsController {
         res.status(400).json({ message: error.message });
         return;
       }
+      if (error instanceof Error && error.message === "Project area not found") {
+        res.status(400).json({ message: error.message });
+        return;
+      }
 
       console.error(error);
       res.status(500).json({ message: "Failed to create project" });
@@ -146,6 +150,10 @@ export class ProjectsController {
       res.json(this.mapper.toRepresentation(project));
     } catch (error) {
       if (error instanceof Error && error.message.startsWith("Invalid")) {
+        res.status(400).json({ message: error.message });
+        return;
+      }
+      if (error instanceof Error && error.message === "Project area not found") {
         res.status(400).json({ message: error.message });
         return;
       }

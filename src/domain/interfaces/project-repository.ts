@@ -17,6 +17,12 @@ export interface IUpdateProjectChildInput {
 export interface IProjectRepository extends IRepository<ProjectNode> {
   listByUser(userId: string): Promise<ProjectNode[]>;
   findByIdForUser(id: string, userId: string): Promise<ProjectNode | null>;
+  updateProject(entity: ProjectNode): Promise<ProjectNode>;
+  setAreaAssignment(
+    projectId: string,
+    userId: string,
+    areaNodeId: string | null
+  ): Promise<void>;
   updateRelatedNode(
     userId: string,
     projectId: string,

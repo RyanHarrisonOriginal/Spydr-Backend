@@ -131,6 +131,83 @@ export class PostgresProjectRepository implements IProjectRepository {
     return saved;
   }
 
+  async updateProject(entity: ProjectNode): Promise<ProjectNode> {
+    const nodeData = this.mapper.toPersistence(entity);
+    const { id, userId, createdAt, ...nodeUpdateData } = nodeData;
+
+    await this.db.$transaction(async (tx) => {
+      const result = await tx.spydrNode.updateMany({
+        where: {
+          id,
+          userId: entity.userId,
+          nodeType: "project",
+          isDeleted: false,
+        },
+        data: nodeUpdateData,
+      });
+
+      if (result.count === 0) {
+        throw new Error("Project not found");
+      }
+
+      if (entity.details) {
+        const detailsData = this.mapper.toProjectDetailsPersistence(
+          entity.id,
+          entity.details
+        );
+        const { nodeId, ...detailsUpdateData } = detailsData;
+
+        await tx.spydrProjectDetails.upsert({
+          where: { nodeId },
+          create: detailsData,
+          update: detailsUpdateData,
+        });
+      }
+    });
+
+    const saved = await this.findByIdForUser(entity.id, entity.userId);
+    if (!saved) {
+      throw new Error("Failed to update project");
+    }
+
+    return saved;
+  }
+
+  async setAreaAssignment(
+    projectId: string,
+    userId: string,
+    areaNodeId: string | null
+  ): Promise<void> {
+    const areaNodes = await this.db.spydrNode.findMany({
+      where: { userId, nodeType: "project_area" },
+      select: { id: true },
+    });
+    const areaIds = areaNodes.map((node) => node.id);
+
+    if (areaIds.length > 0) {
+      await this.db.spydrNodeRelationship.deleteMany({
+        where: {
+          userId,
+          sourceNodeId: projectId,
+          targetNodeId: { in: areaIds },
+          relationshipType: "related_to",
+        },
+      });
+    }
+
+    if (!areaNodeId) return;
+
+    await this.db.spydrNodeRelationship.create({
+      data: {
+        userId,
+        sourceNodeId: projectId,
+        targetNodeId: areaNodeId,
+        relationshipType: "related_to",
+        reason: "Project area",
+      },
+    });
+  }
+
   async delete(id: string): Promise<void> {
     await this.db.spydrNode.update({
       where: { id },

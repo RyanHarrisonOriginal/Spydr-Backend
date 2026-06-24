@@ -1,5 +1,6 @@
 export const spydrNodeTypes = [
   "project",
+  "project_area",
   "task",
   "idea",
   "note",

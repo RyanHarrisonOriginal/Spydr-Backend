@@ -7,6 +7,7 @@ import type { IQueryBus } from "../../domain/cqrs/queries/index.js";
 import { createDecisionsRouter } from "./routes/decisions.router.js";
 import { createIdeasRouter } from "./routes/ideas.router.js";
 import { createNotesRouter } from "./routes/notes.router.js";
+import { createProjectAreasRouter } from "./routes/project-areas.router.js";
 import { createProjectsRouter } from "./routes/projects.router.js";
 import { createResourcesRouter } from "./routes/resources.router.js";
 import { createTasksRouter } from "./routes/tasks.router.js";
@@ -29,6 +30,10 @@ export function createHttpApp(options: IHttpAppOptions): Express {
   app.use(`${apiPrefix}/decisions`, createDecisionsRouter(options.queryBus));
   app.use(`${apiPrefix}/ideas`, createIdeasRouter(options.queryBus));
   app.use(`${apiPrefix}/notes`, createNotesRouter(options.queryBus));
+  app.use(
+    `${apiPrefix}/project-areas`,
+    createProjectAreasRouter(options.queryBus, options.commandBus)
+  );
   app.use(
     `${apiPrefix}/projects`,
     createProjectsRouter(options.queryBus, options.commandBus)

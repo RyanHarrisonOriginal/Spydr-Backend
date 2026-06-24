@@ -5,6 +5,7 @@ export { QueryBus } from "./query-bus.js";
 export * from "./decisions/index.js";
 export * from "./ideas/index.js";
 export * from "./notes/index.js";
+export * from "./project-areas/index.js";
 export * from "./projects/index.js";
 export * from "./resources/index.js";
 export * from "./tasks/index.js";

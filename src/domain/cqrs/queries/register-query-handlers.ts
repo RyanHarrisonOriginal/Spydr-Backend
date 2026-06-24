@@ -3,6 +3,7 @@ import type { IQueryBus } from "./query-bus.js";
 import { ListDecisionsQueryHandler } from "./decisions/index.js";
 import { ListIdeasQueryHandler } from "./ideas/index.js";
 import { ListNotesQueryHandler } from "./notes/index.js";
+import { ListProjectAreasQueryHandler } from "./project-areas/index.js";
 import {
   GetProjectQueryHandler,
   ListProjectsQueryHandler,
@@ -18,6 +19,7 @@ export function registerQueryHandlers(
     new ListDecisionsQueryHandler(repositories.decisions),
     new ListIdeasQueryHandler(repositories.ideas),
     new ListNotesQueryHandler(repositories.notes),
+    new ListProjectAreasQueryHandler(repositories.projectAreas),
     new GetProjectQueryHandler(repositories.projects),
     new ListProjectsQueryHandler(repositories.projects),
     new ListResourcesQueryHandler(repositories.resources),

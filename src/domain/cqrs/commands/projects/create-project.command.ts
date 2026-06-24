@@ -1,3 +1,4 @@
+import type { IProjectAreaRepository } from "../../../interfaces/project-area-repository.js";
 import type { IProjectRepository } from "../../../interfaces/index.js";
 import { ProjectMapper } from "../../../mappers/projects/index.js";
 import type { ProjectNode } from "../../../models/projects/index.js";
@@ -13,6 +14,7 @@ export interface ICreateProjectInput {
   status?: SpydrNodeStatus;
   priority?: SpydrPriority;
   area?: string | null;
+  areaNodeId?: string | null;
   tags?: string[];
   outcome?: string | null;
   startDate?: string | null;
@@ -37,11 +39,35 @@ export class CreateProjectCommandHandler
 
   constructor(
     private readonly projects: IProjectRepository,
+    private readonly projectAreas: IProjectAreaRepository,
     private readonly mapper = new ProjectMapper()
   ) {}
 
   async execute(command: CreateProjectCommand): Promise<ProjectNode> {
-    const project = this.mapper.toModel(command.userId, command.input);
-    return this.projects.save(project);
+    const input = { ...command.input };
+
+    if (command.input.areaNodeId) {
+      const area = await this.projectAreas.findByIdForUser(
+        command.input.areaNodeId,
+        command.userId
+      );
+      if (!area) {
+        throw new Error("Project area not found");
+      }
+      input.area = area.title;
+    }
+
+    const project = this.mapper.toModel(command.userId, input);
+    const saved = await this.projects.save(project);
+
+    if (command.input.areaNodeId) {
+      await this.projects.setAreaAssignment(
+        saved.id,
+        command.userId,
+        command.input.areaNodeId
+      );
+    }
+
+    return (await this.projects.findByIdForUser(saved.id, command.userId)) ?? saved;
   }
 }

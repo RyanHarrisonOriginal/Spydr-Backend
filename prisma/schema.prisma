@@ -9,6 +9,7 @@ datasource db {
 
 enum SpydrNodeType {
   project
+  project_area
   task
   idea
   note
@@ -102,6 +103,7 @@ model SpydrNode {
   outlookSnapshotItems       SpydrOutlookSnapshotItem[]
   personDetails              SpydrPersonDetails?
   projectDetails             SpydrProjectDetails?
+  projectAreaDetails         SpydrProjectAreaDetails?
   resourceDetails            SpydrResourceDetails?
   taskDetails                SpydrTaskDetails?
 
@@ -253,6 +255,16 @@ model SpydrProjectDetails {
   updatedAt      DateTime       @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
 
   @@map("spydr_project_details")
+}
+
+model SpydrProjectAreaDetails {
+  nodeId    String    @id(map: "spydr_project_area_details_pkey") @map("node_id") @db.Uuid
+  node      SpydrNode @relation(fields: [nodeId], references: [id], onDelete: Cascade, map: "spydr_project_area_details_node_id_fkey")
+  color     String    @default("18 94% 50%") @db.VarChar(32)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("spydr_project_area_details")
 }
 
 model SpydrResourceDetails {
