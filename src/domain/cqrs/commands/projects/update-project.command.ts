@@ -9,6 +9,7 @@ import type { IProjectUpdateModelInput } from "../../../mappers/projects/index.j
 export interface IUpdateProjectInput {
   body?: string;
   status?: SpydrNodeStatus;
+  priority?: SpydrPriority;
   areaNodeId?: string | null;
   startDate?: string | null;
   targetDate?: string | null;
@@ -67,6 +68,7 @@ export class UpdateProjectCommandHandler
     const patch: IProjectUpdateModelInput = {
       body: input.body,
       status: input.status,
+      priority: input.priority,
       startDate: input.startDate,
       targetDate: input.targetDate,
       riskLevel: input.riskLevel,

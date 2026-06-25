@@ -29,6 +29,7 @@ export interface IProjectCreateModelInput {
 export interface IProjectUpdateModelInput {
   body?: string;
   status?: SpydrNodeStatus;
+  priority?: SpydrPriority;
   area?: string | null;
   startDate?: string | null;
   targetDate?: string | null;
@@ -116,7 +117,10 @@ export class ProjectMapper {
         input.status !== undefined
           ? this.normalizeStatus(input.status)
           : existing.status,
-      priority: existing.priority,
+      priority:
+        input.priority !== undefined
+          ? this.normalizePriority(input.priority)
+          : existing.priority,
       area: input.area !== undefined ? this.nullableTrim(input.area) : existing.area,
       tags: existing.tags,
       createdAt: existing.createdAt,
