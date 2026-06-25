@@ -1,5 +1,7 @@
 import { DomainNode, type SpydrPriority } from "../shared.js";
 import type { IProjectDetailsProps, IProjectNodeProps } from "./interfaces.js";
+import type { IProjectPersonas } from "./personas.js";
+import { emptyProjectPersonas } from "./personas.js";
 import type { DecisionNode } from "../decisions/index.js";
 import type { IdeaNode } from "../ideas/index.js";
 import type { NoteNode } from "../notes/index.js";
@@ -13,6 +15,10 @@ export class ProjectDetails implements IProjectDetailsProps {
   startDate: Date | null;
   targetDate: Date | null;
   riskLevel: SpydrPriority;
+  requesterPersonNodeId: string | null;
+  assigneePersonNodeId: string | null;
+  sponsorPersonNodeId: string | null;
+  reviewerPersonNodeId: string | null;
   readonly lastActivityAt: Date | null;
   readonly createdAt: Date;
   updatedAt: Date;
@@ -22,6 +28,10 @@ export class ProjectDetails implements IProjectDetailsProps {
     this.startDate = props.startDate;
     this.targetDate = props.targetDate;
     this.riskLevel = props.riskLevel;
+    this.requesterPersonNodeId = props.requesterPersonNodeId;
+    this.assigneePersonNodeId = props.assigneePersonNodeId;
+    this.sponsorPersonNodeId = props.sponsorPersonNodeId;
+    this.reviewerPersonNodeId = props.reviewerPersonNodeId;
     this.lastActivityAt = props.lastActivityAt;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
@@ -47,6 +57,26 @@ export class ProjectDetails implements IProjectDetailsProps {
     this.touch();
   }
 
+  setRequesterPersonNodeId(personNodeId: string | null): void {
+    this.requesterPersonNodeId = personNodeId;
+    this.touch();
+  }
+
+  setAssigneePersonNodeId(personNodeId: string | null): void {
+    this.assigneePersonNodeId = personNodeId;
+    this.touch();
+  }
+
+  setSponsorPersonNodeId(personNodeId: string | null): void {
+    this.sponsorPersonNodeId = personNodeId;
+    this.touch();
+  }
+
+  setReviewerPersonNodeId(personNodeId: string | null): void {
+    this.reviewerPersonNodeId = personNodeId;
+    this.touch();
+  }
+
   private touch(): void {
     this.updatedAt = new Date();
   }
@@ -54,6 +84,7 @@ export class ProjectDetails implements IProjectDetailsProps {
 
 export class ProjectNode extends DomainNode<"project"> {
   readonly details: ProjectDetails | null;
+  readonly personas: IProjectPersonas | null;
   readonly tasks: TaskNode[];
   readonly decisions: DecisionNode[];
   readonly ideas: IdeaNode[];
@@ -68,6 +99,7 @@ export class ProjectNode extends DomainNode<"project"> {
   constructor(props: IProjectNodeProps) {
     super({ ...props, nodeType: "project" });
     this.details = props.details ? new ProjectDetails(props.details) : null;
+    this.personas = props.personas ?? emptyProjectPersonas();
     this.tasks = props.tasks ?? [];
     this.decisions = props.decisions ?? [];
     this.ideas = props.ideas ?? [];

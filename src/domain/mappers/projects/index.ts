@@ -34,6 +34,10 @@ export interface IProjectUpdateModelInput {
   startDate?: string | null;
   targetDate?: string | null;
   riskLevel?: SpydrPriority;
+  requesterPersonNodeId?: string | null;
+  assigneePersonNodeId?: string | null;
+  sponsorPersonNodeId?: string | null;
+  reviewerPersonNodeId?: string | null;
 }
 
 export class ProjectMapper {
@@ -93,6 +97,10 @@ export class ProjectMapper {
         targetDate: this.parseDate(input.targetDate),
         riskLevel,
         lastActivityAt: null,
+        requesterPersonNodeId: null,
+        assigneePersonNodeId: null,
+        sponsorPersonNodeId: null,
+        reviewerPersonNodeId: null,
         createdAt: now,
         updatedAt: now,
       },
@@ -138,6 +146,7 @@ export class ProjectMapper {
       deletedIdeas: existing.deletedIdeas,
       deletedNotes: existing.deletedNotes,
       deletedResources: existing.deletedResources,
+      personas: existing.personas ?? undefined,
       details: {
         outcome: existing.details?.outcome ?? null,
         startDate:
@@ -150,6 +159,22 @@ export class ProjectMapper {
             : existing.details?.targetDate ?? null,
         riskLevel,
         lastActivityAt: existing.details?.lastActivityAt ?? null,
+        requesterPersonNodeId:
+          input.requesterPersonNodeId !== undefined
+            ? input.requesterPersonNodeId
+            : existing.details?.requesterPersonNodeId ?? null,
+        assigneePersonNodeId:
+          input.assigneePersonNodeId !== undefined
+            ? input.assigneePersonNodeId
+            : existing.details?.assigneePersonNodeId ?? null,
+        sponsorPersonNodeId:
+          input.sponsorPersonNodeId !== undefined
+            ? input.sponsorPersonNodeId
+            : existing.details?.sponsorPersonNodeId ?? null,
+        reviewerPersonNodeId:
+          input.reviewerPersonNodeId !== undefined
+            ? input.reviewerPersonNodeId
+            : existing.details?.reviewerPersonNodeId ?? null,
         createdAt: existing.details?.createdAt ?? now,
         updatedAt: now,
       },

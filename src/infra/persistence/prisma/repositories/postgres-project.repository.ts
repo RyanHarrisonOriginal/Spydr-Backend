@@ -11,6 +11,9 @@ import type { ResourceNode } from "../../../../domain/models/resources/index.js"
 import type { TaskStatus } from "../../../../domain/models/shared.js";
 import type { TaskNode } from "../../../../domain/models/tasks/index.js";
 import { ProjectNode } from "../../../../domain/models/projects/index.js";
+import { emptyProjectPersonas } from "../../../../domain/models/projects/personas.js";
+import type { PersonNode } from "../../../../domain/models/people/index.js";
+import { PrismaPersonMapper } from "../mappers/prisma-person.mapper.js";
 import { PrismaProjectMapper } from "../mappers/prisma-project.mapper.js";
 import { PrismaDecisionMapper } from "../mappers/prisma-decision.mapper.js";
 import { PrismaNoteMapper } from "../mappers/prisma-note.mapper.js";
@@ -22,6 +25,7 @@ export class PostgresProjectRepository implements IProjectRepository {
   constructor(
     private readonly db: PrismaClient,
     private readonly mapper = new PrismaProjectMapper(),
+    private readonly personMapper = new PrismaPersonMapper(),
     private readonly taskMapper = new PrismaTaskMapper(),
     private readonly decisionMapper = new PrismaDecisionMapper(),
     private readonly noteMapper = new PrismaNoteMapper(),
@@ -52,6 +56,7 @@ export class PostgresProjectRepository implements IProjectRepository {
 
     const project = this.mapper.toDomain(row);
     const related = await this.loadRelatedNodes(id, userId);
+    const personas = await this.loadPersonas(userId, project.details);
 
     return new ProjectNode({
       id: project.id,
@@ -68,6 +73,7 @@ export class PostgresProjectRepository implements IProjectRepository {
       isDeleted: project.isDeleted,
       deletedAt: project.deletedAt,
       details: project.details,
+      personas,
       ...related,
     });
   }
@@ -80,6 +86,41 @@ export class PostgresProjectRepository implements IProjectRepository {
     });
 
     return rows.map((row) => this.mapper.toDomain(row));
+  }
+
+  async listDeletedByUser(userId: string): Promise<ProjectNode[]> {
+    const rows = await this.db.spydrNode.findMany({
+      where: { userId, nodeType: "project", isDeleted: true },
+      include: { projectDetails: true },
+      orderBy: { deletedAt: "desc" },
+    });
+
+    return rows.map((row) => this.mapper.toDomain(row));
+  }
+
+  async restoreProject(userId: string, projectId: string): Promise<ProjectNode | null> {
+    const row = await this.db.spydrNode.findFirst({
+      where: { id: projectId, userId, nodeType: "project", isDeleted: true },
+      include: { projectDetails: true },
+    });
+
+    if (!row) return null;
+
+    await this.db.spydrNode.update({
+      where: { id: projectId },
+      data: {
+        isDeleted: false,
+        deletedAt: null,
+        updatedAt: new Date(),
+      },
+    });
+
+    const restored = await this.db.spydrNode.findFirst({
+      where: { id: projectId, userId, nodeType: "project", isDeleted: false },
+      include: { projectDetails: true },
+    });
+
+    return restored ? this.mapper.toDomain(restored) : null;
   }
 
   async save(entity: ProjectNode): Promise<ProjectNode> {
@@ -317,6 +358,52 @@ export class PostgresProjectRepository implements IProjectRepository {
     });
 
     return this.findByIdForUser(projectId, userId);
+  }
+
+  private async loadPersonas(
+    userId: string,
+    details: ProjectNode["details"]
+  ) {
+    const personas = emptyProjectPersonas();
+    if (!details) return personas;
+
+    const ids = [
+      details.requesterPersonNodeId,
+      details.assigneePersonNodeId,
+      details.sponsorPersonNodeId,
+      details.reviewerPersonNodeId,
+    ].filter((id): id is string => Boolean(id));
+
+    if (ids.length === 0) return personas;
+
+    const rows = await this.db.spydrNode.findMany({
+      where: {
+        id: { in: ids },
+        userId,
+        nodeType: "person",
+        isDeleted: false,
+      },
+      include: { personDetails: true },
+    });
+
+    const byId = new Map<string, PersonNode>(
+      rows.map((row) => [row.id, this.personMapper.toDomain(row)])
+    );
+
+    personas.requester = details.requesterPersonNodeId
+      ? byId.get(details.requesterPersonNodeId) ?? null
+      : null;
+    personas.assignee = details.assigneePersonNodeId
+      ? byId.get(details.assigneePersonNodeId) ?? null
+      : null;
+    personas.sponsor = details.sponsorPersonNodeId
+      ? byId.get(details.sponsorPersonNodeId) ?? null
+      : null;
+    personas.reviewer = details.reviewerPersonNodeId
+      ? byId.get(details.reviewerPersonNodeId) ?? null
+      : null;
+
+    return personas;
   }
 
   private async loadRelatedNodes(projectId: string, userId: string) {

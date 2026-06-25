@@ -7,7 +7,9 @@ import {
   AddNoteToProjectCommand,
   AddTaskToProjectCommand,
   CreateProjectCommand,
+  DeleteProjectCommand,
   DeleteProjectChildCommand,
+  RestoreProjectCommand,
   RestoreProjectChildCommand,
   UpdateProjectChildCommand,
   type IAddDecisionToProjectInput,
@@ -23,6 +25,7 @@ import {
 import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";
 import {
   GetProjectQuery,
+  ListDeletedProjectsQuery,
   ListProjectsQuery,
 } from "../../../domain/cqrs/queries/index.js";
 import type { ProjectNode } from "../../../domain/models/projects/index.js";
@@ -87,6 +90,26 @@ export class ProjectsController {
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Failed to list projects" });
+    }
+  };
+
+  listTrash = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = getAuth(req).userId;
+      if (!userId) {
+        res.status(401).json({ message: "Unauthorized" });
+        return;
+      }
+
+      const projects = await this.queryBus.execute<
+        ListDeletedProjectsQuery,
+        ProjectNode[]
+      >(new ListDeletedProjectsQuery(userId));
+
+      res.json(projects.map((project) => this.mapper.toRepresentation(project)));
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to list deleted projects" });
     }
   };
 
@@ -157,9 +180,62 @@ export class ProjectsController {
         res.status(400).json({ message: error.message });
         return;
       }
+      if (error instanceof Error && error.message === "Person not found") {
+        res.status(400).json({ message: error.message });
+        return;
+      }
 
       console.error(error);
       res.status(500).json({ message: "Failed to update project" });
+    }
+  };
+
+  delete = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = getAuth(req).userId;
+      if (!userId) {
+        res.status(401).json({ message: "Unauthorized" });
+        return;
+      }
+
+      const deleted = await this.commandBus.execute<DeleteProjectCommand, boolean>(
+        new DeleteProjectCommand(userId, req.params.projectId)
+      );
+
+      if (!deleted) {
+        res.status(404).json({ message: "Project not found" });
+        return;
+      }
+
+      res.status(204).send();
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to delete project" });
+    }
+  };
+
+  restore = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = getAuth(req).userId;
+      if (!userId) {
+        res.status(401).json({ message: "Unauthorized" });
+        return;
+      }
+
+      const project = await this.commandBus.execute<
+        RestoreProjectCommand,
+        ProjectNode | null
+      >(new RestoreProjectCommand(userId, req.params.projectId));
+
+      if (!project) {
+        res.status(404).json({ message: "Deleted project not found" });
+        return;
+      }
+
+      res.json(this.mapper.toRepresentation(project));
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to restore project" });
     }
   };
 

@@ -37,6 +37,10 @@ export class PrismaProjectMapper
             targetDate: persistence.projectDetails.targetDate,
             riskLevel: persistence.projectDetails.riskLevel,
             lastActivityAt: persistence.projectDetails.lastActivityAt,
+            requesterPersonNodeId: persistence.projectDetails.requesterPersonNodeId,
+            assigneePersonNodeId: persistence.projectDetails.assigneePersonNodeId,
+            sponsorPersonNodeId: persistence.projectDetails.sponsorPersonNodeId,
+            reviewerPersonNodeId: persistence.projectDetails.reviewerPersonNodeId,
             createdAt: persistence.projectDetails.createdAt,
             updatedAt: persistence.projectDetails.updatedAt,
           })
@@ -73,6 +77,10 @@ export class PrismaProjectMapper
       targetDate: details.targetDate,
       riskLevel: details.riskLevel,
       lastActivityAt: details.lastActivityAt,
+      requesterPersonNodeId: details.requesterPersonNodeId,
+      assigneePersonNodeId: details.assigneePersonNodeId,
+      sponsorPersonNodeId: details.sponsorPersonNodeId,
+      reviewerPersonNodeId: details.reviewerPersonNodeId,
       createdAt: details.createdAt,
       updatedAt: details.updatedAt,
     };

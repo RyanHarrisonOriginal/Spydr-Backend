@@ -6,12 +6,18 @@ import {
   UpdateProjectAreaCommandHandler,
 } from "./project-areas/index.js";
 import {
+  CreatePersonCommandHandler,
+  UpdatePersonCommandHandler,
+} from "./people/index.js";
+import {
   AddDecisionToProjectCommandHandler,
   AddIdeaToProjectCommandHandler,
   AddNoteToProjectCommandHandler,
   AddTaskToProjectCommandHandler,
   CreateProjectCommandHandler,
   DeleteProjectChildCommandHandler,
+  DeleteProjectCommandHandler,
+  RestoreProjectCommandHandler,
   RestoreProjectChildCommandHandler,
   UpdateProjectChildCommandHandler,
   UpdateProjectCommandHandler,
@@ -25,14 +31,19 @@ export function registerCommandHandlers(
     new CreateProjectAreaCommandHandler(repositories.projectAreas),
     new UpdateProjectAreaCommandHandler(repositories.projectAreas),
     new DeleteProjectAreaCommandHandler(repositories.projectAreas),
+    new CreatePersonCommandHandler(repositories.people),
+    new UpdatePersonCommandHandler(repositories.people),
     new CreateProjectCommandHandler(
       repositories.projects,
       repositories.projectAreas
     ),
     new UpdateProjectCommandHandler(
       repositories.projects,
-      repositories.projectAreas
+      repositories.projectAreas,
+      repositories.people
     ),
+    new DeleteProjectCommandHandler(repositories.projects),
+    new RestoreProjectCommandHandler(repositories.projects),
     new AddTaskToProjectCommandHandler(repositories.projects),
     new AddNoteToProjectCommandHandler(repositories.projects),
     new AddDecisionToProjectCommandHandler(repositories.projects),

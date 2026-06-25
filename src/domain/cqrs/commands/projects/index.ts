@@ -29,6 +29,14 @@ export {
 } from "./update-project.command.js";
 export type { IUpdateProjectInput } from "./update-project.command.js";
 export {
+  DeleteProjectCommand,
+  DeleteProjectCommandHandler,
+} from "./delete-project.command.js";
+export {
+  RestoreProjectCommand,
+  RestoreProjectCommandHandler,
+} from "./restore-project.command.js";
+export {
   UpdateProjectChildCommand,
   UpdateProjectChildCommandHandler,
   DeleteProjectChildCommand,

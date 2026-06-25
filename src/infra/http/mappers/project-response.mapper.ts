@@ -12,6 +12,17 @@ import {
   type IResourceResponse,
 } from "./resource-response.mapper.js";
 import { TaskResponseMapper, type ITaskResponse } from "./task-response.mapper.js";
+import {
+  PersonResponseMapper,
+  type IPersonResponse,
+} from "./person-response.mapper.js";
+
+export interface IProjectPersonasResponse {
+  requester: IPersonResponse | null;
+  assignee: IPersonResponse | null;
+  sponsor: IPersonResponse | null;
+  reviewer: IPersonResponse | null;
+}
 
 export interface IProjectResponse {
   id: string;
@@ -34,9 +45,14 @@ export interface IProjectResponse {
     targetDate: string | null;
     riskLevel: string;
     lastActivityAt: string | null;
+    requesterPersonNodeId: string | null;
+    assigneePersonNodeId: string | null;
+    sponsorPersonNodeId: string | null;
+    reviewerPersonNodeId: string | null;
     createdAt: string;
     updatedAt: string;
   } | null;
+  personas: IProjectPersonasResponse;
   tasks: ITaskResponse[];
   decisions: IDecisionResponse[];
   ideas: IIdeaResponse[];
@@ -83,7 +99,8 @@ export class ProjectResponseMapper
     private readonly decisionMapper = new DecisionResponseMapper(),
     private readonly noteMapper = new NoteResponseMapper(),
     private readonly resourceMapper = new ResourceResponseMapper(),
-    private readonly ideaMapper = new IdeaResponseMapper()
+    private readonly ideaMapper = new IdeaResponseMapper(),
+    private readonly personMapper = new PersonResponseMapper()
   ) {}
 
   toRepresentation(domain: ProjectNode): IProjectResponse {
@@ -108,10 +125,28 @@ export class ProjectResponseMapper
             targetDate: this.toDateOnly(domain.details.targetDate),
             riskLevel: domain.details.riskLevel,
             lastActivityAt: domain.details.lastActivityAt?.toISOString() ?? null,
+            requesterPersonNodeId: domain.details.requesterPersonNodeId,
+            assigneePersonNodeId: domain.details.assigneePersonNodeId,
+            sponsorPersonNodeId: domain.details.sponsorPersonNodeId,
+            reviewerPersonNodeId: domain.details.reviewerPersonNodeId,
             createdAt: domain.details.createdAt.toISOString(),
             updatedAt: domain.details.updatedAt.toISOString(),
           }
         : null,
+      personas: {
+        requester: domain.personas?.requester
+          ? this.personMapper.toRepresentation(domain.personas.requester)
+          : null,
+        assignee: domain.personas?.assignee
+          ? this.personMapper.toRepresentation(domain.personas.assignee)
+          : null,
+        sponsor: domain.personas?.sponsor
+          ? this.personMapper.toRepresentation(domain.personas.sponsor)
+          : null,
+        reviewer: domain.personas?.reviewer
+          ? this.personMapper.toRepresentation(domain.personas.reviewer)
+          : null,
+      },
       tasks: domain.tasks.map((task) => this.taskMapper.toRepresentation(task)),
       decisions: domain.decisions.map((decision) =>
         this.decisionMapper.toRepresentation(decision)

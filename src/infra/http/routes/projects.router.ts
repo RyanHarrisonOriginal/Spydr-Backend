@@ -11,9 +11,12 @@ export function createProjectsRouter(
   const router = Router();
 
   router.get("/", controller.list);
+  router.get("/trash", controller.listTrash);
   router.get("/:projectId", controller.get);
   router.post("/", controller.create);
   router.patch("/:projectId", controller.update);
+  router.delete("/:projectId", controller.delete);
+  router.post("/:projectId/restore", controller.restore);
   router.post("/:projectId/tasks", controller.createTask);
   router.patch("/:projectId/tasks/:childId", controller.updateTask);
   router.delete("/:projectId/tasks/:childId", controller.deleteTask);

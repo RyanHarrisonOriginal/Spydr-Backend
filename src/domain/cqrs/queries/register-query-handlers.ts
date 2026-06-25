@@ -5,7 +5,12 @@ import { ListIdeasQueryHandler } from "./ideas/index.js";
 import { ListNotesQueryHandler } from "./notes/index.js";
 import { ListProjectAreasQueryHandler } from "./project-areas/index.js";
 import {
+  GetPersonQueryHandler,
+  ListPeopleQueryHandler,
+} from "./people/index.js";
+import {
   GetProjectQueryHandler,
+  ListDeletedProjectsQueryHandler,
   ListProjectsQueryHandler,
 } from "./projects/index.js";
 import { ListResourcesQueryHandler } from "./resources/index.js";
@@ -20,8 +25,11 @@ export function registerQueryHandlers(
     new ListIdeasQueryHandler(repositories.ideas),
     new ListNotesQueryHandler(repositories.notes),
     new ListProjectAreasQueryHandler(repositories.projectAreas),
+    new ListPeopleQueryHandler(repositories.people),
+    new GetPersonQueryHandler(repositories.people),
     new GetProjectQueryHandler(repositories.projects),
     new ListProjectsQueryHandler(repositories.projects),
+    new ListDeletedProjectsQueryHandler(repositories.projects),
     new ListResourcesQueryHandler(repositories.resources),
     new ListTasksQueryHandler(repositories.tasks),
   ]);

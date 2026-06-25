@@ -1,4 +1,5 @@
 import type { IProjectAreaRepository } from "../../../interfaces/project-area-repository.js";
+import type { IPersonRepository } from "../../../interfaces/person-repository.js";
 import type { IProjectRepository } from "../../../interfaces/index.js";
 import { ProjectMapper } from "../../../mappers/projects/index.js";
 import type { ProjectNode } from "../../../models/projects/index.js";
@@ -14,6 +15,10 @@ export interface IUpdateProjectInput {
   startDate?: string | null;
   targetDate?: string | null;
   riskLevel?: SpydrPriority;
+  requesterPersonNodeId?: string | null;
+  assigneePersonNodeId?: string | null;
+  sponsorPersonNodeId?: string | null;
+  reviewerPersonNodeId?: string | null;
 }
 
 export class UpdateProjectCommand implements ICommand<ProjectNode | null> {
@@ -35,6 +40,7 @@ export class UpdateProjectCommandHandler
   constructor(
     private readonly projects: IProjectRepository,
     private readonly projectAreas: IProjectAreaRepository,
+    private readonly people: IPersonRepository,
     private readonly mapper = new ProjectMapper()
   ) {}
 
@@ -45,7 +51,11 @@ export class UpdateProjectCommandHandler
     );
     if (!existing) return null;
 
-    const patch = await this.resolvePatch(command.userId, command.input);
+    const patch = await this.resolvePatch(
+      command.userId,
+      command.input,
+      existing
+    );
     const project = this.mapper.toModel(existing, patch);
 
     await this.projects.updateProject(project);
@@ -63,7 +73,8 @@ export class UpdateProjectCommandHandler
 
   private async resolvePatch(
     userId: string,
-    input: IUpdateProjectInput
+    input: IUpdateProjectInput,
+    existing: ProjectNode
   ): Promise<IProjectUpdateModelInput> {
     const patch: IProjectUpdateModelInput = {
       body: input.body,
@@ -73,6 +84,31 @@ export class UpdateProjectCommandHandler
       targetDate: input.targetDate,
       riskLevel: input.riskLevel,
     };
+
+    if (input.requesterPersonNodeId !== undefined) {
+      patch.requesterPersonNodeId = await this.resolvePersonId(
+        userId,
+        input.requesterPersonNodeId
+      );
+    }
+    if (input.assigneePersonNodeId !== undefined) {
+      patch.assigneePersonNodeId = await this.resolvePersonId(
+        userId,
+        input.assigneePersonNodeId
+      );
+    }
+    if (input.sponsorPersonNodeId !== undefined) {
+      patch.sponsorPersonNodeId = await this.resolvePersonId(
+        userId,
+        input.sponsorPersonNodeId
+      );
+    }
+    if (input.reviewerPersonNodeId !== undefined) {
+      patch.reviewerPersonNodeId = await this.resolvePersonId(
+        userId,
+        input.reviewerPersonNodeId
+      );
+    }
 
     if (input.areaNodeId !== undefined) {
       if (input.areaNodeId === null) {
@@ -90,5 +126,19 @@ export class UpdateProjectCommandHandler
     }
 
     return patch;
+  }
+
+  private async resolvePersonId(
+    userId: string,
+    personNodeId: string | null
+  ): Promise<string | null> {
+    if (!personNodeId) return null;
+
+    const person = await this.people.findByIdForUser(personNodeId, userId);
+    if (!person) {
+      throw new Error("Person not found");
+    }
+
+    return person.id;
   }
 }
