@@ -15,4 +15,8 @@ export type {
   ISpydrNodeRelationship,
   ISpydrNodeRelationshipRepository,
 } from "./spydr-node-relationship-repository.js";
-export type { ITaskRepository } from "./task-repository.js";
+export type {
+  ITaskRepository,
+  ITaskListItem,
+  ITaskProjectRef,
+} from "./task-repository.js";

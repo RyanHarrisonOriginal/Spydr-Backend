@@ -22,6 +22,7 @@ import {
   UpdateProjectChildCommandHandler,
   UpdateProjectCommandHandler,
 } from "./projects/index.js";
+import { UpdateTaskCommandHandler } from "./tasks/index.js";
 
 export function registerCommandHandlers(
   commandBus: ICommandBus,
@@ -51,5 +52,6 @@ export function registerCommandHandlers(
     new UpdateProjectChildCommandHandler(repositories.projects),
     new DeleteProjectChildCommandHandler(repositories.projects),
     new RestoreProjectChildCommandHandler(repositories.projects),
+    new UpdateTaskCommandHandler(repositories.tasks),
   ]);
 }

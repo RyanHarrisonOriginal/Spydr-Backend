@@ -14,7 +14,7 @@ import {
   ListProjectsQueryHandler,
 } from "./projects/index.js";
 import { ListResourcesQueryHandler } from "./resources/index.js";
-import { ListTasksQueryHandler } from "./tasks/index.js";
+import { ListTasksQueryHandler, GetTaskQueryHandler } from "./tasks/index.js";
 
 export function registerQueryHandlers(
   queryBus: IQueryBus,
@@ -32,5 +32,6 @@ export function registerQueryHandlers(
     new ListDeletedProjectsQueryHandler(repositories.projects),
     new ListResourcesQueryHandler(repositories.resources),
     new ListTasksQueryHandler(repositories.tasks),
+    new GetTaskQueryHandler(repositories.tasks),
   ]);
 }

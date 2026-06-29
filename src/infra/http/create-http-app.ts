@@ -44,7 +44,7 @@ export function createHttpApp(options: IHttpAppOptions): Express {
     createProjectsRouter(options.queryBus, options.commandBus)
   );
   app.use(`${apiPrefix}/resources`, createResourcesRouter(options.queryBus));
-  app.use(`${apiPrefix}/tasks`, createTasksRouter(options.queryBus));
+  app.use(`${apiPrefix}/tasks`, createTasksRouter(options.queryBus, options.commandBus));
 
   return app;
 }

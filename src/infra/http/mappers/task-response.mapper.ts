@@ -1,6 +1,12 @@
+import type { ITaskListItem } from "../../../domain/interfaces/task-repository.js";
 import type { TaskNode } from "../../../domain/models/tasks/index.js";
 import type { IRepresentationMapper } from "../../../domain/mappers/index.js";
 import { nodeLifecycleResponse } from "./node-lifecycle-response.js";
+
+export interface ITaskProjectResponse {
+  id: string;
+  title: string;
+}
 
 export interface ITaskResponse {
   id: string;
@@ -17,6 +23,7 @@ export interface ITaskResponse {
   archivedAt: string | null;
   isDeleted: boolean;
   deletedAt: string | null;
+  project: ITaskProjectResponse | null;
   details: {
     dueDate: string | null;
     completedAt: string | null;
@@ -30,7 +37,7 @@ export interface ITaskResponse {
 export class TaskResponseMapper
   implements IRepresentationMapper<TaskNode, ITaskResponse>
 {
-  toRepresentation(domain: TaskNode): ITaskResponse {
+  toRepresentation(domain: TaskNode, project: ITaskProjectResponse | null = null): ITaskResponse {
     return {
       id: domain.id,
       userId: domain.userId,
@@ -45,6 +52,7 @@ export class TaskResponseMapper
       updatedAt: domain.updatedAt.toISOString(),
       archivedAt: domain.archivedAt?.toISOString() ?? null,
       ...nodeLifecycleResponse(domain),
+      project,
       details: domain.details
         ? {
             dueDate: this.toDateOnly(domain.details.dueDate),
@@ -56,6 +64,10 @@ export class TaskResponseMapper
           }
         : null,
     };
+  }
+
+  toListRepresentation(item: ITaskListItem): ITaskResponse {
+    return this.toRepresentation(item.task, item.project);
   }
 
   private toDateOnly(date: Date | null): string | null {

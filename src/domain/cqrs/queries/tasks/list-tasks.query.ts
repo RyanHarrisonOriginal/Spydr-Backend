@@ -1,8 +1,7 @@
-import type { ITaskRepository } from "../../../interfaces/index.js";
-import type { TaskNode } from "../../../models/tasks/index.js";
+import type { ITaskRepository, ITaskListItem } from "../../../interfaces/index.js";
 import type { IQuery, IQueryHandler } from "../query.js";
 
-export class ListTasksQuery implements IQuery<TaskNode[]> {
+export class ListTasksQuery implements IQuery<ITaskListItem[]> {
   static readonly queryType = "tasks.list";
   readonly queryType = ListTasksQuery.queryType;
 
@@ -10,13 +9,13 @@ export class ListTasksQuery implements IQuery<TaskNode[]> {
 }
 
 export class ListTasksQueryHandler
-  implements IQueryHandler<ListTasksQuery, TaskNode[]>
+  implements IQueryHandler<ListTasksQuery, ITaskListItem[]>
 {
   readonly queryType = ListTasksQuery.queryType;
 
   constructor(private readonly tasks: ITaskRepository) {}
 
-  execute(query: ListTasksQuery): Promise<TaskNode[]> {
-    return this.tasks.listByUser(query.userId);
+  execute(query: ListTasksQuery): Promise<ITaskListItem[]> {
+    return this.tasks.listByUserWithProjects(query.userId);
   }
 }

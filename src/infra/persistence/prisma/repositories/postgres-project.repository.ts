@@ -85,7 +85,63 @@ export class PostgresProjectRepository implements IProjectRepository {
       orderBy: { updatedAt: "desc" },
     });
 
-    return rows.map((row) => this.mapper.toDomain(row));
+    const projects = rows.map((row) => this.mapper.toDomain(row));
+    return this.attachAssigneesToProjects(userId, projects);
+  }
+
+  private async attachAssigneesToProjects(
+    userId: string,
+    projects: ProjectNode[]
+  ): Promise<ProjectNode[]> {
+    const assigneeIds = [
+      ...new Set(
+        projects
+          .map((project) => project.details?.assigneePersonNodeId)
+          .filter((id): id is string => Boolean(id))
+      ),
+    ];
+
+    const assigneeById = new Map<string, PersonNode>();
+    if (assigneeIds.length > 0) {
+      const rows = await this.db.spydrNode.findMany({
+        where: {
+          id: { in: assigneeIds },
+          userId,
+          nodeType: "person",
+          isDeleted: false,
+        },
+        include: { personDetails: true },
+      });
+      for (const row of rows) {
+        assigneeById.set(row.id, this.personMapper.toDomain(row));
+      }
+    }
+
+    return projects.map((project) => {
+      const assigneeId = project.details?.assigneePersonNodeId ?? null;
+      const assignee = assigneeId ? assigneeById.get(assigneeId) ?? null : null;
+
+      return new ProjectNode({
+        id: project.id,
+        userId: project.userId,
+        title: project.title,
+        body: project.body,
+        status: project.status,
+        priority: project.priority,
+        area: project.area,
+        tags: project.tags,
+        createdAt: project.createdAt,
+        updatedAt: project.updatedAt,
+        archivedAt: project.archivedAt,
+        isDeleted: project.isDeleted,
+        deletedAt: project.deletedAt,
+        details: project.details,
+        personas: {
+          ...emptyProjectPersonas(),
+          assignee,
+        },
+      });
+    });
   }
 
   async listDeletedByUser(userId: string): Promise<ProjectNode[]> {
