@@ -9,6 +9,7 @@ import type {
   IResourceRepository,
   ISpydrNodeRepository,
   ITaskRepository,
+  IWorkspaceDashboardRepository,
 } from "../../domain/interfaces/index.js";
 import { PostgresPersonRepository } from "./prisma/repositories/postgres-person.repository.js";
 import { PrismaSpydrNodeRepository } from "./prisma/repositories/prisma-spydr-node.repository.js";
@@ -19,6 +20,7 @@ import { PostgresProjectAreaRepository } from "./prisma/repositories/postgres-pr
 import { PostgresProjectRepository } from "./prisma/repositories/postgres-project.repository.js";
 import { PostgresResourceRepository } from "./prisma/repositories/postgres-resource.repository.js";
 import { PostgresTaskRepository } from "./prisma/repositories/postgres-task.repository.js";
+import { PostgresWorkspaceDashboardRepository } from "./prisma/repositories/postgres-workspace-dashboard.repository.js";
 
 export interface IPersistenceRepositories {
   decisions: IDecisionRepository;
@@ -30,6 +32,7 @@ export interface IPersistenceRepositories {
   resources: IResourceRepository;
   spydrNodes: ISpydrNodeRepository;
   tasks: ITaskRepository;
+  workspaceDashboard: IWorkspaceDashboardRepository;
 }
 
 export function createPersistenceRepositories(
@@ -45,5 +48,6 @@ export function createPersistenceRepositories(
     resources: new PostgresResourceRepository(prisma),
     spydrNodes: new PrismaSpydrNodeRepository(prisma),
     tasks: new PostgresTaskRepository(prisma),
+    workspaceDashboard: new PostgresWorkspaceDashboardRepository(prisma),
   };
 }

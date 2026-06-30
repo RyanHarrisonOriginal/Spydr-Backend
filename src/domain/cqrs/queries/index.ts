@@ -11,4 +11,5 @@ export * from "./people/index.js";
 export * from "./projects/index.js";
 export * from "./resources/index.js";
 export * from "./tasks/index.js";
+export * from "./dashboard/index.js";
 export { registerQueryHandlers } from "./register-query-handlers.js";

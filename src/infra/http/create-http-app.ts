@@ -11,6 +11,7 @@ import { createPeopleRouter } from "./routes/people.router.js";
 import { createProjectAreasRouter } from "./routes/project-areas.router.js";
 import { createProjectsRouter } from "./routes/projects.router.js";
 import { createResourcesRouter } from "./routes/resources.router.js";
+import { createDashboardRouter } from "./routes/dashboard.router.js";
 import { createTasksRouter } from "./routes/tasks.router.js";
 
 export interface IHttpAppOptions {
@@ -44,6 +45,7 @@ export function createHttpApp(options: IHttpAppOptions): Express {
     createProjectsRouter(options.queryBus, options.commandBus)
   );
   app.use(`${apiPrefix}/resources`, createResourcesRouter(options.queryBus));
+  app.use(`${apiPrefix}/dashboard`, createDashboardRouter(options.queryBus));
   app.use(`${apiPrefix}/tasks`, createTasksRouter(options.queryBus, options.commandBus));
 
   return app;

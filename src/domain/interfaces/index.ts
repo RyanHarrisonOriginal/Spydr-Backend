@@ -20,3 +20,7 @@ export type {
   ITaskListItem,
   ITaskProjectRef,
 } from "./task-repository.js";
+export type {
+  IWorkspaceDashboard,
+  IWorkspaceDashboardRepository,
+} from "./workspace-dashboard-repository.js";

@@ -15,6 +15,7 @@ import {
 } from "./projects/index.js";
 import { ListResourcesQueryHandler } from "./resources/index.js";
 import { ListTasksQueryHandler, GetTaskQueryHandler } from "./tasks/index.js";
+import { GetWorkspaceDashboardQueryHandler } from "./dashboard/index.js";
 
 export function registerQueryHandlers(
   queryBus: IQueryBus,
@@ -33,5 +34,6 @@ export function registerQueryHandlers(
     new ListResourcesQueryHandler(repositories.resources),
     new ListTasksQueryHandler(repositories.tasks),
     new GetTaskQueryHandler(repositories.tasks),
+    new GetWorkspaceDashboardQueryHandler(repositories.workspaceDashboard),
   ]);
 }
