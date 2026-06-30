@@ -144,6 +144,41 @@ export class PostgresProjectRepository implements IProjectRepository {
     });
   }
 
+  private async attachAssigneesToTasks(
+    userId: string,
+    tasks: TaskNode[]
+  ): Promise<TaskNode[]> {
+    const assigneeIds = [
+      ...new Set(
+        tasks
+          .map((task) => task.details?.assigneePersonNodeId)
+          .filter((id): id is string => Boolean(id))
+      ),
+    ];
+
+    if (assigneeIds.length === 0) return tasks;
+
+    const rows = await this.db.spydrNode.findMany({
+      where: {
+        id: { in: assigneeIds },
+        userId,
+        nodeType: "person",
+        isDeleted: false,
+      },
+      include: { personDetails: true },
+    });
+
+    const assigneeById = new Map<string, PersonNode>(
+      rows.map((row) => [row.id, this.personMapper.toDomain(row)])
+    );
+
+    return tasks.map((task) => {
+      const assigneeId = task.details?.assigneePersonNodeId ?? null;
+      if (!assigneeId) return task;
+      return task.withAssignee(assigneeById.get(assigneeId) ?? null);
+    });
+  }
+
   async listDeletedByUser(userId: string): Promise<ProjectNode[]> {
     const rows = await this.db.spydrNode.findMany({
       where: { userId, nodeType: "project", isDeleted: true },
@@ -332,6 +367,20 @@ export class PostgresProjectRepository implements IProjectRepository {
     if (kind === "task") {
       const existing = await this.loadTask(childId, userId);
       if (!existing || existing.isDeleted) return null;
+      if (input.assigneePersonNodeId) {
+        const person = await this.db.spydrNode.findFirst({
+          where: {
+            id: input.assigneePersonNodeId,
+            userId,
+            nodeType: "person",
+            isDeleted: false,
+          },
+          select: { id: true },
+        });
+        if (!person) {
+          throw new Error("Person not found");
+        }
+      }
       const updated = this.taskDomainMapper.updateToModel(existing, {
         title: input.title,
         body: input.body,
@@ -339,6 +388,7 @@ export class PostgresProjectRepository implements IProjectRepository {
         priority: input.priority as TaskNode["priority"] | undefined,
         dueDate: input.dueDate,
         estimatedMinutes: input.estimatedMinutes,
+        assigneePersonNodeId: input.assigneePersonNodeId,
       }, now);
       await this.persistTask(this.db, { id: projectId, userId } as ProjectNode, updated);
     } else if (kind === "note") {
@@ -512,7 +562,10 @@ export class PostgresProjectRepository implements IProjectRepository {
     const noteRows = rows.filter((row) => row.nodeType === "note");
     const resourceRows = rows.filter((row) => row.nodeType === "resource");
 
-    const taskNodes = taskRows.map((row) => this.taskMapper.toDomain(row));
+    const taskNodes = await this.attachAssigneesToTasks(
+      userId,
+      taskRows.map((row) => this.taskMapper.toDomain(row))
+    );
     const decisionNodes = decisionRows.map((row) => this.decisionMapper.toDomain(row));
     const ideaNodes = ideaRows.map((row) => this.ideaMapper.toDomain(row));
     const noteNodes = noteRows.map((row) => this.noteMapper.toDomain(row));

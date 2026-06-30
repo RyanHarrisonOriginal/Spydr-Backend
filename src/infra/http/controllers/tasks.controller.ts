@@ -78,7 +78,11 @@ export class TasksController {
 
       res.json(this.mapper.toListRepresentation(item));
     } catch (error) {
-      if (error instanceof Error && error.message.startsWith("Invalid")) {
+      if (
+        error instanceof Error &&
+        (error.message.startsWith("Invalid") ||
+          error.message === "Person not found")
+      ) {
         res.status(400).json({ message: error.message });
         return;
       }

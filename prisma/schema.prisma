@@ -285,15 +285,17 @@ model SpydrResourceDetails {
 }
 
 model SpydrTaskDetails {
-  nodeId           String    @id(map: "spydr_task_details_pkey") @map("node_id") @db.Uuid
-  node             SpydrNode @relation(fields: [nodeId], references: [id], onDelete: Cascade, map: "spydr_task_details_node_id_fkey")
-  dueDate          DateTime? @map("due_date") @db.Date
-  completedAt      DateTime? @map("completed_at") @db.Timestamptz(6)
-  isBlocked        Boolean   @default(false) @map("is_blocked")
-  estimatedMinutes Int?      @map("estimated_minutes")
-  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime  @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
+  nodeId               String    @id(map: "spydr_task_details_pkey") @map("node_id") @db.Uuid
+  node                 SpydrNode @relation(fields: [nodeId], references: [id], onDelete: Cascade, map: "spydr_task_details_node_id_fkey")
+  dueDate              DateTime? @map("due_date") @db.Date
+  completedAt          DateTime? @map("completed_at") @db.Timestamptz(6)
+  isBlocked            Boolean   @default(false) @map("is_blocked")
+  estimatedMinutes     Int?      @map("estimated_minutes")
+  assigneePersonNodeId String?   @map("assignee_person_node_id") @db.Uuid
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
 
   @@index([dueDate], map: "idx_spydr_task_due_date")
+  @@index([assigneePersonNodeId], map: "idx_spydr_task_assignee")
   @@map("spydr_task_details")
 }

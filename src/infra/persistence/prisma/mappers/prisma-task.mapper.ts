@@ -36,6 +36,7 @@ export class PrismaTaskMapper
             completedAt: persistence.taskDetails.completedAt,
             isBlocked: persistence.taskDetails.isBlocked,
             estimatedMinutes: persistence.taskDetails.estimatedMinutes,
+            assigneePersonNodeId: persistence.taskDetails.assigneePersonNodeId,
             createdAt: persistence.taskDetails.createdAt,
             updatedAt: persistence.taskDetails.updatedAt,
           })
@@ -71,6 +72,7 @@ export class PrismaTaskMapper
       completedAt: details.completedAt,
       isBlocked: details.isBlocked,
       estimatedMinutes: details.estimatedMinutes,
+      assigneePersonNodeId: details.assigneePersonNodeId,
       createdAt: details.createdAt,
       updatedAt: details.updatedAt,
     };

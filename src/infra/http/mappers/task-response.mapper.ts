@@ -2,6 +2,10 @@ import type { ITaskListItem } from "../../../domain/interfaces/task-repository.j
 import type { TaskNode } from "../../../domain/models/tasks/index.js";
 import type { IRepresentationMapper } from "../../../domain/mappers/index.js";
 import { nodeLifecycleResponse } from "./node-lifecycle-response.js";
+import {
+  PersonResponseMapper,
+  type IPersonResponse,
+} from "./person-response.mapper.js";
 
 export interface ITaskProjectResponse {
   id: string;
@@ -24,11 +28,13 @@ export interface ITaskResponse {
   isDeleted: boolean;
   deletedAt: string | null;
   project: ITaskProjectResponse | null;
+  assignee: IPersonResponse | null;
   details: {
     dueDate: string | null;
     completedAt: string | null;
     isBlocked: boolean;
     estimatedMinutes: number | null;
+    assigneePersonNodeId: string | null;
     createdAt: string;
     updatedAt: string;
   } | null;
@@ -37,6 +43,8 @@ export interface ITaskResponse {
 export class TaskResponseMapper
   implements IRepresentationMapper<TaskNode, ITaskResponse>
 {
+  constructor(private readonly personMapper = new PersonResponseMapper()) {}
+
   toRepresentation(domain: TaskNode, project: ITaskProjectResponse | null = null): ITaskResponse {
     return {
       id: domain.id,
@@ -53,12 +61,16 @@ export class TaskResponseMapper
       archivedAt: domain.archivedAt?.toISOString() ?? null,
       ...nodeLifecycleResponse(domain),
       project,
+      assignee: domain.assignee
+        ? this.personMapper.toRepresentation(domain.assignee)
+        : null,
       details: domain.details
         ? {
             dueDate: this.toDateOnly(domain.details.dueDate),
             completedAt: domain.details.completedAt?.toISOString() ?? null,
             isBlocked: domain.details.isBlocked,
             estimatedMinutes: domain.details.estimatedMinutes,
+            assigneePersonNodeId: domain.details.assigneePersonNodeId,
             createdAt: domain.details.createdAt.toISOString(),
             updatedAt: domain.details.updatedAt.toISOString(),
           }

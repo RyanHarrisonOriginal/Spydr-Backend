@@ -3,6 +3,7 @@ import type {
   ITaskListItem,
   ITaskRepository,
 } from "../../../interfaces/task-repository.js";
+import type { IPersonRepository } from "../../../interfaces/person-repository.js";
 import type { ITaskUpdateModelInput } from "../../../mappers/tasks/index.js";
 
 export interface IUpdateTaskInput extends ITaskUpdateModelInput {
@@ -16,7 +17,8 @@ function hasTaskFieldUpdates(input: ITaskUpdateModelInput): boolean {
     input.status !== undefined ||
     input.priority !== undefined ||
     input.dueDate !== undefined ||
-    input.estimatedMinutes !== undefined
+    input.estimatedMinutes !== undefined ||
+    input.assigneePersonNodeId !== undefined
   );
 }
 
@@ -36,10 +38,23 @@ export class UpdateTaskCommandHandler
 {
   readonly commandType = UpdateTaskCommand.commandType;
 
-  constructor(private readonly tasks: ITaskRepository) {}
+  constructor(
+    private readonly tasks: ITaskRepository,
+    private readonly people: IPersonRepository
+  ) {}
 
   async execute(command: UpdateTaskCommand): Promise<ITaskListItem | null> {
     const { projectNodeId, ...taskInput } = command.input;
+
+    if (taskInput.assigneePersonNodeId) {
+      const person = await this.people.findByIdForUser(
+        taskInput.assigneePersonNodeId,
+        command.userId
+      );
+      if (!person) {
+        throw new Error("Person not found");
+      }
+    }
 
     if (hasTaskFieldUpdates(taskInput)) {
       const updated = await this.tasks.updateForUser(

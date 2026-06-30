@@ -17,6 +17,7 @@ export interface ITaskUpdateModelInput {
   priority?: SpydrPriority;
   dueDate?: string | null;
   estimatedMinutes?: number | null;
+  assigneePersonNodeId?: string | null;
 }
 
 export interface ITaskCreateModelInput {
@@ -26,6 +27,7 @@ export interface ITaskCreateModelInput {
   priority?: SpydrPriority;
   dueDate?: string | null;
   estimatedMinutes?: number | null;
+  assigneePersonNodeId?: string | null;
 }
 
 export interface ITaskCreateModelContext {
@@ -63,6 +65,7 @@ export class TaskMapper {
         completedAt: null,
         isBlocked: false,
         estimatedMinutes: input.estimatedMinutes ?? null,
+        assigneePersonNodeId: input.assigneePersonNodeId ?? null,
         createdAt: now,
         updatedAt: now,
       },
@@ -108,9 +111,14 @@ export class TaskMapper {
           input.estimatedMinutes !== undefined
             ? input.estimatedMinutes
             : existing.details?.estimatedMinutes ?? null,
+        assigneePersonNodeId:
+          input.assigneePersonNodeId !== undefined
+            ? input.assigneePersonNodeId
+            : existing.details?.assigneePersonNodeId ?? null,
         createdAt: existing.details?.createdAt ?? now,
         updatedAt: now,
       },
+      assignee: existing.assignee,
     });
   }
 

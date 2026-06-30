@@ -1,4 +1,5 @@
 import type { IProjectRepository } from "../../../interfaces/index.js";
+import type { IPersonRepository } from "../../../interfaces/person-repository.js";
 import { TaskMapper } from "../../../mappers/tasks/index.js";
 import type { TaskNode } from "../../../models/tasks/index.js";
 import {
@@ -14,6 +15,7 @@ export interface IAddTaskToProjectInput {
   priority?: SpydrPriority;
   dueDate?: string | null;
   estimatedMinutes?: number | null;
+  assigneePersonNodeId?: string | null;
 }
 
 export class AddTaskToProjectCommand implements ICommand<TaskNode | null> {
@@ -34,6 +36,7 @@ export class AddTaskToProjectCommandHandler
 
   constructor(
     private readonly projects: IProjectRepository,
+    private readonly people: IPersonRepository,
     private readonly mapper = new TaskMapper()
   ) {}
 
@@ -44,6 +47,17 @@ export class AddTaskToProjectCommandHandler
     );
     if (!project) return null;
 
+    let assignee = null;
+    if (command.input.assigneePersonNodeId) {
+      assignee = await this.people.findByIdForUser(
+        command.input.assigneePersonNodeId,
+        command.userId
+      );
+      if (!assignee) {
+        throw new Error("Person not found");
+      }
+    }
+
     const task = this.mapper.toModel(command.input, {
       userId: command.userId,
       area: project.area,
@@ -51,6 +65,6 @@ export class AddTaskToProjectCommandHandler
     project.addTask(task);
 
     await this.projects.save(project);
-    return task;
+    return assignee ? task.withAssignee(assignee) : task;
   }
 }

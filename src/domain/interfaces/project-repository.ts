@@ -12,6 +12,7 @@ export interface IUpdateProjectChildInput {
   rationale?: string;
   impact?: string;
   estimatedMinutes?: number | null;
+  assigneePersonNodeId?: string | null;
 }
 
 export interface IProjectRepository extends IRepository<ProjectNode> {

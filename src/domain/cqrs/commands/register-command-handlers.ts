@@ -45,13 +45,16 @@ export function registerCommandHandlers(
     ),
     new DeleteProjectCommandHandler(repositories.projects),
     new RestoreProjectCommandHandler(repositories.projects),
-    new AddTaskToProjectCommandHandler(repositories.projects),
+    new AddTaskToProjectCommandHandler(
+      repositories.projects,
+      repositories.people
+    ),
     new AddNoteToProjectCommandHandler(repositories.projects),
     new AddDecisionToProjectCommandHandler(repositories.projects),
     new AddIdeaToProjectCommandHandler(repositories.projects),
     new UpdateProjectChildCommandHandler(repositories.projects),
     new DeleteProjectChildCommandHandler(repositories.projects),
     new RestoreProjectChildCommandHandler(repositories.projects),
-    new UpdateTaskCommandHandler(repositories.tasks),
+    new UpdateTaskCommandHandler(repositories.tasks, repositories.people),
   ]);
 }

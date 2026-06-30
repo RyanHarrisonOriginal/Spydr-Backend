@@ -7,14 +7,60 @@ import type {
 } from "../../../../domain/interfaces/task-repository.js";
 import type { ITaskUpdateModelInput } from "../../../../domain/mappers/tasks/index.js";
 import type { TaskNode } from "../../../../domain/models/tasks/index.js";
+import type { PersonNode } from "../../../../domain/models/people/index.js";
 import { PrismaTaskMapper } from "../mappers/prisma-task.mapper.js";
+import { PrismaPersonMapper } from "../mappers/prisma-person.mapper.js";
 
 export class PostgresTaskRepository implements ITaskRepository {
   constructor(
     private readonly db: PrismaClient,
     private readonly mapper = new PrismaTaskMapper(),
-    private readonly domainMapper = new TaskMapper()
+    private readonly domainMapper = new TaskMapper(),
+    private readonly personMapper = new PrismaPersonMapper()
   ) {}
+
+  private async attachAssignees(
+    userId: string,
+    tasks: TaskNode[]
+  ): Promise<TaskNode[]> {
+    const assigneeIds = [
+      ...new Set(
+        tasks
+          .map((task) => task.details?.assigneePersonNodeId)
+          .filter((id): id is string => Boolean(id))
+      ),
+    ];
+
+    if (assigneeIds.length === 0) return tasks;
+
+    const rows = await this.db.spydrNode.findMany({
+      where: {
+        id: { in: assigneeIds },
+        userId,
+        nodeType: "person",
+        isDeleted: false,
+      },
+      include: { personDetails: true },
+    });
+
+    const assigneeById = new Map<string, PersonNode>(
+      rows.map((row) => [row.id, this.personMapper.toDomain(row)])
+    );
+
+    return tasks.map((task) => {
+      const assigneeId = task.details?.assigneePersonNodeId ?? null;
+      if (!assigneeId) return task;
+      return task.withAssignee(assigneeById.get(assigneeId) ?? null);
+    });
+  }
+
+  private async attachAssignee(
+    userId: string,
+    task: TaskNode
+  ): Promise<TaskNode> {
+    const [hydrated] = await this.attachAssignees(userId, [task]);
+    return hydrated ?? task;
+  }
 
   async findById(id: string): Promise<TaskNode | null> {
     const row = await this.db.spydrNode.findUnique({
@@ -48,7 +94,10 @@ export class PostgresTaskRepository implements ITaskRepository {
 
     if (rows.length === 0) return [];
 
-    const tasks = rows.map((row) => this.mapper.toDomain(row));
+    const tasks = await this.attachAssignees(
+      userId,
+      rows.map((row) => this.mapper.toDomain(row))
+    );
     const taskIds = tasks.map((task) => task.id);
     const relationships = await this.db.spydrNodeRelationship.findMany({
       where: {
@@ -185,7 +234,7 @@ export class PostgresTaskRepository implements ITaskRepository {
     if (!task || task.isDeleted) return null;
 
     return {
-      task,
+      task: await this.attachAssignee(userId, task),
       project: await this.findProjectForTask(userId, taskId),
     };
   }
