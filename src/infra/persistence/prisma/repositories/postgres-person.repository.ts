@@ -31,7 +31,7 @@ export class PostgresPersonRepository implements IPersonRepository {
     const rows = await this.db.spydrNode.findMany({
       where: { userId, nodeType: "person", isDeleted: false },
       include: personInclude,
-      orderBy: { title: "asc" },
+      orderBy: [{ sortOrder: "asc" }, { title: "asc" }],
     });
     return rows.map((row) => this.mapper.toDomain(row));
   }

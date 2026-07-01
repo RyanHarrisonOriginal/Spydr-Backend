@@ -31,7 +31,7 @@ export class PostgresDecisionRepository implements IDecisionRepository {
     const rows = await this.db.spydrNode.findMany({
       where: { userId, nodeType: "decision", isDeleted: false },
       include: { decisionDetails: true },
-      orderBy: { updatedAt: "desc" },
+      orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
     });
 
     return rows.map((row) => this.mapper.toDomain(row));

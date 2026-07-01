@@ -31,7 +31,7 @@ export class PostgresIdeaRepository implements IIdeaRepository {
     const rows = await this.db.spydrNode.findMany({
       where: { userId, nodeType: "idea", isDeleted: false },
       include: { ideaDetails: true },
-      orderBy: { updatedAt: "desc" },
+      orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
     });
 
     return rows.map((row) => this.mapper.toDomain(row));

@@ -80,6 +80,7 @@ export interface IDomainNodeProps<TType extends SpydrNodeType = SpydrNodeType> {
   priority: SpydrPriority;
   area: string | null;
   tags: string[];
+  sortOrder?: number;
   createdAt: Date;
   updatedAt: Date;
   archivedAt: Date | null;
@@ -99,6 +100,7 @@ export class DomainNode<TType extends SpydrNodeType = SpydrNodeType>
   readonly priority: SpydrPriority;
   readonly area: string | null;
   readonly tags: string[];
+  readonly sortOrder: number;
   readonly createdAt: Date;
   readonly updatedAt: Date;
   readonly archivedAt: Date | null;
@@ -120,6 +122,7 @@ export class DomainNode<TType extends SpydrNodeType = SpydrNodeType>
     this.priority = props.priority;
     this.area = props.area;
     this.tags = [...props.tags];
+    this.sortOrder = props.sortOrder ?? 0;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
     this.archivedAt = props.archivedAt;

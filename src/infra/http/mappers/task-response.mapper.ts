@@ -22,6 +22,7 @@ export interface ITaskResponse {
   priority: string;
   area: string | null;
   tags: string[];
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
   archivedAt: string | null;
@@ -56,6 +57,7 @@ export class TaskResponseMapper
       priority: domain.priority,
       area: domain.area,
       tags: domain.tags,
+      sortOrder: domain.sortOrder,
       createdAt: domain.createdAt.toISOString(),
       updatedAt: domain.updatedAt.toISOString(),
       archivedAt: domain.archivedAt?.toISOString() ?? null,

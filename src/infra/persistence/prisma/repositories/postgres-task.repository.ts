@@ -89,7 +89,7 @@ export class PostgresTaskRepository implements ITaskRepository {
     const rows = await this.db.spydrNode.findMany({
       where: { userId, nodeType: "task", isDeleted: false },
       include: { taskDetails: true },
-      orderBy: { updatedAt: "desc" },
+      orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
     });
 
     if (rows.length === 0) return [];
@@ -262,7 +262,7 @@ export class PostgresTaskRepository implements ITaskRepository {
         isDeleted: false,
       },
       select: { id: true, title: true },
-      orderBy: { updatedAt: "desc" },
+      orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
     });
 
     return project ? { id: project.id, title: project.title } : null;

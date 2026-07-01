@@ -82,7 +82,7 @@ export class PostgresProjectRepository implements IProjectRepository {
     const rows = await this.db.spydrNode.findMany({
       where: { userId, nodeType: "project", isDeleted: false },
       include: { projectDetails: true },
-      orderBy: { updatedAt: "desc" },
+      orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
     });
 
     const projects = rows.map((row) => this.mapper.toDomain(row));
@@ -553,7 +553,7 @@ export class PostgresProjectRepository implements IProjectRepository {
         ideaDetails: true,
         resourceDetails: true,
       },
-      orderBy: { updatedAt: "desc" },
+      orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
     });
 
     const taskRows = rows.filter((row) => row.nodeType === "task");

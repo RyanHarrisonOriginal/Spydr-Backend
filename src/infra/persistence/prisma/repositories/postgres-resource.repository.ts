@@ -31,7 +31,7 @@ export class PostgresResourceRepository implements IResourceRepository {
     const rows = await this.db.spydrNode.findMany({
       where: { userId, nodeType: "resource", isDeleted: false },
       include: { resourceDetails: true },
-      orderBy: { updatedAt: "desc" },
+      orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
     });
 
     return rows.map((row) => this.mapper.toDomain(row));

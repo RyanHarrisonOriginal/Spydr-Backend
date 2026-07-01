@@ -15,4 +15,9 @@ export interface ISpydrNodeListCriteria {
 export interface ISpydrNodeRepository extends IRepository<DomainNode> {
   list(criteria: ISpydrNodeListCriteria): Promise<DomainNode[]>;
   findByIdForUser(id: string, userId: string): Promise<DomainNode | null>;
+  reorderForUser(
+    userId: string,
+    nodeType: SpydrNodeType,
+    orderedIds: readonly string[]
+  ): Promise<void>;
 }

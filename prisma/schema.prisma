@@ -88,6 +88,7 @@ model SpydrNode {
   priority                   SpydrPriority              @default(medium)
   area                       String?
   tags                       String[]                   @default([])
+  sortOrder                  Int                        @default(0) @map("sort_order")
   createdAt                  DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                  DateTime                   @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
   archivedAt                 DateTime?                  @map("archived_at") @db.Timestamptz(6)
@@ -110,6 +111,7 @@ model SpydrNode {
   @@index([tags], map: "idx_spydr_nodes_tags", type: Gin)
   @@index([userId, status], map: "idx_spydr_nodes_user_status")
   @@index([userId, nodeType], map: "idx_spydr_nodes_user_type")
+  @@index([userId, nodeType, sortOrder], map: "idx_spydr_nodes_user_type_sort")
   @@index([userId, isDeleted], map: "idx_spydr_nodes_user_deleted")
   @@map("spydr_nodes")
 }

@@ -25,7 +25,7 @@ export class PostgresNoteRepository implements INoteRepository {
   async listByUser(userId: string): Promise<NoteNode[]> {
     const rows = await this.db.spydrNode.findMany({
       where: { userId, nodeType: "note", isDeleted: false },
-      orderBy: { updatedAt: "desc" },
+      orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
     });
 
     return rows.map((row) => this.mapper.toDomain(row));

@@ -20,6 +20,7 @@ export interface IPersonResponse {
   status: string;
   priority: string;
   tags: string[];
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
   archivedAt: string | null;
@@ -39,6 +40,7 @@ export class PersonResponseMapper
       status: domain.status,
       priority: domain.priority,
       tags: domain.tags,
+      sortOrder: domain.sortOrder,
       createdAt: domain.createdAt.toISOString(),
       updatedAt: domain.updatedAt.toISOString(),
       archivedAt: domain.archivedAt?.toISOString() ?? null,

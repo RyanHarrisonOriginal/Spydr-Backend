@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient, SpydrNodeType } from "@prisma/client";
 import type { DomainNode } from "../../../../domain/models/index.js";
 import type {
   ISpydrNodeListCriteria,
@@ -32,7 +32,7 @@ export class PrismaSpydrNodeRepository implements ISpydrNodeRepository {
 
     const rows = await this.db.spydrNode.findMany({
       where,
-      orderBy: { updatedAt: "desc" },
+      orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
     });
 
     return rows.map((row) => this.mapper.toDomain(row));
@@ -52,5 +52,36 @@ export class PrismaSpydrNodeRepository implements ISpydrNodeRepository {
 
   async delete(id: string): Promise<void> {
     await this.db.spydrNode.delete({ where: { id } });
+  }
+
+  async reorderForUser(
+    userId: string,
+    nodeType: SpydrNodeType,
+    orderedIds: readonly string[]
+  ): Promise<void> {
+    if (orderedIds.length === 0) return;
+
+    const rows = await this.db.spydrNode.findMany({
+      where: {
+        userId,
+        nodeType,
+        isDeleted: false,
+        id: { in: [...orderedIds] },
+      },
+      select: { id: true },
+    });
+
+    const allowedIds = new Set(rows.map((row) => row.id));
+    const normalizedIds = orderedIds.filter((id) => allowedIds.has(id));
+    if (normalizedIds.length === 0) return;
+
+    await this.db.$transaction(
+      normalizedIds.map((id, index) =>
+        this.db.spydrNode.update({
+          where: { id },
+          data: { sortOrder: index * 1000 },
+        })
+      )
+    );
   }
 }

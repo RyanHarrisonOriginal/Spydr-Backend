@@ -23,6 +23,7 @@ import {
   UpdateProjectCommandHandler,
 } from "./projects/index.js";
 import { UpdateTaskCommandHandler } from "./tasks/index.js";
+import { ReorderNodesCommandHandler } from "./nodes/index.js";
 
 export function registerCommandHandlers(
   commandBus: ICommandBus,
@@ -56,5 +57,6 @@ export function registerCommandHandlers(
     new DeleteProjectChildCommandHandler(repositories.projects),
     new RestoreProjectChildCommandHandler(repositories.projects),
     new UpdateTaskCommandHandler(repositories.tasks, repositories.people),
+    new ReorderNodesCommandHandler(repositories.spydrNodes),
   ]);
 }
