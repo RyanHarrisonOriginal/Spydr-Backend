@@ -16,31 +16,31 @@ export interface IUpdateProjectChildInput {
 }
 
 export interface IProjectRepository extends IRepository<ProjectNode> {
-  listByUser(userId: string): Promise<ProjectNode[]>;
-  listDeletedByUser(userId: string): Promise<ProjectNode[]>;
-  findByIdForUser(id: string, userId: string): Promise<ProjectNode | null>;
+  listByOrg(orgId: string): Promise<ProjectNode[]>;
+  listDeletedByOrg(orgId: string): Promise<ProjectNode[]>;
+  findByIdForOrg(id: string, orgId: string): Promise<ProjectNode | null>;
   updateProject(entity: ProjectNode): Promise<ProjectNode>;
-  restoreProject(userId: string, projectId: string): Promise<ProjectNode | null>;
+  restoreProject(orgId: string, projectId: string): Promise<ProjectNode | null>;
   setAreaAssignment(
     projectId: string,
-    userId: string,
+    orgId: string,
     areaNodeId: string | null
   ): Promise<void>;
   updateRelatedNode(
-    userId: string,
+    orgId: string,
     projectId: string,
     childId: string,
     kind: ProjectChildKind,
     input: IUpdateProjectChildInput
   ): Promise<ProjectNode | null>;
   softDeleteRelatedNode(
-    userId: string,
+    orgId: string,
     projectId: string,
     childId: string,
     kind: ProjectChildKind
   ): Promise<ProjectNode | null>;
   restoreRelatedNode(
-    userId: string,
+    orgId: string,
     projectId: string,
     childId: string,
     kind: ProjectChildKind

@@ -1,22 +1,24 @@
-import type { INoteRepository } from "../../../interfaces/index.js";
-import type { NoteNode } from "../../../models/notes/index.js";
+import type { INoteListItem, INoteRepository } from "../../../interfaces/index.js";
 import type { IQuery, IQueryHandler } from "../query.js";
 
-export class ListNotesQuery implements IQuery<NoteNode[]> {
+export class ListNotesQuery implements IQuery<INoteListItem[]> {
   static readonly queryType = "notes.list";
   readonly queryType = ListNotesQuery.queryType;
 
-  constructor(readonly userId: string) {}
+  constructor(
+    readonly userId: string,
+    readonly orgId: string
+  ) {}
 }
 
 export class ListNotesQueryHandler
-  implements IQueryHandler<ListNotesQuery, NoteNode[]>
+  implements IQueryHandler<ListNotesQuery, INoteListItem[]>
 {
   readonly queryType = ListNotesQuery.queryType;
 
   constructor(private readonly notes: INoteRepository) {}
 
-  execute(query: ListNotesQuery): Promise<NoteNode[]> {
-    return this.notes.listByUser(query.userId);
+  execute(query: ListNotesQuery): Promise<INoteListItem[]> {
+    return this.notes.listByOrgWithProjects(query.orgId);
   }
 }

@@ -6,7 +6,7 @@ import type {
 import type { IRepository } from "./repository.js";
 
 export interface ISpydrNodeListCriteria {
-  userId: string;
+  orgId: string;
   nodeType?: SpydrNodeType;
   status?: SpydrNodeStatus;
   tag?: string;
@@ -14,9 +14,9 @@ export interface ISpydrNodeListCriteria {
 
 export interface ISpydrNodeRepository extends IRepository<DomainNode> {
   list(criteria: ISpydrNodeListCriteria): Promise<DomainNode[]>;
-  findByIdForUser(id: string, userId: string): Promise<DomainNode | null>;
-  reorderForUser(
-    userId: string,
+  findByIdForOrg(id: string, orgId: string): Promise<DomainNode | null>;
+  reorderForOrg(
+    orgId: string,
     nodeType: SpydrNodeType,
     orderedIds: readonly string[]
   ): Promise<void>;

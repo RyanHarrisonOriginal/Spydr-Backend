@@ -32,6 +32,7 @@ export interface IPersonUpdateModelInput {
 export class PersonMapper {
   toModel(
     userId: string,
+    orgId: string,
     input: IPersonCreateModelInput,
     now = new Date()
   ): PersonNode {
@@ -42,6 +43,7 @@ export class PersonMapper {
 
     return new PersonNode({
       id: randomUUID(),
+      orgId,
       userId,
       title: fullName,
       body: input.body?.trim() ?? "",
@@ -78,6 +80,7 @@ export class PersonMapper {
 
     return new PersonNode({
       id: existing.id,
+      orgId: existing.orgId,
       userId: existing.userId,
       title: fullName,
       body: input.body ?? existing.body,

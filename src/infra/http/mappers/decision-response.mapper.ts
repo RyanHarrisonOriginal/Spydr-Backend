@@ -5,6 +5,7 @@ import { nodeLifecycleResponse } from "./node-lifecycle-response.js";
 export interface IDecisionResponse {
   id: string;
   userId: string;
+  organizationId: string;
   nodeType: "decision";
   title: string;
   body: string;
@@ -35,6 +36,7 @@ export class DecisionResponseMapper
     return {
       id: domain.id,
       userId: domain.userId,
+      organizationId: domain.orgId,
       nodeType: domain.nodeType,
       title: domain.title,
       body: domain.body,

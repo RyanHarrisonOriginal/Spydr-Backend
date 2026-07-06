@@ -22,6 +22,7 @@ export class AddIdeaToProjectCommand implements ICommand<IdeaNode | null> {
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly projectId: string,
     readonly input: IAddIdeaToProjectInput
   ) {}
@@ -38,14 +39,15 @@ export class AddIdeaToProjectCommandHandler
   ) {}
 
   async execute(command: AddIdeaToProjectCommand): Promise<IdeaNode | null> {
-    const project = await this.projects.findByIdForUser(
+    const project = await this.projects.findByIdForOrg(
       command.projectId,
-      command.userId
+      command.orgId
     );
     if (!project) return null;
 
     const idea = this.mapper.toModel(command.input, {
       userId: command.userId,
+      orgId: command.orgId,
       area: project.area,
     });
     project.addIdea(idea);

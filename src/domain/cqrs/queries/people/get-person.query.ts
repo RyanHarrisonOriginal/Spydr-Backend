@@ -8,6 +8,7 @@ export class GetPersonQuery implements IQuery<PersonNode | null> {
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly personId: string
   ) {}
 }
@@ -20,6 +21,6 @@ export class GetPersonQueryHandler
   constructor(private readonly people: IPersonRepository) {}
 
   execute(query: GetPersonQuery): Promise<PersonNode | null> {
-    return this.people.findByIdForUser(query.personId, query.userId);
+    return this.people.findByIdForOrg(query.personId, query.orgId);
   }
 }

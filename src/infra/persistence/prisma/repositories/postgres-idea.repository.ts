@@ -18,18 +18,18 @@ export class PostgresIdeaRepository implements IIdeaRepository {
     return row && row.nodeType === "idea" ? this.mapper.toDomain(row) : null;
   }
 
-  async findByIdForUser(id: string, userId: string): Promise<IdeaNode | null> {
+  async findByIdForOrg(id: string, orgId: string): Promise<IdeaNode | null> {
     const row = await this.db.spydrNode.findFirst({
-      where: { id, userId, nodeType: "idea" },
+      where: { id, orgId, nodeType: "idea" },
       include: { ideaDetails: true },
     });
 
     return row ? this.mapper.toDomain(row) : null;
   }
 
-  async listByUser(userId: string): Promise<IdeaNode[]> {
+  async listByOrg(orgId: string): Promise<IdeaNode[]> {
     const rows = await this.db.spydrNode.findMany({
-      where: { userId, nodeType: "idea", isDeleted: false },
+      where: { orgId, nodeType: "idea", isDeleted: false },
       include: { ideaDetails: true },
       orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
     });

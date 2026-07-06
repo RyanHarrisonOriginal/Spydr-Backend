@@ -10,6 +10,7 @@ export class IdeaResponseMapper
     return {
       id: domain.id,
       userId: domain.userId,
+      organizationId: domain.orgId,
       nodeType: domain.nodeType,
       title: domain.title,
       body: domain.body,

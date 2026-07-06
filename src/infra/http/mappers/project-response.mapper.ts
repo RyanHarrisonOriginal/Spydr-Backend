@@ -27,6 +27,7 @@ export interface IProjectPersonasResponse {
 export interface IProjectResponse {
   id: string;
   userId: string;
+  organizationId: string;
   nodeType: "project";
   title: string;
   body: string;
@@ -71,6 +72,7 @@ export interface IProjectResponse {
 export interface IIdeaResponse {
   id: string;
   userId: string;
+  organizationId: string;
   nodeType: "idea";
   title: string;
   body: string;
@@ -109,6 +111,7 @@ export class ProjectResponseMapper
     return {
       id: domain.id,
       userId: domain.userId,
+      organizationId: domain.orgId,
       nodeType: domain.nodeType,
       title: domain.title,
       body: domain.body,

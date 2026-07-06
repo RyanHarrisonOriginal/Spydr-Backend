@@ -17,6 +17,7 @@ export class UpdateProjectAreaCommand implements ICommand<ProjectAreaNode> {
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly areaId: string,
     readonly input: IUpdateProjectAreaInput
   ) {}
@@ -30,9 +31,9 @@ export class UpdateProjectAreaCommandHandler
   constructor(private readonly projectAreas: IProjectAreaRepository) {}
 
   async execute(command: UpdateProjectAreaCommand): Promise<ProjectAreaNode> {
-    const area = await this.projectAreas.findByIdForUser(
+    const area = await this.projectAreas.findByIdForOrg(
       command.areaId,
-      command.userId
+      command.orgId
     );
     if (!area) {
       throw new Error("Project area not found");

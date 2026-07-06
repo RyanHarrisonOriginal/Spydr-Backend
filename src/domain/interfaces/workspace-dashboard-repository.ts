@@ -44,5 +44,5 @@ export interface IWorkspaceDashboard {
 }
 
 export interface IWorkspaceDashboardRepository {
-  getForUser(userId: string): Promise<IWorkspaceDashboard>;
+  getForOrg(orgId: string): Promise<IWorkspaceDashboard>;
 }

@@ -27,6 +27,7 @@ export class UpdateProjectCommand implements ICommand<ProjectNode | null> {
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly projectId: string,
     readonly input: IUpdateProjectInput
   ) {}
@@ -45,14 +46,14 @@ export class UpdateProjectCommandHandler
   ) {}
 
   async execute(command: UpdateProjectCommand): Promise<ProjectNode | null> {
-    const existing = await this.projects.findByIdForUser(
+    const existing = await this.projects.findByIdForOrg(
       command.projectId,
-      command.userId
+      command.orgId
     );
     if (!existing) return null;
 
     const patch = await this.resolvePatch(
-      command.userId,
+      command.orgId,
       command.input,
       existing
     );
@@ -63,16 +64,16 @@ export class UpdateProjectCommandHandler
     if (command.input.areaNodeId !== undefined) {
       await this.projects.setAreaAssignment(
         command.projectId,
-        command.userId,
+        command.orgId,
         command.input.areaNodeId
       );
     }
 
-    return this.projects.findByIdForUser(command.projectId, command.userId);
+    return this.projects.findByIdForOrg(command.projectId, command.orgId);
   }
 
   private async resolvePatch(
-    userId: string,
+    orgId: string,
     input: IUpdateProjectInput,
     existing: ProjectNode
   ): Promise<IProjectUpdateModelInput> {
@@ -87,25 +88,25 @@ export class UpdateProjectCommandHandler
 
     if (input.requesterPersonNodeId !== undefined) {
       patch.requesterPersonNodeId = await this.resolvePersonId(
-        userId,
+        orgId,
         input.requesterPersonNodeId
       );
     }
     if (input.assigneePersonNodeId !== undefined) {
       patch.assigneePersonNodeId = await this.resolvePersonId(
-        userId,
+        orgId,
         input.assigneePersonNodeId
       );
     }
     if (input.sponsorPersonNodeId !== undefined) {
       patch.sponsorPersonNodeId = await this.resolvePersonId(
-        userId,
+        orgId,
         input.sponsorPersonNodeId
       );
     }
     if (input.reviewerPersonNodeId !== undefined) {
       patch.reviewerPersonNodeId = await this.resolvePersonId(
-        userId,
+        orgId,
         input.reviewerPersonNodeId
       );
     }
@@ -114,9 +115,9 @@ export class UpdateProjectCommandHandler
       if (input.areaNodeId === null) {
         patch.area = null;
       } else {
-        const area = await this.projectAreas.findByIdForUser(
+        const area = await this.projectAreas.findByIdForOrg(
           input.areaNodeId,
-          userId
+          orgId
         );
         if (!area) {
           throw new Error("Project area not found");
@@ -129,12 +130,12 @@ export class UpdateProjectCommandHandler
   }
 
   private async resolvePersonId(
-    userId: string,
+    orgId: string,
     personNodeId: string | null
   ): Promise<string | null> {
     if (!personNodeId) return null;
 
-    const person = await this.people.findByIdForUser(personNodeId, userId);
+    const person = await this.people.findByIdForOrg(personNodeId, orgId);
     if (!person) {
       throw new Error("Person not found");
     }

@@ -21,6 +21,7 @@ export class PrismaPersonMapper
 
     return new PersonNode({
       id: persistence.id,
+      orgId: persistence.orgId,
       userId: persistence.userId,
       title: fullName,
       body: persistence.body,
@@ -50,6 +51,7 @@ export class PrismaPersonMapper
   toPersistence(domain: PersonNode): Prisma.SpydrNodeUncheckedCreateInput {
     return {
       id: domain.id,
+      orgId: domain.orgId,
       userId: domain.userId,
       nodeType: "person",
       title: domain.details?.fullName ?? domain.title,

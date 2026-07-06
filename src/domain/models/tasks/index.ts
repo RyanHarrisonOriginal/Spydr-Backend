@@ -37,6 +37,7 @@ export class TaskNode extends DomainNode<"task"> {
   withAssignee(assignee: PersonNode | null): TaskNode {
     return new TaskNode({
       id: this.id,
+      orgId: this.orgId,
       userId: this.userId,
       title: this.title,
       body: this.body,

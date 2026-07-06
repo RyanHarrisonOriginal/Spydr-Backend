@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { getAuth } from "@clerk/express";
+import { getOrgContext } from "../../../middleware/org-context.js";
 import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";
 import { GetWorkspaceDashboardQuery } from "../../../domain/cqrs/queries/dashboard/index.js";
 import type { IWorkspaceDashboard } from "../../../domain/interfaces/workspace-dashboard-repository.js";
@@ -9,16 +9,13 @@ export class DashboardController {
 
   getWorkspace = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
 
       const dashboard = await this.queryBus.execute<
         GetWorkspaceDashboardQuery,
         IWorkspaceDashboard
-      >(new GetWorkspaceDashboardQuery(userId));
+      >(new GetWorkspaceDashboardQuery(ctx.userId, ctx.orgId));
 
       res.json(dashboard);
     } catch (error) {

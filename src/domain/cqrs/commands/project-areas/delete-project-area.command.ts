@@ -7,6 +7,7 @@ export class DeleteProjectAreaCommand implements ICommand<boolean> {
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly areaId: string
   ) {}
 }
@@ -19,13 +20,13 @@ export class DeleteProjectAreaCommandHandler
   constructor(private readonly projectAreas: IProjectAreaRepository) {}
 
   async execute(command: DeleteProjectAreaCommand): Promise<boolean> {
-    const area = await this.projectAreas.findByIdForUser(
+    const area = await this.projectAreas.findByIdForOrg(
       command.areaId,
-      command.userId
+      command.orgId
     );
     if (!area) return false;
 
-    await this.projectAreas.clearProjectsUsingArea(command.userId, area.title);
+    await this.projectAreas.clearProjectsUsingArea(command.orgId, area.title);
     await this.projectAreas.delete(area.id);
     return true;
   }

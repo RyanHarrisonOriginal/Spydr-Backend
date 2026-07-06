@@ -7,6 +7,7 @@ export class GetTaskQuery implements IQuery<ITaskListItem | null> {
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly taskId: string
   ) {}
 }
@@ -19,6 +20,6 @@ export class GetTaskQueryHandler
   constructor(private readonly tasks: ITaskRepository) {}
 
   execute(query: GetTaskQuery): Promise<ITaskListItem | null> {
-    return this.tasks.getListItemForUser(query.userId, query.taskId);
+    return this.tasks.getListItemForOrg(query.orgId, query.taskId);
   }
 }

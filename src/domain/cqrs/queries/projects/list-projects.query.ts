@@ -6,7 +6,10 @@ export class ListProjectsQuery implements IQuery<ProjectNode[]> {
   static readonly queryType = "projects.list";
   readonly queryType = ListProjectsQuery.queryType;
 
-  constructor(readonly userId: string) {}
+  constructor(
+    readonly userId: string,
+    readonly orgId: string
+  ) {}
 }
 
 export class ListProjectsQueryHandler
@@ -17,6 +20,6 @@ export class ListProjectsQueryHandler
   constructor(private readonly projects: IProjectRepository) {}
 
   execute(query: ListProjectsQuery): Promise<ProjectNode[]> {
-    return this.projects.listByUser(query.userId);
+    return this.projects.listByOrg(query.orgId);
   }
 }

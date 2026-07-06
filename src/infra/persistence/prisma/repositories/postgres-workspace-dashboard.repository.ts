@@ -69,20 +69,20 @@ export class PostgresWorkspaceDashboardRepository
 {
   constructor(private readonly db: PrismaClient) {}
 
-  async getForUser(userId: string): Promise<IWorkspaceDashboard> {
+  async getForOrg(orgId: string): Promise<IWorkspaceDashboard> {
     const today = startOfUtcDay(new Date());
 
     const [projects, tasks, relationships] = await Promise.all([
       this.db.spydrNode.findMany({
-        where: { userId, nodeType: "project", isDeleted: false },
+        where: { orgId, nodeType: "project", isDeleted: false },
         include: { projectDetails: true },
       }),
       this.db.spydrNode.findMany({
-        where: { userId, nodeType: "task", isDeleted: false },
+        where: { orgId, nodeType: "task", isDeleted: false },
         include: { taskDetails: true },
       }),
       this.db.spydrNodeRelationship.findMany({
-        where: { userId, relationshipType: "related_to" },
+        where: { orgId, relationshipType: "related_to" },
         select: { sourceNodeId: true, targetNodeId: true },
       }),
     ]);
@@ -122,7 +122,7 @@ export class PostgresWorkspaceDashboardRepository
         ? []
         : await this.db.spydrNode.findMany({
             where: {
-              userId,
+              orgId,
               id: { in: Array.from(personIds) },
               nodeType: "person",
               isDeleted: false,

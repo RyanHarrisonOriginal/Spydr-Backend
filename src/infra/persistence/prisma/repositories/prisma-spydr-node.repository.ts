@@ -17,14 +17,14 @@ export class PrismaSpydrNodeRepository implements ISpydrNodeRepository {
     return row ? this.mapper.toDomain(row) : null;
   }
 
-  async findByIdForUser(id: string, userId: string): Promise<DomainNode | null> {
-    const row = await this.db.spydrNode.findFirst({ where: { id, userId } });
+  async findByIdForOrg(id: string, orgId: string): Promise<DomainNode | null> {
+    const row = await this.db.spydrNode.findFirst({ where: { id, orgId } });
     return row ? this.mapper.toDomain(row) : null;
   }
 
   async list(criteria: ISpydrNodeListCriteria): Promise<DomainNode[]> {
     const where: Prisma.SpydrNodeWhereInput = {
-      userId: criteria.userId,
+      orgId: criteria.orgId,
       ...(criteria.nodeType ? { nodeType: criteria.nodeType } : {}),
       ...(criteria.status ? { status: criteria.status } : {}),
       ...(criteria.tag ? { tags: { has: criteria.tag } } : {}),
@@ -54,8 +54,8 @@ export class PrismaSpydrNodeRepository implements ISpydrNodeRepository {
     await this.db.spydrNode.delete({ where: { id } });
   }
 
-  async reorderForUser(
-    userId: string,
+  async reorderForOrg(
+    orgId: string,
     nodeType: SpydrNodeType,
     orderedIds: readonly string[]
   ): Promise<void> {
@@ -63,7 +63,7 @@ export class PrismaSpydrNodeRepository implements ISpydrNodeRepository {
 
     const rows = await this.db.spydrNode.findMany({
       where: {
-        userId,
+        orgId,
         nodeType,
         isDeleted: false,
         id: { in: [...orderedIds] },

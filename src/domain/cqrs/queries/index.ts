@@ -6,6 +6,7 @@ export * from "./decisions/index.js";
 export * from "./ideas/index.js";
 export * from "./notes/index.js";
 export * from "./people/index.js";
+export * from "./organizations/index.js";
 export * from "./project-areas/index.js";
 export * from "./people/index.js";
 export * from "./projects/index.js";

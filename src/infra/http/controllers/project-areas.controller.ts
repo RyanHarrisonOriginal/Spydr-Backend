@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { getAuth } from "@clerk/express";
+import { getOrgContext } from "../../../middleware/org-context.js";
 import type { ICommandBus } from "../../../domain/cqrs/commands/index.js";
 import {
   CreateProjectAreaCommand,
@@ -22,16 +22,13 @@ export class ProjectAreasController {
 
   list = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
 
       const areas = await this.queryBus.execute<
         ListProjectAreasQuery,
         ProjectAreaNode[]
-      >(new ListProjectAreasQuery(userId));
+      >(new ListProjectAreasQuery(ctx.userId, ctx.orgId));
 
       res.json(areas.map((area) => this.mapper.toRepresentation(area)));
     } catch (error) {
@@ -42,18 +39,16 @@ export class ProjectAreasController {
 
   create = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
 
       const area = await this.commandBus.execute<
         CreateProjectAreaCommand,
         ProjectAreaNode
       >(
         new CreateProjectAreaCommand(
-          userId,
+          ctx.userId,
+          ctx.orgId,
           req.body as ICreateProjectAreaInput
         )
       );
@@ -76,18 +71,16 @@ export class ProjectAreasController {
 
   update = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
 
       const area = await this.commandBus.execute<
         UpdateProjectAreaCommand,
         ProjectAreaNode
       >(
         new UpdateProjectAreaCommand(
-          userId,
+          ctx.userId,
+          ctx.orgId,
           req.params.areaId,
           req.body as IUpdateProjectAreaInput
         )
@@ -119,14 +112,11 @@ export class ProjectAreasController {
 
   delete = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
 
       const deleted = await this.commandBus.execute<DeleteProjectAreaCommand, boolean>(
-        new DeleteProjectAreaCommand(userId, req.params.areaId)
+        new DeleteProjectAreaCommand(ctx.userId, ctx.orgId, req.params.areaId)
       );
 
       if (!deleted) {

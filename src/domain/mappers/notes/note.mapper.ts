@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { NoteNode } from "../../models/notes/index.js";
+import { resolveNoteTitle } from "../../utils/default-node-title.js";
 import {
   spydrNodeStatuses,
   spydrPriorities,
@@ -13,7 +14,7 @@ export interface INoteUpdateModelInput {
 }
 
 export interface INoteCreateModelInput {
-  title: string;
+  title?: string;
   body?: string;
   status?: SpydrNodeStatus;
   priority?: SpydrPriority;
@@ -21,6 +22,7 @@ export interface INoteCreateModelInput {
 
 export interface INoteCreateModelContext {
   userId: string;
+  orgId: string;
   area?: string | null;
 }
 
@@ -30,16 +32,14 @@ export class NoteMapper {
     context: INoteCreateModelContext,
     now = new Date()
   ): NoteNode {
-    const title = input.title?.trim();
-    if (!title) {
-      throw new Error("Note title is required");
-    }
+    const title = resolveNoteTitle(input.title, now);
 
     return new NoteNode({
       id: randomUUID(),
+      orgId: context.orgId,
       userId: context.userId,
       title,
-      body: input.body?.trim() ?? "",
+      body: input.body ?? "",
       status: this.normalizeStatus(input.status),
       priority: this.normalizePriority(input.priority),
       area: context.area ?? null,
@@ -58,16 +58,14 @@ export class NoteMapper {
     input: INoteUpdateModelInput,
     now = new Date()
   ): NoteNode {
-    const title = input.title?.trim() ?? existing.title;
-    if (!title) {
-      throw new Error("Note title is required");
-    }
+    const title = input.title !== undefined ? resolveNoteTitle(input.title, now) : existing.title;
 
     return new NoteNode({
       id: existing.id,
+      orgId: existing.orgId,
       userId: existing.userId,
       title,
-      body: input.body !== undefined ? input.body.trim() : existing.body,
+      body: input.body !== undefined ? input.body : existing.body,
       status: existing.status,
       priority: existing.priority,
       area: existing.area,

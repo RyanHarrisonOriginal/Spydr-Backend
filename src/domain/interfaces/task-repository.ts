@@ -13,19 +13,19 @@ export interface ITaskListItem {
 }
 
 export interface ITaskRepository extends IRepository<TaskNode> {
-  listByUser(userId: string): Promise<TaskNode[]>;
-  listByUserWithProjects(userId: string): Promise<ITaskListItem[]>;
-  findByIdForUser(id: string, userId: string): Promise<TaskNode | null>;
-  updateForUser(
-    userId: string,
+  listByOrg(orgId: string): Promise<TaskNode[]>;
+  listByOrgWithProjects(orgId: string): Promise<ITaskListItem[]>;
+  findByIdForOrg(id: string, orgId: string): Promise<TaskNode | null>;
+  updateForOrg(
+    orgId: string,
     taskId: string,
     input: ITaskUpdateModelInput
   ): Promise<TaskNode | null>;
   assignToProject(
-    userId: string,
+    orgId: string,
     taskId: string,
     projectId: string | null
   ): Promise<ITaskListItem | null>;
-  getListItemForUser(userId: string, taskId: string): Promise<ITaskListItem | null>;
+  getListItemForOrg(orgId: string, taskId: string): Promise<ITaskListItem | null>;
   saveForProject(entity: TaskNode, projectId: string): Promise<TaskNode>;
 }

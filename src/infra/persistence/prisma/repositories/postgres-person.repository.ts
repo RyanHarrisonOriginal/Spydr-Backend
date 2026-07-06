@@ -19,17 +19,17 @@ export class PostgresPersonRepository implements IPersonRepository {
     return row && row.nodeType === "person" ? this.mapper.toDomain(row) : null;
   }
 
-  async findByIdForUser(id: string, userId: string): Promise<PersonNode | null> {
+  async findByIdForOrg(id: string, orgId: string): Promise<PersonNode | null> {
     const row = await this.db.spydrNode.findFirst({
-      where: { id, userId, nodeType: "person", isDeleted: false },
+      where: { id, orgId, nodeType: "person", isDeleted: false },
       include: personInclude,
     });
     return row ? this.mapper.toDomain(row) : null;
   }
 
-  async listByUser(userId: string): Promise<PersonNode[]> {
+  async listByOrg(orgId: string): Promise<PersonNode[]> {
     const rows = await this.db.spydrNode.findMany({
-      where: { userId, nodeType: "person", isDeleted: false },
+      where: { orgId, nodeType: "person", isDeleted: false },
       include: personInclude,
       orderBy: [{ sortOrder: "asc" }, { title: "asc" }],
     });
@@ -62,11 +62,54 @@ export class PostgresPersonRepository implements IPersonRepository {
       }
     });
 
-    const saved = await this.findByIdForUser(entity.id, entity.userId);
+    const saved = await this.findByIdForOrg(entity.id, entity.orgId);
     if (!saved) {
       throw new Error("Failed to load saved person");
     }
     return saved;
+  }
+
+  async clearPersonReferences(orgId: string, personId: string): Promise<void> {
+    const now = new Date();
+    const projectNodeScope = { orgId, nodeType: "project" as const };
+
+    await this.db.$transaction([
+      this.db.spydrProjectDetails.updateMany({
+        where: {
+          requesterPersonNodeId: personId,
+          node: projectNodeScope,
+        },
+        data: { requesterPersonNodeId: null, updatedAt: now },
+      }),
+      this.db.spydrProjectDetails.updateMany({
+        where: {
+          assigneePersonNodeId: personId,
+          node: projectNodeScope,
+        },
+        data: { assigneePersonNodeId: null, updatedAt: now },
+      }),
+      this.db.spydrProjectDetails.updateMany({
+        where: {
+          sponsorPersonNodeId: personId,
+          node: projectNodeScope,
+        },
+        data: { sponsorPersonNodeId: null, updatedAt: now },
+      }),
+      this.db.spydrProjectDetails.updateMany({
+        where: {
+          reviewerPersonNodeId: personId,
+          node: projectNodeScope,
+        },
+        data: { reviewerPersonNodeId: null, updatedAt: now },
+      }),
+      this.db.spydrTaskDetails.updateMany({
+        where: {
+          assigneePersonNodeId: personId,
+          node: { orgId, nodeType: "task" },
+        },
+        data: { assigneePersonNodeId: null, updatedAt: now },
+      }),
+    ]);
   }
 
   async delete(id: string): Promise<void> {

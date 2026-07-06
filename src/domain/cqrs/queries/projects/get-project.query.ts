@@ -8,6 +8,7 @@ export class GetProjectQuery implements IQuery<ProjectNode | null> {
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly projectId: string
   ) {}
 }
@@ -20,6 +21,6 @@ export class GetProjectQueryHandler
   constructor(private readonly projects: IProjectRepository) {}
 
   execute(query: GetProjectQuery): Promise<ProjectNode | null> {
-    return this.projects.findByIdForUser(query.projectId, query.userId);
+    return this.projects.findByIdForOrg(query.projectId, query.orgId);
   }
 }

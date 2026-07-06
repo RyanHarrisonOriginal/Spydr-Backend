@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { getAuth } from "@clerk/express";
+import { getOrgContext } from "../../../middleware/org-context.js";
 import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";
 import { ListDecisionsQuery } from "../../../domain/cqrs/queries/index.js";
 import type { DecisionNode } from "../../../domain/models/decisions/index.js";
@@ -13,16 +13,13 @@ export class DecisionsController {
 
   list = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
 
       const decisions = await this.queryBus.execute<
         ListDecisionsQuery,
         DecisionNode[]
-      >(new ListDecisionsQuery(userId));
+      >(new ListDecisionsQuery(ctx.userId, ctx.orgId));
       res.json(
         decisions.map((decision) => this.mapper.toRepresentation(decision))
       );

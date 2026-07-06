@@ -5,6 +5,7 @@ import { nodeLifecycleResponse } from "./node-lifecycle-response.js";
 export interface IResourceResponse {
   id: string;
   userId: string;
+  organizationId: string;
   nodeType: "resource";
   title: string;
   body: string;
@@ -35,6 +36,7 @@ export class ResourceResponseMapper
     return {
       id: domain.id,
       userId: domain.userId,
+      organizationId: domain.orgId,
       nodeType: domain.nodeType,
       title: domain.title,
       body: domain.body,

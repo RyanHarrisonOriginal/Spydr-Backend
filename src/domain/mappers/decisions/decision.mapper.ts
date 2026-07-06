@@ -25,6 +25,7 @@ export interface IDecisionCreateModelInput {
 
 export interface IDecisionCreateModelContext {
   userId: string;
+  orgId: string;
   area?: string | null;
 }
 
@@ -41,6 +42,7 @@ export class DecisionMapper {
 
     return new DecisionNode({
       id: randomUUID(),
+      orgId: context.orgId,
       userId: context.userId,
       title,
       body: input.body?.trim() ?? "",
@@ -76,6 +78,7 @@ export class DecisionMapper {
 
     return new DecisionNode({
       id: existing.id,
+      orgId: existing.orgId,
       userId: existing.userId,
       title,
       body: input.body !== undefined ? input.body.trim() : existing.body,

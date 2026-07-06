@@ -28,6 +28,7 @@ export class CreateProjectCommand implements ICommand<ProjectNode> {
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly input: ICreateProjectInput
   ) {}
 }
@@ -47,9 +48,9 @@ export class CreateProjectCommandHandler
     const input = { ...command.input };
 
     if (command.input.areaNodeId) {
-      const area = await this.projectAreas.findByIdForUser(
+      const area = await this.projectAreas.findByIdForOrg(
         command.input.areaNodeId,
-        command.userId
+        command.orgId
       );
       if (!area) {
         throw new Error("Project area not found");
@@ -57,17 +58,17 @@ export class CreateProjectCommandHandler
       input.area = area.title;
     }
 
-    const project = this.mapper.toModel(command.userId, input);
+    const project = this.mapper.toModel(command.userId, command.orgId, input);
     const saved = await this.projects.save(project);
 
     if (command.input.areaNodeId) {
       await this.projects.setAreaAssignment(
         saved.id,
-        command.userId,
+        command.orgId,
         command.input.areaNodeId
       );
     }
 
-    return (await this.projects.findByIdForUser(saved.id, command.userId)) ?? saved;
+    return (await this.projects.findByIdForOrg(saved.id, command.orgId)) ?? saved;
   }
 }

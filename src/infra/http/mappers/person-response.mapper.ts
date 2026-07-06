@@ -14,6 +14,7 @@ export interface IPersonDetailsResponse {
 export interface IPersonResponse {
   id: string;
   userId: string;
+  organizationId: string;
   nodeType: "person";
   title: string;
   body: string;
@@ -34,6 +35,7 @@ export class PersonResponseMapper
     return {
       id: domain.id,
       userId: domain.userId,
+      organizationId: domain.orgId,
       nodeType: domain.nodeType,
       title: domain.details?.fullName ?? domain.title,
       body: domain.body,

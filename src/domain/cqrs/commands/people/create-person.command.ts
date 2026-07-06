@@ -21,6 +21,7 @@ export class CreatePersonCommand implements ICommand<PersonNode> {
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly input: ICreatePersonInput
   ) {}
 }
@@ -36,7 +37,7 @@ export class CreatePersonCommandHandler
   ) {}
 
   async execute(command: CreatePersonCommand): Promise<PersonNode> {
-    const person = this.mapper.toModel(command.userId, command.input);
+    const person = this.mapper.toModel(command.userId, command.orgId, command.input);
     return this.people.save(person);
   }
 }

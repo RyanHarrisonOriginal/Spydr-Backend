@@ -19,6 +19,7 @@ export class PrismaTaskMapper
   toDomain(persistence: PrismaTaskWithDetails): TaskNode {
     return new TaskNode({
       id: persistence.id,
+      orgId: persistence.orgId,
       userId: persistence.userId,
       title: persistence.title,
       body: persistence.body,
@@ -48,6 +49,7 @@ export class PrismaTaskMapper
   toPersistence(domain: TaskNode): Prisma.SpydrNodeUncheckedCreateInput {
     return {
       id: domain.id,
+      orgId: domain.orgId,
       userId: domain.userId,
       nodeType: "task",
       title: domain.title,

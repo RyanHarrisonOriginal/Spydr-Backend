@@ -6,7 +6,10 @@ export class ListPeopleQuery implements IQuery<PersonNode[]> {
   static readonly queryType = "people.list";
   readonly queryType = ListPeopleQuery.queryType;
 
-  constructor(readonly userId: string) {}
+  constructor(
+    readonly userId: string,
+    readonly orgId: string
+  ) {}
 }
 
 export class ListPeopleQueryHandler
@@ -17,6 +20,6 @@ export class ListPeopleQueryHandler
   constructor(private readonly people: IPersonRepository) {}
 
   execute(query: ListPeopleQuery): Promise<PersonNode[]> {
-    return this.people.listByUser(query.userId);
+    return this.people.listByOrg(query.orgId);
   }
 }

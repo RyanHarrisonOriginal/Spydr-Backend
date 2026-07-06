@@ -18,18 +18,18 @@ export class PostgresDecisionRepository implements IDecisionRepository {
     return row && row.nodeType === "decision" ? this.mapper.toDomain(row) : null;
   }
 
-  async findByIdForUser(id: string, userId: string): Promise<DecisionNode | null> {
+  async findByIdForOrg(id: string, orgId: string): Promise<DecisionNode | null> {
     const row = await this.db.spydrNode.findFirst({
-      where: { id, userId, nodeType: "decision" },
+      where: { id, orgId, nodeType: "decision" },
       include: { decisionDetails: true },
     });
 
     return row ? this.mapper.toDomain(row) : null;
   }
 
-  async listByUser(userId: string): Promise<DecisionNode[]> {
+  async listByOrg(orgId: string): Promise<DecisionNode[]> {
     const rows = await this.db.spydrNode.findMany({
-      where: { userId, nodeType: "decision", isDeleted: false },
+      where: { orgId, nodeType: "decision", isDeleted: false },
       include: { decisionDetails: true },
       orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
     });

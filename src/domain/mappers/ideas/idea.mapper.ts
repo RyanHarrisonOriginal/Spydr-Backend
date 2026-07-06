@@ -23,6 +23,7 @@ export interface IIdeaCreateModelInput {
 
 export interface IIdeaCreateModelContext {
   userId: string;
+  orgId: string;
   area?: string | null;
 }
 
@@ -39,6 +40,7 @@ export class IdeaMapper {
 
     return new IdeaNode({
       id: randomUUID(),
+      orgId: context.orgId,
       userId: context.userId,
       title,
       body: input.body?.trim() ?? "",
@@ -69,6 +71,7 @@ export class IdeaMapper {
 
     return new IdeaNode({
       id: existing.id,
+      orgId: existing.orgId,
       userId: existing.userId,
       title,
       body: input.body !== undefined ? input.body.trim() : existing.body,

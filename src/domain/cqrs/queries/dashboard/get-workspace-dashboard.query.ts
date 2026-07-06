@@ -6,7 +6,10 @@ export class GetWorkspaceDashboardQuery implements IQuery<IWorkspaceDashboard> {
   static readonly queryType = "dashboard.workspace";
   readonly queryType = GetWorkspaceDashboardQuery.queryType;
 
-  constructor(readonly userId: string) {}
+  constructor(
+    readonly userId: string,
+    readonly orgId: string
+  ) {}
 }
 
 export class GetWorkspaceDashboardQueryHandler
@@ -17,6 +20,6 @@ export class GetWorkspaceDashboardQueryHandler
   constructor(private readonly dashboard: IWorkspaceDashboardRepository) {}
 
   execute(query: GetWorkspaceDashboardQuery): Promise<IWorkspaceDashboard> {
-    return this.dashboard.getForUser(query.userId);
+    return this.dashboard.getForOrg(query.orgId);
   }
 }

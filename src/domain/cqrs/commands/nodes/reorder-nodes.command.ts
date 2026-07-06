@@ -13,6 +13,7 @@ export class ReorderNodesCommand implements ICommand<void> {
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly input: IReorderNodesInput
   ) {}
 }
@@ -26,6 +27,6 @@ export class ReorderNodesCommandHandler
 
   execute(command: ReorderNodesCommand): Promise<void> {
     const { nodeType, orderedIds } = command.input;
-    return this.nodes.reorderForUser(command.userId, nodeType, orderedIds);
+    return this.nodes.reorderForOrg(command.orgId, nodeType, orderedIds);
   }
 }

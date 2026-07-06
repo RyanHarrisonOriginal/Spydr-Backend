@@ -1,8 +1,9 @@
 import type { IPersistenceRepositories } from "../../../infra/persistence/index.js";
 import type { IQueryBus } from "./query-bus.js";
+import { ListOrganizationsQueryHandler } from "./organizations/index.js";
 import { ListDecisionsQueryHandler } from "./decisions/index.js";
 import { ListIdeasQueryHandler } from "./ideas/index.js";
-import { ListNotesQueryHandler } from "./notes/index.js";
+import { ListNotesQueryHandler, GetNoteQueryHandler } from "./notes/index.js";
 import { ListProjectAreasQueryHandler } from "./project-areas/index.js";
 import {
   GetPersonQueryHandler,
@@ -22,9 +23,11 @@ export function registerQueryHandlers(
   repositories: IPersistenceRepositories
 ): void {
   queryBus.registerMany([
+    new ListOrganizationsQueryHandler(repositories.organizations),
     new ListDecisionsQueryHandler(repositories.decisions),
     new ListIdeasQueryHandler(repositories.ideas),
     new ListNotesQueryHandler(repositories.notes),
+    new GetNoteQueryHandler(repositories.notes),
     new ListProjectAreasQueryHandler(repositories.projectAreas),
     new ListPeopleQueryHandler(repositories.people),
     new GetPersonQueryHandler(repositories.people),

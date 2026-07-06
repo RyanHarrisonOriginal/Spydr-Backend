@@ -21,6 +21,7 @@ export class UpdatePersonCommand implements ICommand<PersonNode | null> {
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly personId: string,
     readonly input: IUpdatePersonInput
   ) {}
@@ -37,9 +38,9 @@ export class UpdatePersonCommandHandler
   ) {}
 
   async execute(command: UpdatePersonCommand): Promise<PersonNode | null> {
-    const existing = await this.people.findByIdForUser(
+    const existing = await this.people.findByIdForOrg(
       command.personId,
-      command.userId
+      command.orgId
     );
     if (!existing) return null;
 

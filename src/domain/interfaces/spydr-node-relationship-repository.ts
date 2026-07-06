@@ -2,6 +2,7 @@ import type { SpydrRelationshipType } from "../models/index.js";
 
 export interface ISpydrNodeRelationship {
   id: string;
+  orgId: string;
   userId: string;
   sourceNodeId: string;
   targetNodeId: string;
@@ -11,7 +12,7 @@ export interface ISpydrNodeRelationship {
 }
 
 export interface ISpydrNodeRelationshipRepository {
-  listForNode(nodeId: string, userId: string): Promise<ISpydrNodeRelationship[]>;
+  listForNode(nodeId: string, orgId: string): Promise<ISpydrNodeRelationship[]>;
   save(relationship: ISpydrNodeRelationship): Promise<ISpydrNodeRelationship>;
   delete(id: string): Promise<void>;
 }

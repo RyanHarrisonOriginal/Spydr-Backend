@@ -21,24 +21,24 @@ export class PostgresProjectAreaRepository implements IProjectAreaRepository {
       : null;
   }
 
-  async findByIdForUser(
+  async findByIdForOrg(
     id: string,
-    userId: string
+    orgId: string
   ): Promise<ProjectAreaNode | null> {
     const row = await this.db.spydrNode.findFirst({
-      where: { id, userId, nodeType: "project_area", isDeleted: false },
+      where: { id, orgId, nodeType: "project_area", isDeleted: false },
       include: projectAreaInclude,
     });
     return row ? this.mapper.toDomain(row) : null;
   }
 
-  async findByTitleForUser(
-    userId: string,
+  async findByTitleForOrg(
+    orgId: string,
     title: string
   ): Promise<ProjectAreaNode | null> {
     const row = await this.db.spydrNode.findFirst({
       where: {
-        userId,
+        orgId,
         nodeType: "project_area",
         isDeleted: false,
         title: { equals: title, mode: "insensitive" },
@@ -48,9 +48,9 @@ export class PostgresProjectAreaRepository implements IProjectAreaRepository {
     return row ? this.mapper.toDomain(row) : null;
   }
 
-  async listByUser(userId: string): Promise<ProjectAreaNode[]> {
+  async listByOrg(orgId: string): Promise<ProjectAreaNode[]> {
     const rows = await this.db.spydrNode.findMany({
-      where: { userId, nodeType: "project_area", isDeleted: false },
+      where: { orgId, nodeType: "project_area", isDeleted: false },
       include: projectAreaInclude,
       orderBy: { title: "asc" },
     });
@@ -83,7 +83,7 @@ export class PostgresProjectAreaRepository implements IProjectAreaRepository {
       }
     });
 
-    const saved = await this.findByIdForUser(entity.id, entity.userId);
+    const saved = await this.findByIdForOrg(entity.id, entity.orgId);
     if (!saved) {
       throw new Error("Failed to load saved project area");
     }
@@ -94,10 +94,10 @@ export class PostgresProjectAreaRepository implements IProjectAreaRepository {
     await this.db.spydrNode.delete({ where: { id } });
   }
 
-  async clearProjectsUsingArea(userId: string, areaTitle: string): Promise<void> {
+  async clearProjectsUsingArea(orgId: string, areaTitle: string): Promise<void> {
     await this.db.spydrNode.updateMany({
       where: {
-        userId,
+        orgId,
         nodeType: "project",
         area: { equals: areaTitle, mode: "insensitive" },
       },

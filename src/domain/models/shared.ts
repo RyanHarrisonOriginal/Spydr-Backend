@@ -72,6 +72,7 @@ export function isTaskStatus(status: string): status is TaskStatus {
 
 export interface IDomainNodeProps<TType extends SpydrNodeType = SpydrNodeType> {
   id: string;
+  orgId: string;
   userId: string;
   nodeType: TType;
   title: string;
@@ -92,6 +93,7 @@ export class DomainNode<TType extends SpydrNodeType = SpydrNodeType>
   implements IDomainNodeProps<TType>
 {
   readonly id: string;
+  readonly orgId: string;
   readonly userId: string;
   readonly nodeType: TType;
   readonly title: string;
@@ -114,6 +116,7 @@ export class DomainNode<TType extends SpydrNodeType = SpydrNodeType>
 
   constructor(props: IDomainNodeProps<TType>) {
     this.id = props.id;
+    this.orgId = props.orgId;
     this.userId = props.userId;
     this.nodeType = props.nodeType;
     this.title = props.title;

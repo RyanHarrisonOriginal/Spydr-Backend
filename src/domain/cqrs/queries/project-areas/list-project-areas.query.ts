@@ -6,7 +6,10 @@ export class ListProjectAreasQuery implements IQuery<ProjectAreaNode[]> {
   static readonly queryType = "project-areas.list";
   readonly queryType = ListProjectAreasQuery.queryType;
 
-  constructor(readonly userId: string) {}
+  constructor(
+    readonly userId: string,
+    readonly orgId: string
+  ) {}
 }
 
 export class ListProjectAreasQueryHandler
@@ -17,6 +20,6 @@ export class ListProjectAreasQueryHandler
   constructor(private readonly projectAreas: IProjectAreaRepository) {}
 
   execute(query: ListProjectAreasQuery): Promise<ProjectAreaNode[]> {
-    return this.projectAreas.listByUser(query.userId);
+    return this.projectAreas.listByOrg(query.orgId);
   }
 }

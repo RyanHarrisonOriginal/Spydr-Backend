@@ -19,6 +19,7 @@ export class PrismaProjectMapper
   toDomain(persistence: PrismaProjectWithDetails): ProjectNode {
     return new ProjectNode({
       id: persistence.id,
+      orgId: persistence.orgId,
       userId: persistence.userId,
       title: persistence.title,
       body: persistence.body,
@@ -52,6 +53,7 @@ export class PrismaProjectMapper
   toPersistence(domain: ProjectNode): Prisma.SpydrNodeUncheckedCreateInput {
     return {
       id: domain.id,
+      orgId: domain.orgId,
       userId: domain.userId,
       nodeType: "project",
       title: domain.title,

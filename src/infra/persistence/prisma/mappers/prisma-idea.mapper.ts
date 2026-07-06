@@ -19,6 +19,7 @@ export class PrismaIdeaMapper
   toDomain(persistence: PrismaIdeaWithDetails): IdeaNode {
     return new IdeaNode({
       id: persistence.id,
+      orgId: persistence.orgId,
       userId: persistence.userId,
       title: persistence.title,
       body: persistence.body,
@@ -49,6 +50,7 @@ export class PrismaIdeaMapper
   toPersistence(domain: IdeaNode): Prisma.SpydrNodeUncheckedCreateInput {
     return {
       id: domain.id,
+      orgId: domain.orgId,
       userId: domain.userId,
       nodeType: "idea",
       title: domain.title,

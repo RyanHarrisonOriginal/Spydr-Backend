@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { getAuth } from "@clerk/express";
+import { getOrgContext } from "../../../middleware/org-context.js";
 import type { ICommandBus } from "../../../domain/cqrs/commands/index.js";
 import {
   AddDecisionToProjectCommand,
@@ -52,16 +52,14 @@ export class ProjectsController {
 
   get = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
+      const { userId, orgId } = ctx;
 
       const project = await this.queryBus.execute<
         GetProjectQuery,
         ProjectNode | null
-      >(new GetProjectQuery(userId, req.params.projectId));
+      >(new GetProjectQuery(userId, orgId, req.params.projectId));
 
       if (!project) {
         res.status(404).json({ message: "Project not found" });
@@ -77,14 +75,12 @@ export class ProjectsController {
 
   list = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
+      const { userId, orgId } = ctx;
 
       const projects = await this.queryBus.execute<ListProjectsQuery, ProjectNode[]>(
-        new ListProjectsQuery(userId)
+        new ListProjectsQuery(userId, orgId)
       );
       res.json(projects.map((project) => this.mapper.toRepresentation(project)));
     } catch (error) {
@@ -95,16 +91,14 @@ export class ProjectsController {
 
   listTrash = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
+      const { userId, orgId } = ctx;
 
       const projects = await this.queryBus.execute<
         ListDeletedProjectsQuery,
         ProjectNode[]
-      >(new ListDeletedProjectsQuery(userId));
+      >(new ListDeletedProjectsQuery(userId, orgId));
 
       res.json(projects.map((project) => this.mapper.toRepresentation(project)));
     } catch (error) {
@@ -115,16 +109,14 @@ export class ProjectsController {
 
   create = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
+      const { userId, orgId } = ctx;
 
       const project = await this.commandBus.execute<
         CreateProjectCommand,
         ProjectNode
-      >(new CreateProjectCommand(userId, req.body as ICreateProjectInput));
+      >(new CreateProjectCommand(userId, orgId, req.body as ICreateProjectInput));
 
       res.status(201).json(this.mapper.toRepresentation(project));
     } catch (error) {
@@ -148,11 +140,9 @@ export class ProjectsController {
 
   update = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
+      const { userId, orgId } = ctx;
 
       const project = await this.commandBus.execute<
         UpdateProjectCommand,
@@ -160,6 +150,7 @@ export class ProjectsController {
       >(
         new UpdateProjectCommand(
           userId,
+          orgId,
           req.params.projectId,
           req.body as IUpdateProjectInput
         )
@@ -192,14 +183,12 @@ export class ProjectsController {
 
   delete = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
+      const { userId, orgId } = ctx;
 
       const deleted = await this.commandBus.execute<DeleteProjectCommand, boolean>(
-        new DeleteProjectCommand(userId, req.params.projectId)
+        new DeleteProjectCommand(userId, orgId, req.params.projectId)
       );
 
       if (!deleted) {
@@ -216,16 +205,14 @@ export class ProjectsController {
 
   restore = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
+      const { userId, orgId } = ctx;
 
       const project = await this.commandBus.execute<
         RestoreProjectCommand,
         ProjectNode | null
-      >(new RestoreProjectCommand(userId, req.params.projectId));
+      >(new RestoreProjectCommand(userId, orgId, req.params.projectId));
 
       if (!project) {
         res.status(404).json({ message: "Deleted project not found" });
@@ -241,11 +228,9 @@ export class ProjectsController {
 
   createTask = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
+      const { userId, orgId } = ctx;
 
       const task = await this.commandBus.execute<
         AddTaskToProjectCommand,
@@ -253,6 +238,7 @@ export class ProjectsController {
       >(
         new AddTaskToProjectCommand(
           userId,
+          orgId,
           req.params.projectId,
           req.body as IAddTaskToProjectInput
         )
@@ -285,11 +271,9 @@ export class ProjectsController {
 
   createNote = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
+      const { userId, orgId } = ctx;
 
       const note = await this.commandBus.execute<
         AddNoteToProjectCommand,
@@ -297,6 +281,7 @@ export class ProjectsController {
       >(
         new AddNoteToProjectCommand(
           userId,
+          orgId,
           req.params.projectId,
           req.body as IAddNoteToProjectInput
         )
@@ -313,10 +298,6 @@ export class ProjectsController {
         res.status(400).json({ message: error.message });
         return;
       }
-      if (error instanceof Error && error.message === "Note title is required") {
-        res.status(400).json({ message: error.message });
-        return;
-      }
 
       console.error(error);
       res.status(500).json({ message: "Failed to create note" });
@@ -325,11 +306,9 @@ export class ProjectsController {
 
   createDecision = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
+      const { userId, orgId } = ctx;
 
       const decision = await this.commandBus.execute<
         AddDecisionToProjectCommand,
@@ -337,6 +316,7 @@ export class ProjectsController {
       >(
         new AddDecisionToProjectCommand(
           userId,
+          orgId,
           req.params.projectId,
           req.body as IAddDecisionToProjectInput
         )
@@ -368,11 +348,9 @@ export class ProjectsController {
 
   createIdea = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
+      const { userId, orgId } = ctx;
 
       const idea = await this.commandBus.execute<
         AddIdeaToProjectCommand,
@@ -380,6 +358,7 @@ export class ProjectsController {
       >(
         new AddIdeaToProjectCommand(
           userId,
+          orgId,
           req.params.projectId,
           req.body as IAddIdeaToProjectInput
         )
@@ -458,11 +437,9 @@ export class ProjectsController {
     action: "update" | "delete" | "restore"
   ): Promise<void> {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
+      const { userId, orgId } = ctx;
 
       const { projectId, childId } = req.params;
 
@@ -475,6 +452,7 @@ export class ProjectsController {
         >(
           new UpdateProjectChildCommand(
             userId,
+            orgId,
             projectId,
             childId,
             kind,
@@ -486,14 +464,14 @@ export class ProjectsController {
           DeleteProjectChildCommand,
           ProjectNode | null
         >(
-          new DeleteProjectChildCommand(userId, projectId, childId, kind)
+          new DeleteProjectChildCommand(userId, orgId, projectId, childId, kind)
         );
       } else {
         project = await this.commandBus.execute<
           RestoreProjectChildCommand,
           ProjectNode | null
         >(
-          new RestoreProjectChildCommand(userId, projectId, childId, kind)
+          new RestoreProjectChildCommand(userId, orgId, projectId, childId, kind)
         );
       }
 

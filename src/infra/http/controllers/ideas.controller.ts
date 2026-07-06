@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { getAuth } from "@clerk/express";
+import { getOrgContext } from "../../../middleware/org-context.js";
 import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";
 import { ListIdeasQuery } from "../../../domain/cqrs/queries/index.js";
 import type { IdeaNode } from "../../../domain/models/ideas/index.js";
@@ -13,17 +13,14 @@ export class IdeasController {
 
   list = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
 
       const ideas = await this.queryBus.execute<ListIdeasQuery, IdeaNode[]>(
-        new ListIdeasQuery(userId)
+        new ListIdeasQuery(ctx.userId, ctx.orgId)
       );
       if (process.env.NODE_ENV !== "production") {
-        console.log(`[ideas.list] user=${userId} count=${ideas.length}`);
+        console.log(`[ideas.list] org=${ctx.orgId} count=${ideas.length}`);
       }
       res.json(ideas.map((idea) => this.mapper.toRepresentation(idea)));
     } catch (error) {

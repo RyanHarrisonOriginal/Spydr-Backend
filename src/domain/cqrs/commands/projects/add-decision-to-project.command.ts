@@ -22,6 +22,7 @@ export class AddDecisionToProjectCommand implements ICommand<DecisionNode | null
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly projectId: string,
     readonly input: IAddDecisionToProjectInput
   ) {}
@@ -40,14 +41,15 @@ export class AddDecisionToProjectCommandHandler
   async execute(
     command: AddDecisionToProjectCommand
   ): Promise<DecisionNode | null> {
-    const project = await this.projects.findByIdForUser(
+    const project = await this.projects.findByIdForOrg(
       command.projectId,
-      command.userId
+      command.orgId
     );
     if (!project) return null;
 
     const decision = this.mapper.toModel(command.input, {
       userId: command.userId,
+      orgId: command.orgId,
       area: project.area,
     });
     project.addDecision(decision);

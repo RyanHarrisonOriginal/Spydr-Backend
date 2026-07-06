@@ -8,7 +8,7 @@ import {
 import type { ICommand, ICommandHandler } from "../command.js";
 
 export interface IAddNoteToProjectInput {
-  title: string;
+  title?: string;
   body?: string;
   status?: SpydrNodeStatus;
   priority?: SpydrPriority;
@@ -20,6 +20,7 @@ export class AddNoteToProjectCommand implements ICommand<NoteNode | null> {
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly projectId: string,
     readonly input: IAddNoteToProjectInput
   ) {}
@@ -36,14 +37,15 @@ export class AddNoteToProjectCommandHandler
   ) {}
 
   async execute(command: AddNoteToProjectCommand): Promise<NoteNode | null> {
-    const project = await this.projects.findByIdForUser(
+    const project = await this.projects.findByIdForOrg(
       command.projectId,
-      command.userId
+      command.orgId
     );
     if (!project) return null;
 
     const note = this.mapper.toModel(command.input, {
       userId: command.userId,
+      orgId: command.orgId,
       area: project.area,
     });
     project.addNote(note);

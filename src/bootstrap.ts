@@ -75,6 +75,7 @@ export function createBackend(overrides: IBackendOverrides = {}): IBackend {
       apiPrefix: config.apiPrefix,
       commandBus: services.commandBus,
       queryBus: services.queryBus,
+      organizations: services.repositories.organizations,
     });
   let server: Server | undefined;
 

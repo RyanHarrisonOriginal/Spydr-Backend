@@ -14,6 +14,7 @@ export function createPeopleRouter(
   router.get("/:personId", controller.get);
   router.post("/", controller.create);
   router.patch("/:personId", controller.update);
+  router.delete("/:personId", controller.delete);
 
   return router;
 }

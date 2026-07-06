@@ -19,6 +19,7 @@ export class PrismaResourceMapper
   toDomain(persistence: PrismaResourceWithDetails): ResourceNode {
     return new ResourceNode({
       id: persistence.id,
+      orgId: persistence.orgId,
       userId: persistence.userId,
       title: persistence.title,
       body: persistence.body,
@@ -47,6 +48,7 @@ export class PrismaResourceMapper
   toPersistence(domain: ResourceNode): Prisma.SpydrNodeUncheckedCreateInput {
     return {
       id: domain.id,
+      orgId: domain.orgId,
       userId: domain.userId,
       nodeType: "resource",
       title: domain.title,

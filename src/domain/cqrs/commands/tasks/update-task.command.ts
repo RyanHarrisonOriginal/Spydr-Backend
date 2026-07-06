@@ -28,6 +28,7 @@ export class UpdateTaskCommand implements ICommand<ITaskListItem | null> {
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly taskId: string,
     readonly input: IUpdateTaskInput
   ) {}
@@ -47,9 +48,9 @@ export class UpdateTaskCommandHandler
     const { projectNodeId, ...taskInput } = command.input;
 
     if (taskInput.assigneePersonNodeId) {
-      const person = await this.people.findByIdForUser(
+      const person = await this.people.findByIdForOrg(
         taskInput.assigneePersonNodeId,
-        command.userId
+        command.orgId
       );
       if (!person) {
         throw new Error("Person not found");
@@ -57,28 +58,28 @@ export class UpdateTaskCommandHandler
     }
 
     if (hasTaskFieldUpdates(taskInput)) {
-      const updated = await this.tasks.updateForUser(
-        command.userId,
+      const updated = await this.tasks.updateForOrg(
+        command.orgId,
         command.taskId,
         taskInput
       );
       if (!updated) return null;
     } else {
-      const existing = await this.tasks.findByIdForUser(
+      const existing = await this.tasks.findByIdForOrg(
         command.taskId,
-        command.userId
+        command.orgId
       );
       if (!existing || existing.isDeleted) return null;
     }
 
     if (projectNodeId !== undefined) {
       return this.tasks.assignToProject(
-        command.userId,
+        command.orgId,
         command.taskId,
         projectNodeId
       );
     }
 
-    return this.tasks.getListItemForUser(command.userId, command.taskId);
+    return this.tasks.getListItemForOrg(command.orgId, command.taskId);
   }
 }

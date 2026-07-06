@@ -43,6 +43,7 @@ export interface IProjectUpdateModelInput {
 export class ProjectMapper {
   toModel(
     userId: string,
+    orgId: string,
     input: IProjectCreateModelInput,
     now?: Date
   ): ProjectNode;
@@ -52,19 +53,28 @@ export class ProjectMapper {
     now?: Date
   ): ProjectNode;
   toModel(
-    subject: string | ProjectNode,
-    input: IProjectCreateModelInput | IProjectUpdateModelInput,
-    now = new Date()
+    arg1: string | ProjectNode,
+    arg2: string | IProjectUpdateModelInput,
+    arg3?: IProjectCreateModelInput | Date,
+    arg4?: Date
   ): ProjectNode {
-    if (typeof subject === "string") {
-      return this.createToModel(subject, input as IProjectCreateModelInput, now);
+    if (typeof arg1 === "string") {
+      const now = arg4 ?? (arg3 instanceof Date ? arg3 : new Date());
+      return this.createToModel(
+        arg1,
+        arg2 as string,
+        arg3 as IProjectCreateModelInput,
+        now
+      );
     }
 
-    return this.updateToModel(subject, input as IProjectUpdateModelInput, now);
+    const now = (arg3 instanceof Date ? arg3 : arg4) ?? new Date();
+    return this.updateToModel(arg1, arg2 as IProjectUpdateModelInput, now);
   }
 
   private createToModel(
     userId: string,
+    orgId: string,
     input: IProjectCreateModelInput,
     now: Date
   ): ProjectNode {
@@ -79,6 +89,7 @@ export class ProjectMapper {
 
     return new ProjectNode({
       id: randomUUID(),
+      orgId,
       userId,
       title,
       body: input.body?.trim() ?? "",
@@ -118,6 +129,7 @@ export class ProjectMapper {
 
     return new ProjectNode({
       id: existing.id,
+      orgId: existing.orgId,
       userId: existing.userId,
       title: existing.title,
       body: input.body ?? existing.body,

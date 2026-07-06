@@ -78,8 +78,47 @@ enum SpydrOutlookSection {
   @@map("spydr_outlook_section")
 }
 
+enum OrganizationMemberRole {
+  owner
+  admin
+  member
+
+  @@map("organization_member_role")
+}
+
+model Organization {
+  id        String               @id(map: "organizations_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  slug      String               @unique(map: "organizations_slug_key")
+  createdAt DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime             @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
+  members   OrganizationMember[]
+  nodes     SpydrNode[]
+  relationships SpydrNodeRelationship[]
+  outlookSnapshots SpydrOutlookSnapshot[]
+  outlookTemplates SpydrOutlookTemplate[]
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id             String                 @id(map: "organization_members_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String                 @map("organization_id") @db.Uuid
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade, map: "organization_members_organization_id_fkey")
+  userId         String                 @map("user_id")
+  role           OrganizationMemberRole   @default(member)
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([organizationId, userId], map: "organization_members_org_user_key")
+  @@index([userId], map: "idx_organization_members_user")
+  @@index([organizationId], map: "idx_organization_members_org")
+  @@map("organization_members")
+}
+
 model SpydrNode {
   id                         String                     @id(map: "spydr_nodes_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId                      String                     @map("org_id") @db.Uuid
+  organization               Organization               @relation(fields: [orgId], references: [id], onDelete: Cascade, map: "spydr_nodes_org_id_fkey")
   userId                     String                     @map("user_id")
   nodeType                   SpydrNodeType              @map("node_type")
   title                      String
@@ -109,6 +148,10 @@ model SpydrNode {
   taskDetails                SpydrTaskDetails?
 
   @@index([tags], map: "idx_spydr_nodes_tags", type: Gin)
+  @@index([orgId, status], map: "idx_spydr_nodes_org_status")
+  @@index([orgId, nodeType], map: "idx_spydr_nodes_org_type")
+  @@index([orgId, nodeType, sortOrder], map: "idx_spydr_nodes_org_type_sort")
+  @@index([orgId, isDeleted], map: "idx_spydr_nodes_org_deleted")
   @@index([userId, status], map: "idx_spydr_nodes_user_status")
   @@index([userId, nodeType], map: "idx_spydr_nodes_user_type")
   @@index([userId, nodeType, sortOrder], map: "idx_spydr_nodes_user_type_sort")
@@ -157,6 +200,8 @@ model SpydrInboxItem {
 
 model SpydrNodeRelationship {
   id               String                @id(map: "spydr_node_relationships_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId            String                @map("org_id") @db.Uuid
+  organization     Organization          @relation(fields: [orgId], references: [id], onDelete: Cascade, map: "spydr_node_relationships_org_id_fkey")
   userId           String                @map("user_id")
   sourceNodeId     String                @map("source_node_id") @db.Uuid
   sourceNode       SpydrNode             @relation("RelationshipSourceNode", fields: [sourceNodeId], references: [id], onDelete: Cascade, map: "spydr_node_relationships_source_node_id_fkey")
@@ -167,6 +212,7 @@ model SpydrNodeRelationship {
   createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@unique([sourceNodeId, targetNodeId, relationshipType], map: "spydr_unique_relationship")
+  @@index([orgId], map: "idx_spydr_relationships_org")
   @@index([sourceNodeId], map: "idx_spydr_relationships_source")
   @@index([targetNodeId], map: "idx_spydr_relationships_target")
   @@index([relationshipType], map: "idx_spydr_relationships_type")
@@ -198,6 +244,8 @@ model SpydrOutlookSnapshotItem {
 
 model SpydrOutlookSnapshot {
   id              String                       @id(map: "spydr_outlook_snapshots_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId           String                       @map("org_id") @db.Uuid
+  organization    Organization                 @relation(fields: [orgId], references: [id], onDelete: Cascade, map: "spydr_outlook_snapshots_org_id_fkey")
   userId          String                       @map("user_id")
   templateId      String?                      @map("template_id") @db.Uuid
   template        SpydrOutlookTemplate?        @relation(fields: [templateId], references: [id], onDelete: SetNull, map: "spydr_outlook_snapshots_template_id_fkey")
@@ -211,12 +259,15 @@ model SpydrOutlookSnapshot {
   createdByEngine String                       @default("heuristic_v1") @map("created_by_engine")
   items           SpydrOutlookSnapshotItem[]
 
+  @@index([orgId, outlookType, generatedAt], map: "idx_spydr_outlook_snapshots_org_type_generated")
   @@index([userId, outlookType, generatedAt], map: "idx_spydr_outlook_snapshots_user_type_generated")
   @@map("spydr_outlook_snapshots")
 }
 
 model SpydrOutlookTemplate {
   id          String                   @id(map: "spydr_outlook_templates_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId       String                   @map("org_id") @db.Uuid
+  organization Organization            @relation(fields: [orgId], references: [id], onDelete: Cascade, map: "spydr_outlook_templates_org_id_fkey")
   userId      String                   @map("user_id")
   outlookType SpydrOutlookType         @map("outlook_type")
   name        String
@@ -227,6 +278,7 @@ model SpydrOutlookTemplate {
   updatedAt   DateTime                 @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
   snapshots   SpydrOutlookSnapshot[]
 
+  @@index([orgId, outlookType], map: "idx_spydr_outlook_templates_org_type")
   @@index([userId, outlookType], map: "idx_spydr_outlook_templates_user_type")
   @@map("spydr_outlook_templates")
 }

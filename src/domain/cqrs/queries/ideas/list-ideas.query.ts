@@ -6,7 +6,10 @@ export class ListIdeasQuery implements IQuery<IdeaNode[]> {
   static readonly queryType = "ideas.list";
   readonly queryType = ListIdeasQuery.queryType;
 
-  constructor(readonly userId: string) {}
+  constructor(
+    readonly userId: string,
+    readonly orgId: string
+  ) {}
 }
 
 export class ListIdeasQueryHandler
@@ -17,6 +20,6 @@ export class ListIdeasQueryHandler
   constructor(private readonly ideas: IIdeaRepository) {}
 
   execute(query: ListIdeasQuery): Promise<IdeaNode[]> {
-    return this.ideas.listByUser(query.userId);
+    return this.ideas.listByOrg(query.orgId);
   }
 }

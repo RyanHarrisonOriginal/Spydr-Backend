@@ -46,20 +46,21 @@ export class PostgresProjectRepository implements IProjectRepository {
     return row && row.nodeType === "project" ? this.mapper.toDomain(row) : null;
   }
 
-  async findByIdForUser(id: string, userId: string): Promise<ProjectNode | null> {
+  async findByIdForOrg(id: string, orgId: string): Promise<ProjectNode | null> {
     const row = await this.db.spydrNode.findFirst({
-      where: { id, userId, nodeType: "project", isDeleted: false },
+      where: { id, orgId, nodeType: "project", isDeleted: false },
       include: { projectDetails: true },
     });
 
     if (!row) return null;
 
     const project = this.mapper.toDomain(row);
-    const related = await this.loadRelatedNodes(id, userId);
-    const personas = await this.loadPersonas(userId, project.details);
+    const related = await this.loadRelatedNodes(id, orgId);
+    const personas = await this.loadPersonas(orgId, project.details);
 
     return new ProjectNode({
       id: project.id,
+      orgId: project.orgId,
       userId: project.userId,
       title: project.title,
       body: project.body,
@@ -78,19 +79,19 @@ export class PostgresProjectRepository implements IProjectRepository {
     });
   }
 
-  async listByUser(userId: string): Promise<ProjectNode[]> {
+  async listByOrg(orgId: string): Promise<ProjectNode[]> {
     const rows = await this.db.spydrNode.findMany({
-      where: { userId, nodeType: "project", isDeleted: false },
+      where: { orgId, nodeType: "project", isDeleted: false },
       include: { projectDetails: true },
       orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
     });
 
     const projects = rows.map((row) => this.mapper.toDomain(row));
-    return this.attachAssigneesToProjects(userId, projects);
+    return this.attachAssigneesToProjects(orgId, projects);
   }
 
   private async attachAssigneesToProjects(
-    userId: string,
+    orgId: string,
     projects: ProjectNode[]
   ): Promise<ProjectNode[]> {
     const assigneeIds = [
@@ -106,7 +107,7 @@ export class PostgresProjectRepository implements IProjectRepository {
       const rows = await this.db.spydrNode.findMany({
         where: {
           id: { in: assigneeIds },
-          userId,
+          orgId,
           nodeType: "person",
           isDeleted: false,
         },
@@ -123,6 +124,7 @@ export class PostgresProjectRepository implements IProjectRepository {
 
       return new ProjectNode({
         id: project.id,
+        orgId: project.orgId,
         userId: project.userId,
         title: project.title,
         body: project.body,
@@ -145,7 +147,7 @@ export class PostgresProjectRepository implements IProjectRepository {
   }
 
   private async attachAssigneesToTasks(
-    userId: string,
+    orgId: string,
     tasks: TaskNode[]
   ): Promise<TaskNode[]> {
     const assigneeIds = [
@@ -161,7 +163,7 @@ export class PostgresProjectRepository implements IProjectRepository {
     const rows = await this.db.spydrNode.findMany({
       where: {
         id: { in: assigneeIds },
-        userId,
+        orgId,
         nodeType: "person",
         isDeleted: false,
       },
@@ -179,9 +181,9 @@ export class PostgresProjectRepository implements IProjectRepository {
     });
   }
 
-  async listDeletedByUser(userId: string): Promise<ProjectNode[]> {
+  async listDeletedByOrg(orgId: string): Promise<ProjectNode[]> {
     const rows = await this.db.spydrNode.findMany({
-      where: { userId, nodeType: "project", isDeleted: true },
+      where: { orgId, nodeType: "project", isDeleted: true },
       include: { projectDetails: true },
       orderBy: { deletedAt: "desc" },
     });
@@ -189,9 +191,9 @@ export class PostgresProjectRepository implements IProjectRepository {
     return rows.map((row) => this.mapper.toDomain(row));
   }
 
-  async restoreProject(userId: string, projectId: string): Promise<ProjectNode | null> {
+  async restoreProject(orgId: string, projectId: string): Promise<ProjectNode | null> {
     const row = await this.db.spydrNode.findFirst({
-      where: { id: projectId, userId, nodeType: "project", isDeleted: true },
+      where: { id: projectId, orgId, nodeType: "project", isDeleted: true },
       include: { projectDetails: true },
     });
 
@@ -207,7 +209,7 @@ export class PostgresProjectRepository implements IProjectRepository {
     });
 
     const restored = await this.db.spydrNode.findFirst({
-      where: { id: projectId, userId, nodeType: "project", isDeleted: false },
+      where: { id: projectId, orgId, nodeType: "project", isDeleted: false },
       include: { projectDetails: true },
     });
 
@@ -255,7 +257,7 @@ export class PostgresProjectRepository implements IProjectRepository {
         await this.persistNote(tx, entity, note);
       }
     });
-    const saved = await this.findByIdForUser(entity.id, entity.userId);
+    const saved = await this.findByIdForOrg(entity.id, entity.orgId);
     if (!saved) {
       throw new Error("Failed to save project");
     }
@@ -271,7 +273,7 @@ export class PostgresProjectRepository implements IProjectRepository {
       const result = await tx.spydrNode.updateMany({
         where: {
           id,
-          userId: entity.userId,
+          orgId: entity.orgId,
           nodeType: "project",
           isDeleted: false,
         },
@@ -297,7 +299,7 @@ export class PostgresProjectRepository implements IProjectRepository {
       }
     });
 
-    const saved = await this.findByIdForUser(entity.id, entity.userId);
+    const saved = await this.findByIdForOrg(entity.id, entity.orgId);
     if (!saved) {
       throw new Error("Failed to update project");
     }
@@ -307,11 +309,17 @@ export class PostgresProjectRepository implements IProjectRepository {
 
   async setAreaAssignment(
     projectId: string,
-    userId: string,
+    orgId: string,
     areaNodeId: string | null
   ): Promise<void> {
+    const project = await this.db.spydrNode.findFirst({
+      where: { id: projectId, orgId, nodeType: "project" },
+      select: { userId: true },
+    });
+    if (!project) return;
+
     const areaNodes = await this.db.spydrNode.findMany({
-      where: { userId, nodeType: "project_area" },
+      where: { orgId, nodeType: "project_area" },
       select: { id: true },
     });
     const areaIds = areaNodes.map((node) => node.id);
@@ -319,7 +327,7 @@ export class PostgresProjectRepository implements IProjectRepository {
     if (areaIds.length > 0) {
       await this.db.spydrNodeRelationship.deleteMany({
         where: {
-          userId,
+          orgId,
           sourceNodeId: projectId,
           targetNodeId: { in: areaIds },
           relationshipType: "related_to",
@@ -331,7 +339,8 @@ export class PostgresProjectRepository implements IProjectRepository {
 
     await this.db.spydrNodeRelationship.create({
       data: {
-        userId,
+        orgId,
+        userId: project.userId,
         sourceNodeId: projectId,
         targetNodeId: areaNodeId,
         relationshipType: "related_to",
@@ -352,26 +361,26 @@ export class PostgresProjectRepository implements IProjectRepository {
   }
 
   async updateRelatedNode(
-    userId: string,
+    orgId: string,
     projectId: string,
     childId: string,
     kind: ProjectChildKind,
     input: IUpdateProjectChildInput
   ): Promise<ProjectNode | null> {
-    if (!(await this.ensureRelatedChild(userId, projectId, childId, kind))) {
+    if (!(await this.ensureRelatedChild(orgId, projectId, childId, kind))) {
       return null;
     }
 
     const now = new Date();
 
     if (kind === "task") {
-      const existing = await this.loadTask(childId, userId);
+      const existing = await this.loadTask(childId, orgId);
       if (!existing || existing.isDeleted) return null;
       if (input.assigneePersonNodeId) {
         const person = await this.db.spydrNode.findFirst({
           where: {
             id: input.assigneePersonNodeId,
-            userId,
+            orgId,
             nodeType: "person",
             isDeleted: false,
           },
@@ -390,24 +399,24 @@ export class PostgresProjectRepository implements IProjectRepository {
         estimatedMinutes: input.estimatedMinutes,
         assigneePersonNodeId: input.assigneePersonNodeId,
       }, now);
-      await this.persistTask(this.db, { id: projectId, userId } as ProjectNode, updated);
+      await this.persistTask(this.db, { id: projectId, orgId, userId: existing.userId } as ProjectNode, updated);
     } else if (kind === "note") {
-      const existing = await this.loadNote(childId, userId);
+      const existing = await this.loadNote(childId, orgId);
       if (!existing || existing.isDeleted) return null;
       const updated = this.noteDomainMapper.updateToModel(existing, input, now);
-      await this.persistNote(this.db, { id: projectId, userId } as ProjectNode, updated);
+      await this.persistNote(this.db, { id: projectId, orgId, userId: existing.userId } as ProjectNode, updated);
     } else if (kind === "decision") {
-      const existing = await this.loadDecision(childId, userId);
+      const existing = await this.loadDecision(childId, orgId);
       if (!existing || existing.isDeleted) return null;
       const updated = this.decisionDomainMapper.updateToModel(existing, input, now);
-      await this.persistDecision(this.db, { id: projectId, userId } as ProjectNode, updated);
+      await this.persistDecision(this.db, { id: projectId, orgId, userId: existing.userId } as ProjectNode, updated);
     } else if (kind === "idea") {
-      const existing = await this.loadIdea(childId, userId);
+      const existing = await this.loadIdea(childId, orgId);
       if (!existing || existing.isDeleted) return null;
       const updated = this.ideaDomainMapper.updateToModel(existing, input, now);
-      await this.persistIdea(this.db, { id: projectId, userId } as ProjectNode, updated);
+      await this.persistIdea(this.db, { id: projectId, orgId, userId: existing.userId } as ProjectNode, updated);
     } else if (kind === "resource") {
-      const existing = await this.loadResource(childId, userId);
+      const existing = await this.loadResource(childId, orgId);
       if (!existing || existing.isDeleted) return null;
       await this.db.spydrNode.update({
         where: { id: childId },
@@ -419,21 +428,21 @@ export class PostgresProjectRepository implements IProjectRepository {
       });
     }
 
-    return this.findByIdForUser(projectId, userId);
+    return this.findByIdForOrg(projectId, orgId);
   }
 
   async softDeleteRelatedNode(
-    userId: string,
+    orgId: string,
     projectId: string,
     childId: string,
     kind: ProjectChildKind
   ): Promise<ProjectNode | null> {
-    if (!(await this.ensureRelatedChild(userId, projectId, childId, kind))) {
+    if (!(await this.ensureRelatedChild(orgId, projectId, childId, kind))) {
       return null;
     }
 
     await this.db.spydrNode.update({
-      where: { id: childId, userId },
+      where: { id: childId, orgId },
       data: {
         isDeleted: true,
         deletedAt: new Date(),
@@ -441,21 +450,21 @@ export class PostgresProjectRepository implements IProjectRepository {
       },
     });
 
-    return this.findByIdForUser(projectId, userId);
+    return this.findByIdForOrg(projectId, orgId);
   }
 
   async restoreRelatedNode(
-    userId: string,
+    orgId: string,
     projectId: string,
     childId: string,
     kind: ProjectChildKind
   ): Promise<ProjectNode | null> {
-    if (!(await this.ensureRelatedChild(userId, projectId, childId, kind))) {
+    if (!(await this.ensureRelatedChild(orgId, projectId, childId, kind))) {
       return null;
     }
 
     await this.db.spydrNode.update({
-      where: { id: childId, userId },
+      where: { id: childId, orgId },
       data: {
         isDeleted: false,
         deletedAt: null,
@@ -463,11 +472,11 @@ export class PostgresProjectRepository implements IProjectRepository {
       },
     });
 
-    return this.findByIdForUser(projectId, userId);
+    return this.findByIdForOrg(projectId, orgId);
   }
 
   private async loadPersonas(
-    userId: string,
+    orgId: string,
     details: ProjectNode["details"]
   ) {
     const personas = emptyProjectPersonas();
@@ -485,7 +494,7 @@ export class PostgresProjectRepository implements IProjectRepository {
     const rows = await this.db.spydrNode.findMany({
       where: {
         id: { in: ids },
-        userId,
+        orgId,
         nodeType: "person",
         isDeleted: false,
       },
@@ -512,10 +521,10 @@ export class PostgresProjectRepository implements IProjectRepository {
     return personas;
   }
 
-  private async loadRelatedNodes(projectId: string, userId: string) {
+  private async loadRelatedNodes(projectId: string, orgId: string) {
     const relationships = await this.db.spydrNodeRelationship.findMany({
       where: {
-        userId,
+        orgId,
         OR: [{ sourceNodeId: projectId }, { targetNodeId: projectId }],
       },
     });
@@ -543,7 +552,7 @@ export class PostgresProjectRepository implements IProjectRepository {
 
     const rows = await this.db.spydrNode.findMany({
       where: {
-        userId,
+        orgId,
         id: { in: relatedIds },
         nodeType: { in: ["task", "decision", "idea", "note", "resource"] },
       },
@@ -563,7 +572,7 @@ export class PostgresProjectRepository implements IProjectRepository {
     const resourceRows = rows.filter((row) => row.nodeType === "resource");
 
     const taskNodes = await this.attachAssigneesToTasks(
-      userId,
+      orgId,
       taskRows.map((row) => this.taskMapper.toDomain(row))
     );
     const decisionNodes = decisionRows.map((row) => this.decisionMapper.toDomain(row));
@@ -586,19 +595,19 @@ export class PostgresProjectRepository implements IProjectRepository {
   }
 
   private async ensureRelatedChild(
-    userId: string,
+    orgId: string,
     projectId: string,
     childId: string,
     kind: ProjectChildKind
   ): Promise<boolean> {
     const project = await this.db.spydrNode.findFirst({
-      where: { id: projectId, userId, nodeType: "project", isDeleted: false },
+      where: { id: projectId, orgId, nodeType: "project", isDeleted: false },
     });
     if (!project) return false;
 
     const relationship = await this.db.spydrNodeRelationship.findFirst({
       where: {
-        userId,
+        orgId,
         OR: [
           { sourceNodeId: projectId, targetNodeId: childId },
           { sourceNodeId: childId, targetNodeId: projectId },
@@ -608,40 +617,40 @@ export class PostgresProjectRepository implements IProjectRepository {
     if (!relationship) return false;
 
     const child = await this.db.spydrNode.findFirst({
-      where: { id: childId, userId, nodeType: kind },
+      where: { id: childId, orgId, nodeType: kind },
     });
     return Boolean(child);
   }
 
-  private async loadTask(childId: string, userId: string): Promise<TaskNode | null> {
+  private async loadTask(childId: string, orgId: string): Promise<TaskNode | null> {
     const row = await this.db.spydrNode.findFirst({
-      where: { id: childId, userId, nodeType: "task" },
+      where: { id: childId, orgId, nodeType: "task" },
       include: { taskDetails: true },
     });
     return row ? this.taskMapper.toDomain(row) : null;
   }
 
-  private async loadNote(childId: string, userId: string): Promise<NoteNode | null> {
+  private async loadNote(childId: string, orgId: string): Promise<NoteNode | null> {
     const row = await this.db.spydrNode.findFirst({
-      where: { id: childId, userId, nodeType: "note" },
+      where: { id: childId, orgId, nodeType: "note" },
     });
     return row ? this.noteMapper.toDomain(row) : null;
   }
 
   private async loadDecision(
     childId: string,
-    userId: string
+    orgId: string
   ): Promise<DecisionNode | null> {
     const row = await this.db.spydrNode.findFirst({
-      where: { id: childId, userId, nodeType: "decision" },
+      where: { id: childId, orgId, nodeType: "decision" },
       include: { decisionDetails: true },
     });
     return row ? this.decisionMapper.toDomain(row) : null;
   }
 
-  private async loadIdea(childId: string, userId: string): Promise<IdeaNode | null> {
+  private async loadIdea(childId: string, orgId: string): Promise<IdeaNode | null> {
     const row = await this.db.spydrNode.findFirst({
-      where: { id: childId, userId, nodeType: "idea" },
+      where: { id: childId, orgId, nodeType: "idea" },
       include: { ideaDetails: true },
     });
     return row ? this.ideaMapper.toDomain(row) : null;
@@ -649,10 +658,10 @@ export class PostgresProjectRepository implements IProjectRepository {
 
   private async loadResource(
     childId: string,
-    userId: string
+    orgId: string
   ): Promise<ResourceNode | null> {
     const row = await this.db.spydrNode.findFirst({
-      where: { id: childId, userId, nodeType: "resource" },
+      where: { id: childId, orgId, nodeType: "resource" },
       include: { resourceDetails: true },
     });
     return row ? this.resourceMapper.toDomain(row) : null;
@@ -776,6 +785,7 @@ export class PostgresProjectRepository implements IProjectRepository {
   ) {
     await tx.spydrNodeRelationship.deleteMany({
       where: {
+        orgId: project.orgId,
         userId: project.userId,
         sourceNodeId: project.id,
         targetNodeId,
@@ -784,6 +794,7 @@ export class PostgresProjectRepository implements IProjectRepository {
     });
     await tx.spydrNodeRelationship.create({
       data: {
+        orgId: project.orgId,
         userId: project.userId,
         sourceNodeId: project.id,
         targetNodeId,

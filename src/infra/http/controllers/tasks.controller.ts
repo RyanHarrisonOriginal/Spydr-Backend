@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { getAuth } from "@clerk/express";
+import { getOrgContext } from "../../../middleware/org-context.js";
 import type { ICommandBus } from "../../../domain/cqrs/commands/index.js";
 import {
   UpdateTaskCommand,
@@ -19,14 +19,11 @@ export class TasksController {
 
   list = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
 
       const items = await this.queryBus.execute<ListTasksQuery, ITaskListItem[]>(
-        new ListTasksQuery(userId)
+        new ListTasksQuery(ctx.userId, ctx.orgId)
       );
       res.json(items.map((item) => this.mapper.toListRepresentation(item)));
     } catch (error) {
@@ -37,14 +34,11 @@ export class TasksController {
 
   get = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
 
       const item = await this.queryBus.execute<GetTaskQuery, ITaskListItem | null>(
-        new GetTaskQuery(userId, req.params.id)
+        new GetTaskQuery(ctx.userId, ctx.orgId, req.params.id)
       );
 
       if (!item) {
@@ -61,14 +55,16 @@ export class TasksController {
 
   update = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = getAuth(req).userId;
-      if (!userId) {
-        res.status(401).json({ message: "Unauthorized" });
-        return;
-      }
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
 
       const item = await this.commandBus.execute<UpdateTaskCommand, ITaskListItem | null>(
-        new UpdateTaskCommand(userId, req.params.id, req.body as IUpdateTaskInput)
+        new UpdateTaskCommand(
+          ctx.userId,
+          ctx.orgId,
+          req.params.id,
+          req.body as IUpdateTaskInput
+        )
       );
 
       if (!item) {

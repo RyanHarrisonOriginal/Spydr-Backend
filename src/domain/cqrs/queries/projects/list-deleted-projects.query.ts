@@ -6,7 +6,10 @@ export class ListDeletedProjectsQuery implements IQuery<ProjectNode[]> {
   static readonly queryType = "projects.listDeleted";
   readonly queryType = ListDeletedProjectsQuery.queryType;
 
-  constructor(readonly userId: string) {}
+  constructor(
+    readonly userId: string,
+    readonly orgId: string
+  ) {}
 }
 
 export class ListDeletedProjectsQueryHandler
@@ -17,6 +20,6 @@ export class ListDeletedProjectsQueryHandler
   constructor(private readonly projects: IProjectRepository) {}
 
   execute(query: ListDeletedProjectsQuery): Promise<ProjectNode[]> {
-    return this.projects.listDeletedByUser(query.userId);
+    return this.projects.listDeletedByOrg(query.orgId);
   }
 }

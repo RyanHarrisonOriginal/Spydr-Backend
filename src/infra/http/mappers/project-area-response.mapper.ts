@@ -10,6 +10,7 @@ export interface IProjectAreaDetailsResponse {
 export interface IProjectAreaResponse {
   id: string;
   userId: string;
+  organizationId: string;
   nodeType: "project_area";
   title: string;
   body: string;
@@ -29,6 +30,7 @@ export class ProjectAreaResponseMapper
     return {
       id: domain.id,
       userId: domain.userId,
+      organizationId: domain.orgId,
       nodeType: domain.nodeType,
       title: domain.title,
       body: domain.body,

@@ -8,6 +8,7 @@ export class RestoreProjectCommand implements ICommand<ProjectNode | null> {
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly projectId: string
   ) {}
 }
@@ -20,6 +21,6 @@ export class RestoreProjectCommandHandler
   constructor(private readonly projects: IProjectRepository) {}
 
   async execute(command: RestoreProjectCommand): Promise<ProjectNode | null> {
-    return this.projects.restoreProject(command.userId, command.projectId);
+    return this.projects.restoreProject(command.orgId, command.projectId);
   }
 }

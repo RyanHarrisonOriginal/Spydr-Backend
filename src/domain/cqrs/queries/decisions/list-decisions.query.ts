@@ -6,7 +6,10 @@ export class ListDecisionsQuery implements IQuery<DecisionNode[]> {
   static readonly queryType = "decisions.list";
   readonly queryType = ListDecisionsQuery.queryType;
 
-  constructor(readonly userId: string) {}
+  constructor(
+    readonly userId: string,
+    readonly orgId: string
+  ) {}
 }
 
 export class ListDecisionsQueryHandler
@@ -17,6 +20,6 @@ export class ListDecisionsQueryHandler
   constructor(private readonly decisions: IDecisionRepository) {}
 
   execute(query: ListDecisionsQuery): Promise<DecisionNode[]> {
-    return this.decisions.listByUser(query.userId);
+    return this.decisions.listByOrg(query.orgId);
   }
 }

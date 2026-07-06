@@ -3,6 +3,7 @@ import type {
   IDecisionRepository,
   IIdeaRepository,
   INoteRepository,
+  IOrganizationRepository,
   IPersonRepository,
   IProjectAreaRepository,
   IProjectRepository,
@@ -11,6 +12,7 @@ import type {
   ITaskRepository,
   IWorkspaceDashboardRepository,
 } from "../../domain/interfaces/index.js";
+import { PostgresOrganizationRepository } from "./prisma/repositories/postgres-organization.repository.js";
 import { PostgresPersonRepository } from "./prisma/repositories/postgres-person.repository.js";
 import { PrismaSpydrNodeRepository } from "./prisma/repositories/prisma-spydr-node.repository.js";
 import { PostgresDecisionRepository } from "./prisma/repositories/postgres-decision.repository.js";
@@ -26,6 +28,7 @@ export interface IPersistenceRepositories {
   decisions: IDecisionRepository;
   ideas: IIdeaRepository;
   notes: INoteRepository;
+  organizations: IOrganizationRepository;
   people: IPersonRepository;
   projectAreas: IProjectAreaRepository;
   projects: IProjectRepository;
@@ -42,6 +45,7 @@ export function createPersistenceRepositories(
     decisions: new PostgresDecisionRepository(prisma),
     ideas: new PostgresIdeaRepository(prisma),
     notes: new PostgresNoteRepository(prisma),
+    organizations: new PostgresOrganizationRepository(prisma),
     people: new PostgresPersonRepository(prisma),
     projectAreas: new PostgresProjectAreaRepository(prisma),
     projects: new PostgresProjectRepository(prisma),

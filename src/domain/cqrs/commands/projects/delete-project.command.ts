@@ -7,6 +7,7 @@ export class DeleteProjectCommand implements ICommand<boolean> {
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly projectId: string
   ) {}
 }
@@ -19,9 +20,9 @@ export class DeleteProjectCommandHandler
   constructor(private readonly projects: IProjectRepository) {}
 
   async execute(command: DeleteProjectCommand): Promise<boolean> {
-    const project = await this.projects.findByIdForUser(
+    const project = await this.projects.findByIdForOrg(
       command.projectId,
-      command.userId
+      command.orgId
     );
     if (!project) return false;
 

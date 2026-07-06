@@ -6,7 +6,10 @@ export class ListResourcesQuery implements IQuery<ResourceNode[]> {
   static readonly queryType = "resources.list";
   readonly queryType = ListResourcesQuery.queryType;
 
-  constructor(readonly userId: string) {}
+  constructor(
+    readonly userId: string,
+    readonly orgId: string
+  ) {}
 }
 
 export class ListResourcesQueryHandler
@@ -17,6 +20,6 @@ export class ListResourcesQueryHandler
   constructor(private readonly resources: IResourceRepository) {}
 
   execute(query: ListResourcesQuery): Promise<ResourceNode[]> {
-    return this.resources.listByUser(query.userId);
+    return this.resources.listByOrg(query.orgId);
   }
 }

@@ -32,6 +32,7 @@ export interface ITaskCreateModelInput {
 
 export interface ITaskCreateModelContext {
   userId: string;
+  orgId: string;
   area?: string | null;
 }
 
@@ -48,6 +49,7 @@ export class TaskMapper {
 
     return new TaskNode({
       id: randomUUID(),
+      orgId: context.orgId,
       userId: context.userId,
       title,
       body: input.body?.trim() ?? "",
@@ -89,6 +91,7 @@ export class TaskMapper {
 
     return new TaskNode({
       id: existing.id,
+      orgId: existing.orgId,
       userId: existing.userId,
       title,
       body: input.body !== undefined ? input.body.trim() : existing.body,

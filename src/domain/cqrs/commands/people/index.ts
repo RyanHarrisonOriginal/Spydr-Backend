@@ -8,3 +8,7 @@ export {
   UpdatePersonCommandHandler,
 } from "./update-person.command.js";
 export type { IUpdatePersonInput } from "./update-person.command.js";
+export {
+  DeletePersonCommand,
+  DeletePersonCommandHandler,
+} from "./delete-person.command.js";

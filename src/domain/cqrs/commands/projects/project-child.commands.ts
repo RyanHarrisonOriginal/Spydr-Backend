@@ -18,6 +18,7 @@ export class UpdateProjectChildCommand implements ICommand<ProjectNode | null> {
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly projectId: string,
     readonly childId: string,
     readonly kind: ProjectChildKind,
@@ -34,7 +35,7 @@ export class UpdateProjectChildCommandHandler
 
   async execute(command: UpdateProjectChildCommand): Promise<ProjectNode | null> {
     return this.projects.updateRelatedNode(
-      command.userId,
+      command.orgId,
       command.projectId,
       command.childId,
       command.kind,
@@ -49,6 +50,7 @@ export class DeleteProjectChildCommand implements ICommand<ProjectNode | null> {
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly projectId: string,
     readonly childId: string,
     readonly kind: ProjectChildKind
@@ -64,7 +66,7 @@ export class DeleteProjectChildCommandHandler
 
   async execute(command: DeleteProjectChildCommand): Promise<ProjectNode | null> {
     return this.projects.softDeleteRelatedNode(
-      command.userId,
+      command.orgId,
       command.projectId,
       command.childId,
       command.kind
@@ -78,6 +80,7 @@ export class RestoreProjectChildCommand implements ICommand<ProjectNode | null> 
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly projectId: string,
     readonly childId: string,
     readonly kind: ProjectChildKind
@@ -93,7 +96,7 @@ export class RestoreProjectChildCommandHandler
 
   async execute(command: RestoreProjectChildCommand): Promise<ProjectNode | null> {
     return this.projects.restoreRelatedNode(
-      command.userId,
+      command.orgId,
       command.projectId,
       command.childId,
       command.kind
@@ -101,7 +104,6 @@ export class RestoreProjectChildCommandHandler
   }
 }
 
-// Mappers exported for repository use if needed
 export const projectChildMappers = {
   task: new TaskMapper(),
   note: new NoteMapper(),

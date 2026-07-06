@@ -16,6 +16,7 @@ export class PrismaNoteMapper
   toDomain(persistence: PrismaNote): NoteNode {
     return new NoteNode({
       id: persistence.id,
+      orgId: persistence.orgId,
       userId: persistence.userId,
       title: persistence.title,
       body: persistence.body,
@@ -35,6 +36,7 @@ export class PrismaNoteMapper
   toPersistence(domain: NoteNode): Prisma.SpydrNodeUncheckedCreateInput {
     return {
       id: domain.id,
+      orgId: domain.orgId,
       userId: domain.userId,
       nodeType: "note",
       title: domain.title,

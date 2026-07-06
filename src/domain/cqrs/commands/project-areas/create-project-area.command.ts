@@ -15,6 +15,7 @@ export class CreateProjectAreaCommand implements ICommand<ProjectAreaNode> {
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly input: ICreateProjectAreaInput
   ) {}
 }
@@ -35,15 +36,15 @@ export class CreateProjectAreaCommandHandler
       throw new Error("Project area title is required");
     }
 
-    const existing = await this.projectAreas.findByTitleForUser(
-      command.userId,
+    const existing = await this.projectAreas.findByTitleForOrg(
+      command.orgId,
       title
     );
     if (existing) {
       throw new Error("Project area already exists");
     }
 
-    const area = this.mapper.toModel(command.userId, command.input);
+    const area = this.mapper.toModel(command.userId, command.orgId, command.input);
     return this.projectAreas.save(area);
   }
 }

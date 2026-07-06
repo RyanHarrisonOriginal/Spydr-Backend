@@ -20,7 +20,7 @@ export class PostgresTaskRepository implements ITaskRepository {
   ) {}
 
   private async attachAssignees(
-    userId: string,
+    orgId: string,
     tasks: TaskNode[]
   ): Promise<TaskNode[]> {
     const assigneeIds = [
@@ -36,7 +36,7 @@ export class PostgresTaskRepository implements ITaskRepository {
     const rows = await this.db.spydrNode.findMany({
       where: {
         id: { in: assigneeIds },
-        userId,
+        orgId,
         nodeType: "person",
         isDeleted: false,
       },
@@ -55,10 +55,10 @@ export class PostgresTaskRepository implements ITaskRepository {
   }
 
   private async attachAssignee(
-    userId: string,
+    orgId: string,
     task: TaskNode
   ): Promise<TaskNode> {
-    const [hydrated] = await this.attachAssignees(userId, [task]);
+    const [hydrated] = await this.attachAssignees(orgId, [task]);
     return hydrated ?? task;
   }
 
@@ -71,23 +71,23 @@ export class PostgresTaskRepository implements ITaskRepository {
     return row && row.nodeType === "task" ? this.mapper.toDomain(row) : null;
   }
 
-  async findByIdForUser(id: string, userId: string): Promise<TaskNode | null> {
+  async findByIdForOrg(id: string, orgId: string): Promise<TaskNode | null> {
     const row = await this.db.spydrNode.findFirst({
-      where: { id, userId, nodeType: "task" },
+      where: { id, orgId, nodeType: "task" },
       include: { taskDetails: true },
     });
 
     return row ? this.mapper.toDomain(row) : null;
   }
 
-  async listByUser(userId: string): Promise<TaskNode[]> {
-    const items = await this.listByUserWithProjects(userId);
+  async listByOrg(orgId: string): Promise<TaskNode[]> {
+    const items = await this.listByOrgWithProjects(orgId);
     return items.map((item) => item.task);
   }
 
-  async listByUserWithProjects(userId: string): Promise<ITaskListItem[]> {
+  async listByOrgWithProjects(orgId: string): Promise<ITaskListItem[]> {
     const rows = await this.db.spydrNode.findMany({
-      where: { userId, nodeType: "task", isDeleted: false },
+      where: { orgId, nodeType: "task", isDeleted: false },
       include: { taskDetails: true },
       orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
     });
@@ -95,13 +95,13 @@ export class PostgresTaskRepository implements ITaskRepository {
     if (rows.length === 0) return [];
 
     const tasks = await this.attachAssignees(
-      userId,
+      orgId,
       rows.map((row) => this.mapper.toDomain(row))
     );
     const taskIds = tasks.map((task) => task.id);
     const relationships = await this.db.spydrNodeRelationship.findMany({
       where: {
-        userId,
+        orgId,
         targetNodeId: { in: taskIds },
         relationshipType: "related_to",
       },
@@ -116,7 +116,7 @@ export class PostgresTaskRepository implements ITaskRepository {
         ? []
         : await this.db.spydrNode.findMany({
             where: {
-              userId,
+              orgId,
               id: { in: projectIds },
               nodeType: "project",
               isDeleted: false,
@@ -142,12 +142,12 @@ export class PostgresTaskRepository implements ITaskRepository {
     }));
   }
 
-  async updateForUser(
-    userId: string,
+  async updateForOrg(
+    orgId: string,
     taskId: string,
     input: ITaskUpdateModelInput
   ): Promise<TaskNode | null> {
-    const existing = await this.findByIdForUser(taskId, userId);
+    const existing = await this.findByIdForOrg(taskId, orgId);
     if (!existing || existing.isDeleted) return null;
 
     const updated = this.domainMapper.updateToModel(existing, input);
@@ -155,18 +155,18 @@ export class PostgresTaskRepository implements ITaskRepository {
   }
 
   async assignToProject(
-    userId: string,
+    orgId: string,
     taskId: string,
     projectId: string | null
   ): Promise<ITaskListItem | null> {
-    const task = await this.findByIdForUser(taskId, userId);
+    const task = await this.findByIdForOrg(taskId, orgId);
     if (!task || task.isDeleted) return null;
 
     if (projectId) {
       const project = await this.db.spydrNode.findFirst({
         where: {
           id: projectId,
-          userId,
+          orgId,
           nodeType: "project",
           isDeleted: false,
         },
@@ -178,7 +178,7 @@ export class PostgresTaskRepository implements ITaskRepository {
     await this.db.$transaction(async (tx) => {
       const relationships = await tx.spydrNodeRelationship.findMany({
         where: {
-          userId,
+          orgId,
           targetNodeId: taskId,
           relationshipType: "related_to",
         },
@@ -189,7 +189,7 @@ export class PostgresTaskRepository implements ITaskRepository {
         const sourceIds = relationships.map((relationship) => relationship.sourceNodeId);
         const projectSources = await tx.spydrNode.findMany({
           where: {
-            userId,
+            orgId,
             id: { in: sourceIds },
             nodeType: "project",
           },
@@ -201,7 +201,7 @@ export class PostgresTaskRepository implements ITaskRepository {
           if (!projectSourceIds.has(relationship.sourceNodeId)) continue;
           await tx.spydrNodeRelationship.deleteMany({
             where: {
-              userId,
+              orgId,
               sourceNodeId: relationship.sourceNodeId,
               targetNodeId: taskId,
               relationshipType: "related_to",
@@ -213,7 +213,8 @@ export class PostgresTaskRepository implements ITaskRepository {
       if (projectId) {
         await tx.spydrNodeRelationship.create({
           data: {
-            userId,
+            orgId,
+            userId: task.userId,
             sourceNodeId: projectId,
             targetNodeId: taskId,
             relationshipType: "related_to",
@@ -223,29 +224,29 @@ export class PostgresTaskRepository implements ITaskRepository {
       }
     });
 
-    return this.getListItemForUser(userId, taskId);
+    return this.getListItemForOrg(orgId, taskId);
   }
 
-  async getListItemForUser(
-    userId: string,
+  async getListItemForOrg(
+    orgId: string,
     taskId: string
   ): Promise<ITaskListItem | null> {
-    const task = await this.findByIdForUser(taskId, userId);
+    const task = await this.findByIdForOrg(taskId, orgId);
     if (!task || task.isDeleted) return null;
 
     return {
-      task: await this.attachAssignee(userId, task),
-      project: await this.findProjectForTask(userId, taskId),
+      task: await this.attachAssignee(orgId, task),
+      project: await this.findProjectForTask(orgId, taskId),
     };
   }
 
   private async findProjectForTask(
-    userId: string,
+    orgId: string,
     taskId: string
   ): Promise<ITaskProjectRef | null> {
     const relationships = await this.db.spydrNodeRelationship.findMany({
       where: {
-        userId,
+        orgId,
         targetNodeId: taskId,
         relationshipType: "related_to",
       },
@@ -256,7 +257,7 @@ export class PostgresTaskRepository implements ITaskRepository {
 
     const project = await this.db.spydrNode.findFirst({
       where: {
-        userId,
+        orgId,
         id: { in: relationships.map((relationship) => relationship.sourceNodeId) },
         nodeType: "project",
         isDeleted: false,
@@ -314,6 +315,7 @@ export class PostgresTaskRepository implements ITaskRepository {
 
       await tx.spydrNodeRelationship.create({
         data: {
+          orgId: entity.orgId,
           userId: entity.userId,
           sourceNodeId: projectId,
           targetNodeId: entity.id,

@@ -24,6 +24,7 @@ export class AddTaskToProjectCommand implements ICommand<TaskNode | null> {
 
   constructor(
     readonly userId: string,
+    readonly orgId: string,
     readonly projectId: string,
     readonly input: IAddTaskToProjectInput
   ) {}
@@ -41,17 +42,17 @@ export class AddTaskToProjectCommandHandler
   ) {}
 
   async execute(command: AddTaskToProjectCommand): Promise<TaskNode | null> {
-    const project = await this.projects.findByIdForUser(
+    const project = await this.projects.findByIdForOrg(
       command.projectId,
-      command.userId
+      command.orgId
     );
     if (!project) return null;
 
     let assignee = null;
     if (command.input.assigneePersonNodeId) {
-      assignee = await this.people.findByIdForUser(
+      assignee = await this.people.findByIdForOrg(
         command.input.assigneePersonNodeId,
-        command.userId
+        command.orgId
       );
       if (!assignee) {
         throw new Error("Person not found");
@@ -60,6 +61,7 @@ export class AddTaskToProjectCommandHandler
 
     const task = this.mapper.toModel(command.input, {
       userId: command.userId,
+      orgId: command.orgId,
       area: project.area,
     });
     project.addTask(task);

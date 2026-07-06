@@ -19,6 +19,7 @@ export class PrismaDecisionMapper
   toDomain(persistence: PrismaDecisionWithDetails): DecisionNode {
     return new DecisionNode({
       id: persistence.id,
+      orgId: persistence.orgId,
       userId: persistence.userId,
       title: persistence.title,
       body: persistence.body,
@@ -48,6 +49,7 @@ export class PrismaDecisionMapper
   toPersistence(domain: DecisionNode): Prisma.SpydrNodeUncheckedCreateInput {
     return {
       id: domain.id,
+      orgId: domain.orgId,
       userId: domain.userId,
       nodeType: "decision",
       title: domain.title,

@@ -18,6 +18,7 @@ export class PrismaSpydrNodeMapper
   toDomain(persistence: PrismaSpydrNode): DomainNode {
     return new DomainNode({
       id: persistence.id,
+      orgId: persistence.orgId,
       userId: persistence.userId,
       nodeType: persistence.nodeType as SpydrNodeType,
       title: persistence.title,
@@ -37,6 +38,7 @@ export class PrismaSpydrNodeMapper
   toPersistence(domain: DomainNode): Prisma.SpydrNodeUncheckedCreateInput {
     return {
       id: domain.id,
+      orgId: domain.orgId,
       userId: domain.userId,
       nodeType: domain.nodeType,
       title: domain.title,

@@ -18,18 +18,18 @@ export class PostgresResourceRepository implements IResourceRepository {
     return row && row.nodeType === "resource" ? this.mapper.toDomain(row) : null;
   }
 
-  async findByIdForUser(id: string, userId: string): Promise<ResourceNode | null> {
+  async findByIdForOrg(id: string, orgId: string): Promise<ResourceNode | null> {
     const row = await this.db.spydrNode.findFirst({
-      where: { id, userId, nodeType: "resource" },
+      where: { id, orgId, nodeType: "resource" },
       include: { resourceDetails: true },
     });
 
     return row ? this.mapper.toDomain(row) : null;
   }
 
-  async listByUser(userId: string): Promise<ResourceNode[]> {
+  async listByOrg(orgId: string): Promise<ResourceNode[]> {
     const rows = await this.db.spydrNode.findMany({
-      where: { userId, nodeType: "resource", isDeleted: false },
+      where: { orgId, nodeType: "resource", isDeleted: false },
       include: { resourceDetails: true },
       orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
     });

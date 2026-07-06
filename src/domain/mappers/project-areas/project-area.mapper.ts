@@ -23,6 +23,7 @@ export interface IProjectAreaCreateModelInput {
 export class ProjectAreaMapper {
   toModel(
     userId: string,
+    orgId: string,
     input: IProjectAreaCreateModelInput,
     now = new Date()
   ): ProjectAreaNode {
@@ -38,6 +39,7 @@ export class ProjectAreaMapper {
 
     return new ProjectAreaNode({
       id: randomUUID(),
+      orgId,
       userId,
       title,
       body: input.body?.trim() ?? "",
