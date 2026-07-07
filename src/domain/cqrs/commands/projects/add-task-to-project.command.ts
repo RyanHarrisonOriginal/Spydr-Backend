@@ -1,11 +1,13 @@
 import type { IProjectRepository } from "../../../interfaces/index.js";
 import type { IPersonRepository } from "../../../interfaces/person-repository.js";
+import type { ISpydrNodeRepository } from "../../../interfaces/spydr-node-repository.js";
 import { TaskMapper } from "../../../mappers/tasks/index.js";
 import type { TaskNode } from "../../../models/tasks/index.js";
 import {
   type TaskStatus,
   type SpydrPriority,
 } from "../../../models/shared.js";
+import { nextCollectionSortOrder } from "../../../utils/collection-sort-order.js";
 import type { ICommand, ICommandHandler } from "../command.js";
 
 export interface IAddTaskToProjectInput {
@@ -38,6 +40,7 @@ export class AddTaskToProjectCommandHandler
   constructor(
     private readonly projects: IProjectRepository,
     private readonly people: IPersonRepository,
+    private readonly nodes: ISpydrNodeRepository,
     private readonly mapper = new TaskMapper()
   ) {}
 
@@ -59,10 +62,16 @@ export class AddTaskToProjectCommandHandler
       }
     }
 
+    const sortOrder = await nextCollectionSortOrder(
+      this.nodes,
+      command.orgId,
+      "task"
+    );
     const task = this.mapper.toModel(command.input, {
       userId: command.userId,
       orgId: command.orgId,
       area: project.area,
+      sortOrder,
     });
     project.addTask(task);
 

@@ -1,11 +1,13 @@
 import type { IProjectAreaRepository } from "../../../interfaces/project-area-repository.js";
 import type { IProjectRepository } from "../../../interfaces/index.js";
+import type { ISpydrNodeRepository } from "../../../interfaces/spydr-node-repository.js";
 import { ProjectMapper } from "../../../mappers/projects/index.js";
 import type { ProjectNode } from "../../../models/projects/index.js";
 import {
   type SpydrNodeStatus,
   type SpydrPriority,
 } from "../../../models/shared.js";
+import { nextCollectionSortOrder } from "../../../utils/collection-sort-order.js";
 import type { ICommand, ICommandHandler } from "../command.js";
 
 export interface ICreateProjectInput {
@@ -41,6 +43,7 @@ export class CreateProjectCommandHandler
   constructor(
     private readonly projects: IProjectRepository,
     private readonly projectAreas: IProjectAreaRepository,
+    private readonly nodes: ISpydrNodeRepository,
     private readonly mapper = new ProjectMapper()
   ) {}
 
@@ -58,7 +61,18 @@ export class CreateProjectCommandHandler
       input.area = area.title;
     }
 
-    const project = this.mapper.toModel(command.userId, command.orgId, input);
+    const sortOrder = await nextCollectionSortOrder(
+      this.nodes,
+      command.orgId,
+      "project"
+    );
+    const project = this.mapper.toModel(
+      command.userId,
+      command.orgId,
+      input,
+      new Date(),
+      sortOrder
+    );
     const saved = await this.projects.save(project);
 
     if (command.input.areaNodeId) {

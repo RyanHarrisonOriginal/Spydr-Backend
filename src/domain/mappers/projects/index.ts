@@ -45,7 +45,8 @@ export class ProjectMapper {
     userId: string,
     orgId: string,
     input: IProjectCreateModelInput,
-    now?: Date
+    now?: Date,
+    sortOrder?: number
   ): ProjectNode;
   toModel(
     existing: ProjectNode,
@@ -56,19 +57,27 @@ export class ProjectMapper {
     arg1: string | ProjectNode,
     arg2: string | IProjectUpdateModelInput,
     arg3?: IProjectCreateModelInput | Date,
-    arg4?: Date
+    arg4?: Date | number,
+    arg5?: number
   ): ProjectNode {
     if (typeof arg1 === "string") {
-      const now = arg4 ?? (arg3 instanceof Date ? arg3 : new Date());
-      return this.createToModel(
-        arg1,
-        arg2 as string,
-        arg3 as IProjectCreateModelInput,
-        now
-      );
+      const now =
+        arg3 instanceof Date
+          ? arg3
+          : arg4 instanceof Date
+            ? arg4
+            : new Date();
+      const sortOrder =
+        typeof arg5 === "number"
+          ? arg5
+          : typeof arg4 === "number"
+            ? arg4
+            : undefined;
+      const input = (arg3 instanceof Date ? arg4 : arg3) as IProjectCreateModelInput;
+      return this.createToModel(arg1, arg2 as string, input, now, sortOrder);
     }
 
-    const now = (arg3 instanceof Date ? arg3 : arg4) ?? new Date();
+    const now = (arg3 instanceof Date ? arg3 : arg4 instanceof Date ? arg4 : undefined) ?? new Date();
     return this.updateToModel(arg1, arg2 as IProjectUpdateModelInput, now);
   }
 
@@ -76,7 +85,8 @@ export class ProjectMapper {
     userId: string,
     orgId: string,
     input: IProjectCreateModelInput,
-    now: Date
+    now: Date,
+    sortOrder?: number
   ): ProjectNode {
     const title = this.nullableTrim(input.title) ?? "";
 
@@ -97,6 +107,7 @@ export class ProjectMapper {
       priority,
       area: this.nullableTrim(input.area),
       tags: this.normalizeTags(input.tags),
+      sortOrder,
       createdAt: now,
       updatedAt: now,
       archivedAt: null,
@@ -143,6 +154,7 @@ export class ProjectMapper {
           : existing.priority,
       area: input.area !== undefined ? this.nullableTrim(input.area) : existing.area,
       tags: existing.tags,
+      sortOrder: existing.sortOrder,
       createdAt: existing.createdAt,
       updatedAt: now,
       archivedAt: existing.archivedAt,

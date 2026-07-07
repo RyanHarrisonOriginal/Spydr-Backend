@@ -1,10 +1,12 @@
 import type { IProjectRepository } from "../../../interfaces/index.js";
+import type { ISpydrNodeRepository } from "../../../interfaces/spydr-node-repository.js";
 import { DecisionMapper } from "../../../mappers/decisions/index.js";
 import type { DecisionNode } from "../../../models/decisions/index.js";
 import {
   type SpydrNodeStatus,
   type SpydrPriority,
 } from "../../../models/shared.js";
+import { nextCollectionSortOrder } from "../../../utils/collection-sort-order.js";
 import type { ICommand, ICommandHandler } from "../command.js";
 
 export interface IAddDecisionToProjectInput {
@@ -35,6 +37,7 @@ export class AddDecisionToProjectCommandHandler
 
   constructor(
     private readonly projects: IProjectRepository,
+    private readonly nodes: ISpydrNodeRepository,
     private readonly mapper = new DecisionMapper()
   ) {}
 
@@ -47,10 +50,16 @@ export class AddDecisionToProjectCommandHandler
     );
     if (!project) return null;
 
+    const sortOrder = await nextCollectionSortOrder(
+      this.nodes,
+      command.orgId,
+      "decision"
+    );
     const decision = this.mapper.toModel(command.input, {
       userId: command.userId,
       orgId: command.orgId,
       area: project.area,
+      sortOrder,
     });
     project.addDecision(decision);
 

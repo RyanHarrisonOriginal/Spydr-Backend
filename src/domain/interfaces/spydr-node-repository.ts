@@ -20,4 +20,5 @@ export interface ISpydrNodeRepository extends IRepository<DomainNode> {
     nodeType: SpydrNodeType,
     orderedIds: readonly string[]
   ): Promise<void>;
+  nextSortOrderForOrg(orgId: string, nodeType: SpydrNodeType): Promise<number>;
 }

@@ -1,10 +1,12 @@
 import type { IProjectRepository } from "../../../interfaces/index.js";
+import type { ISpydrNodeRepository } from "../../../interfaces/spydr-node-repository.js";
 import { IdeaMapper } from "../../../mappers/ideas/index.js";
 import type { IdeaNode } from "../../../models/ideas/index.js";
 import {
   type SpydrNodeStatus,
   type SpydrPriority,
 } from "../../../models/shared.js";
+import { nextCollectionSortOrder } from "../../../utils/collection-sort-order.js";
 import type { ICommand, ICommandHandler } from "../command.js";
 
 export interface IAddIdeaToProjectInput {
@@ -35,6 +37,7 @@ export class AddIdeaToProjectCommandHandler
 
   constructor(
     private readonly projects: IProjectRepository,
+    private readonly nodes: ISpydrNodeRepository,
     private readonly mapper = new IdeaMapper()
   ) {}
 
@@ -45,10 +48,16 @@ export class AddIdeaToProjectCommandHandler
     );
     if (!project) return null;
 
+    const sortOrder = await nextCollectionSortOrder(
+      this.nodes,
+      command.orgId,
+      "idea"
+    );
     const idea = this.mapper.toModel(command.input, {
       userId: command.userId,
       orgId: command.orgId,
       area: project.area,
+      sortOrder,
     });
     project.addIdea(idea);
 

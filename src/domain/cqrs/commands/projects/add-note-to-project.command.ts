@@ -1,10 +1,12 @@
 import type { IProjectRepository } from "../../../interfaces/index.js";
+import type { ISpydrNodeRepository } from "../../../interfaces/spydr-node-repository.js";
 import { NoteMapper } from "../../../mappers/notes/index.js";
 import type { NoteNode } from "../../../models/notes/index.js";
 import {
   type SpydrNodeStatus,
   type SpydrPriority,
 } from "../../../models/shared.js";
+import { nextCollectionSortOrder } from "../../../utils/collection-sort-order.js";
 import type { ICommand, ICommandHandler } from "../command.js";
 
 export interface IAddNoteToProjectInput {
@@ -33,6 +35,7 @@ export class AddNoteToProjectCommandHandler
 
   constructor(
     private readonly projects: IProjectRepository,
+    private readonly nodes: ISpydrNodeRepository,
     private readonly mapper = new NoteMapper()
   ) {}
 
@@ -43,10 +46,16 @@ export class AddNoteToProjectCommandHandler
     );
     if (!project) return null;
 
+    const sortOrder = await nextCollectionSortOrder(
+      this.nodes,
+      command.orgId,
+      "note"
+    );
     const note = this.mapper.toModel(command.input, {
       userId: command.userId,
       orgId: command.orgId,
       area: project.area,
+      sortOrder,
     });
     project.addNote(note);
 

@@ -24,6 +24,7 @@ export interface INoteCreateModelContext {
   userId: string;
   orgId: string;
   area?: string | null;
+  sortOrder?: number;
 }
 
 export class NoteMapper {
@@ -44,6 +45,7 @@ export class NoteMapper {
       priority: this.normalizePriority(input.priority),
       area: context.area ?? null,
       tags: [],
+      sortOrder: context.sortOrder,
       createdAt: now,
       updatedAt: now,
       archivedAt: null,
@@ -70,6 +72,7 @@ export class NoteMapper {
       priority: existing.priority,
       area: existing.area,
       tags: existing.tags,
+      sortOrder: existing.sortOrder,
       createdAt: existing.createdAt,
       updatedAt: now,
       archivedAt: existing.archivedAt,

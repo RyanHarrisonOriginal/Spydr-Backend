@@ -23,6 +23,17 @@ export interface IWorkspaceDashboardPersonLoad {
 
 export type IWorkspaceDashboardStatusCounts = Record<string, number>;
 
+export interface IWorkspaceDashboardAreaSummary {
+  id: string | null;
+  name: string;
+  /** HSL channels, e.g. `18 94% 50%` */
+  color: string;
+  projects: number;
+  activeProjects: number;
+  tasks: number;
+  openTasks: number;
+}
+
 export interface IWorkspaceDashboardSummary {
   totalProjects: number;
   activeProjects: number;
@@ -40,6 +51,7 @@ export interface IWorkspaceDashboard {
   summary: IWorkspaceDashboardSummary;
   projectStatusCounts: IWorkspaceDashboardStatusCounts;
   taskStatusCounts: IWorkspaceDashboardStatusCounts;
+  areaSummaries: IWorkspaceDashboardAreaSummary[];
   personLoads: IWorkspaceDashboardPersonLoad[];
 }
 

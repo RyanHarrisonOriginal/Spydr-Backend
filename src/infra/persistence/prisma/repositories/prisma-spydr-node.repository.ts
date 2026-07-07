@@ -66,22 +66,39 @@ export class PrismaSpydrNodeRepository implements ISpydrNodeRepository {
         orgId,
         nodeType,
         isDeleted: false,
-        id: { in: [...orderedIds] },
       },
+      orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }, { id: "asc" }],
       select: { id: true },
     });
 
-    const allowedIds = new Set(rows.map((row) => row.id));
-    const normalizedIds = orderedIds.filter((id) => allowedIds.has(id));
-    if (normalizedIds.length === 0) return;
+    if (rows.length === 0) return;
+
+    const allIds = rows.map((row) => row.id);
+    const allowedIds = new Set(allIds);
+    const normalizedOrderedIds = orderedIds.filter((id) => allowedIds.has(id));
+    const orderedSet = new Set(normalizedOrderedIds);
+    const trailingIds = allIds.filter((id) => !orderedSet.has(id));
+    const finalOrder = [...normalizedOrderedIds, ...trailingIds];
+
+    if (finalOrder.length === 0) return;
 
     await this.db.$transaction(
-      normalizedIds.map((id, index) =>
+      finalOrder.map((id, index) =>
         this.db.spydrNode.update({
           where: { id },
           data: { sortOrder: index * 1000 },
         })
       )
     );
+  }
+
+  async nextSortOrderForOrg(orgId: string, nodeType: SpydrNodeType): Promise<number> {
+    const result = await this.db.spydrNode.aggregate({
+      where: { orgId, nodeType, isDeleted: false },
+      _max: { sortOrder: true },
+    });
+
+    const currentMax = result._max.sortOrder;
+    return (currentMax ?? -1000) + 1000;
   }
 }

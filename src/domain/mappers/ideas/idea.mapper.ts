@@ -25,6 +25,7 @@ export interface IIdeaCreateModelContext {
   userId: string;
   orgId: string;
   area?: string | null;
+  sortOrder?: number;
 }
 
 export class IdeaMapper {
@@ -48,6 +49,7 @@ export class IdeaMapper {
       priority: this.normalizePriority(input.priority),
       area: context.area ?? null,
       tags: [],
+      sortOrder: context.sortOrder,
       createdAt: now,
       updatedAt: now,
       archivedAt: null,
@@ -79,6 +81,7 @@ export class IdeaMapper {
       priority: existing.priority,
       area: existing.area,
       tags: existing.tags,
+      sortOrder: existing.sortOrder,
       createdAt: existing.createdAt,
       updatedAt: now,
       archivedAt: existing.archivedAt,

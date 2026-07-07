@@ -41,8 +41,8 @@ export function createHttpApp(options: IHttpAppOptions): Express {
   );
 
   app.use(apiPrefix, requireOrgContext);
-  app.use(`${apiPrefix}/decisions`, createDecisionsRouter(options.queryBus));
-  app.use(`${apiPrefix}/ideas`, createIdeasRouter(options.queryBus));
+  app.use(`${apiPrefix}/decisions`, createDecisionsRouter(options.queryBus, options.commandBus));
+  app.use(`${apiPrefix}/ideas`, createIdeasRouter(options.queryBus, options.commandBus));
   app.use(`${apiPrefix}/notes`, createNotesRouter(options.queryBus, options.commandBus));
   app.use(
     `${apiPrefix}/people`,

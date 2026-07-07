@@ -1,8 +1,10 @@
 import type { ICommand, ICommandHandler } from "../command.js";
 import type { IPersonRepository } from "../../../interfaces/person-repository.js";
+import type { ISpydrNodeRepository } from "../../../interfaces/spydr-node-repository.js";
 import { PersonMapper } from "../../../mappers/people/index.js";
 import type { PersonNode } from "../../../models/people/index.js";
 import type { SpydrNodeStatus, SpydrPriority } from "../../../models/shared.js";
+import { nextCollectionSortOrder } from "../../../utils/collection-sort-order.js";
 
 export interface ICreatePersonInput {
   fullName: string;
@@ -33,11 +35,23 @@ export class CreatePersonCommandHandler
 
   constructor(
     private readonly people: IPersonRepository,
+    private readonly nodes: ISpydrNodeRepository,
     private readonly mapper = new PersonMapper()
   ) {}
 
   async execute(command: CreatePersonCommand): Promise<PersonNode> {
-    const person = this.mapper.toModel(command.userId, command.orgId, command.input);
+    const sortOrder = await nextCollectionSortOrder(
+      this.nodes,
+      command.orgId,
+      "person"
+    );
+    const person = this.mapper.toModel(
+      command.userId,
+      command.orgId,
+      command.input,
+      new Date(),
+      sortOrder
+    );
     return this.people.save(person);
   }
 }

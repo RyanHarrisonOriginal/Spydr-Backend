@@ -153,6 +153,13 @@ export class PostgresNoteRepository implements INoteRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await this.db.spydrNode.delete({ where: { id } });
+    await this.db.spydrNode.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
   }
 }

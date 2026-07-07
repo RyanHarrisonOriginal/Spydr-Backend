@@ -45,6 +45,7 @@ export class TaskNode extends DomainNode<"task"> {
       priority: this.priority,
       area: this.area,
       tags: this.tags,
+      sortOrder: this.sortOrder,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
       archivedAt: this.archivedAt,

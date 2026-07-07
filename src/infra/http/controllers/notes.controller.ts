@@ -3,6 +3,7 @@ import { getOrgContext } from "../../../middleware/org-context.js";
 import type { ICommandBus } from "../../../domain/cqrs/commands/index.js";
 import {
   UpdateNoteCommand,
+  DeleteNoteCommand,
   type IUpdateNoteInput,
 } from "../../../domain/cqrs/commands/index.js";
 import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";
@@ -76,6 +77,27 @@ export class NotesController {
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Failed to update note" });
+    }
+  };
+
+  delete = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
+
+      const deleted = await this.commandBus.execute<DeleteNoteCommand, boolean>(
+        new DeleteNoteCommand(ctx.userId, ctx.orgId, req.params.id)
+      );
+
+      if (!deleted) {
+        res.status(404).json({ message: "Note not found" });
+        return;
+      }
+
+      res.status(204).send();
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to delete note" });
     }
   };
 }

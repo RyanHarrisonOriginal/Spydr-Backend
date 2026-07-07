@@ -34,7 +34,8 @@ export class PersonMapper {
     userId: string,
     orgId: string,
     input: IPersonCreateModelInput,
-    now = new Date()
+    now = new Date(),
+    sortOrder?: number
   ): PersonNode {
     const fullName = input.fullName.trim();
     if (!fullName) {
@@ -51,6 +52,7 @@ export class PersonMapper {
       priority: this.normalizePriority(input.priority),
       area: null,
       tags: [],
+      sortOrder,
       createdAt: now,
       updatedAt: now,
       archivedAt: null,
@@ -94,6 +96,7 @@ export class PersonMapper {
           : existing.priority,
       area: existing.area,
       tags: existing.tags,
+      sortOrder: existing.sortOrder,
       createdAt: existing.createdAt,
       updatedAt: now,
       archivedAt: existing.archivedAt,

@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import type {
   IWorkspaceDashboard,
+  IWorkspaceDashboardAreaSummary,
   IWorkspaceDashboardPersonLoad,
   IWorkspaceDashboardPersonRef,
   IWorkspaceDashboardPersonRoleCounts,
@@ -9,6 +10,8 @@ import type {
 } from "../../../../domain/interfaces/workspace-dashboard-repository.js";
 
 const UNASSIGNED_KEY = "__unassigned__";
+const UNASSIGNED_AREA_COLOR = "0 0% 45%";
+const DEFAULT_AREA_COLOR = "18 94% 50%";
 
 const personaFields = [
   "assigneePersonNodeId",
@@ -72,7 +75,7 @@ export class PostgresWorkspaceDashboardRepository
   async getForOrg(orgId: string): Promise<IWorkspaceDashboard> {
     const today = startOfUtcDay(new Date());
 
-    const [projects, tasks, relationships] = await Promise.all([
+    const [projects, tasks, relationships, areaRows] = await Promise.all([
       this.db.spydrNode.findMany({
         where: { orgId, nodeType: "project", isDeleted: false },
         include: { projectDetails: true },
@@ -84,6 +87,11 @@ export class PostgresWorkspaceDashboardRepository
       this.db.spydrNodeRelationship.findMany({
         where: { orgId, relationshipType: "related_to" },
         select: { sourceNodeId: true, targetNodeId: true },
+      }),
+      this.db.spydrNode.findMany({
+        where: { orgId, nodeType: "project_area", isDeleted: false },
+        include: { projectAreaDetails: true },
+        orderBy: { title: "asc" },
       }),
     ]);
 
@@ -160,6 +168,70 @@ export class PostgresWorkspaceDashboardRepository
     const projectStatusCounts: IWorkspaceDashboardStatusCounts = {};
     const taskStatusCounts: IWorkspaceDashboardStatusCounts = {};
 
+    type AreaBucket = {
+      id: string | null;
+      name: string;
+      color: string;
+      projects: number;
+      activeProjects: number;
+      tasks: number;
+      openTasks: number;
+    };
+
+    const areaByTitle = new Map(
+      areaRows.map((area) => [
+        area.title.trim().toLowerCase(),
+        {
+          id: area.id,
+          name: area.title,
+          color: area.projectAreaDetails?.color ?? DEFAULT_AREA_COLOR,
+        },
+      ])
+    );
+
+    const areaBuckets = new Map<string, AreaBucket>();
+    const ensureAreaBucket = (key: string, meta: { id: string | null; name: string; color: string }) => {
+      if (!areaBuckets.has(key)) {
+        areaBuckets.set(key, {
+          id: meta.id,
+          name: meta.name,
+          color: meta.color,
+          projects: 0,
+          activeProjects: 0,
+          tasks: 0,
+          openTasks: 0,
+        });
+      }
+      return areaBuckets.get(key)!;
+    };
+
+    for (const area of areaRows) {
+      ensureAreaBucket(area.id, {
+        id: area.id,
+        name: area.title,
+        color: area.projectAreaDetails?.color ?? DEFAULT_AREA_COLOR,
+      });
+    }
+
+    const resolveProjectAreaKey = (areaTitle: string | null | undefined): string => {
+      if (!areaTitle?.trim()) return UNASSIGNED_KEY;
+      const match = areaByTitle.get(areaTitle.trim().toLowerCase());
+      return match?.id ?? `title:${areaTitle.trim().toLowerCase()}`;
+    };
+
+    const resolveProjectAreaMeta = (areaTitle: string | null | undefined) => {
+      if (!areaTitle?.trim()) {
+        return { id: null, name: "Unassigned", color: UNASSIGNED_AREA_COLOR };
+      }
+      const match = areaByTitle.get(areaTitle.trim().toLowerCase());
+      if (match) return match;
+      return {
+        id: null,
+        name: areaTitle.trim(),
+        color: DEFAULT_AREA_COLOR,
+      };
+    };
+
     let unassignedProjects = 0;
     let unassignedProjectTasks = 0;
     let unlinkedTasks = 0;
@@ -186,6 +258,14 @@ export class PostgresWorkspaceDashboardRepository
     for (const project of projects) {
       incrementStatusCount(projectStatusCounts, project.status);
 
+      const areaKey = resolveProjectAreaKey(project.area);
+      const areaMeta = resolveProjectAreaMeta(project.area);
+      const areaBucket = ensureAreaBucket(areaKey, areaMeta);
+      areaBucket.projects += 1;
+      if (isOpenProjectStatus(project.status)) {
+        areaBucket.activeProjects += 1;
+      }
+
       const details = project.projectDetails;
       const assigneeId = details?.assigneePersonNodeId ?? null;
       const assigneeKey = personKey(assigneeId);
@@ -211,6 +291,11 @@ export class PostgresWorkspaceDashboardRepository
       for (const taskId of tasksByProject.get(project.id) ?? []) {
         const task = taskById.get(taskId);
         if (!task) continue;
+
+        areaBucket.tasks += 1;
+        if (isOpenTaskStatus(task.status)) {
+          areaBucket.openTasks += 1;
+        }
 
         assigneeLoad.tasks += 1;
         if (!assigneeId) unassignedProjectTasks += 1;
@@ -242,6 +327,13 @@ export class PostgresWorkspaceDashboardRepository
       isOpenProjectStatus(project.status)
     ).length;
 
+    const areaSummaries: IWorkspaceDashboardAreaSummary[] = Array.from(areaBuckets.values())
+      .filter((bucket) => bucket.projects > 0 || bucket.id !== null)
+      .sort((left, right) => {
+        if (right.projects !== left.projects) return right.projects - left.projects;
+        return left.name.localeCompare(right.name);
+      });
+
     return {
       generatedAt: new Date().toISOString(),
       summary: {
@@ -257,6 +349,7 @@ export class PostgresWorkspaceDashboardRepository
       },
       projectStatusCounts,
       taskStatusCounts,
+      areaSummaries,
       personLoads: sortedPersonLoads,
     };
   }
