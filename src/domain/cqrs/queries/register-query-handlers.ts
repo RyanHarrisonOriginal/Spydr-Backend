@@ -7,6 +7,7 @@ import { ListNotesQueryHandler, GetNoteQueryHandler } from "./notes/index.js";
 import { ListProjectAreasQueryHandler } from "./project-areas/index.js";
 import {
   GetPersonQueryHandler,
+  GetPersonWorkQueryHandler,
   ListPeopleQueryHandler,
 } from "./people/index.js";
 import {
@@ -31,6 +32,7 @@ export function registerQueryHandlers(
     new ListProjectAreasQueryHandler(repositories.projectAreas),
     new ListPeopleQueryHandler(repositories.people),
     new GetPersonQueryHandler(repositories.people),
+    new GetPersonWorkQueryHandler(repositories.personWork),
     new GetProjectQueryHandler(repositories.projects),
     new ListProjectsQueryHandler(repositories.projects),
     new ListDeletedProjectsQueryHandler(repositories.projects),

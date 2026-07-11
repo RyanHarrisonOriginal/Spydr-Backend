@@ -11,6 +11,8 @@ export function createPeopleRouter(
   const router = Router();
 
   router.get("/", controller.list);
+  router.get("/:personId/work", controller.getWork);
+  router.post("/:personId/collections/reorder", controller.reorderCollection);
   router.get("/:personId", controller.get);
   router.post("/", controller.create);
   router.patch("/:personId", controller.update);

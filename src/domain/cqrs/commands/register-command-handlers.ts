@@ -11,6 +11,7 @@ import {
 import {
   CreatePersonCommandHandler,
   DeletePersonCommandHandler,
+  ReorderPersonCollectionCommandHandler,
   UpdatePersonCommandHandler,
 } from "./people/index.js";
 import {
@@ -43,7 +44,10 @@ export function registerCommandHandlers(
     new DeleteProjectAreaCommandHandler(repositories.projectAreas),
     new CreatePersonCommandHandler(repositories.people, repositories.spydrNodes),
     new UpdatePersonCommandHandler(repositories.people),
-    new DeletePersonCommandHandler(repositories.people),
+    new DeletePersonCommandHandler(
+      repositories.people,
+      repositories.personCollectionSort
+    ),
     new CreateProjectCommandHandler(
       repositories.projects,
       repositories.projectAreas,
@@ -83,5 +87,10 @@ export function registerCommandHandlers(
     new DeleteIdeaCommandHandler(repositories.ideas),
     new DeleteDecisionCommandHandler(repositories.decisions),
     new ReorderNodesCommandHandler(repositories.spydrNodes),
+    new ReorderPersonCollectionCommandHandler(
+      repositories.people,
+      repositories.personWork,
+      repositories.personCollectionSort
+    ),
   ]);
 }

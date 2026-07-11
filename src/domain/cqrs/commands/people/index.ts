@@ -12,3 +12,8 @@ export {
   DeletePersonCommand,
   DeletePersonCommandHandler,
 } from "./delete-person.command.js";
+export {
+  ReorderPersonCollectionCommand,
+  ReorderPersonCollectionCommandHandler,
+} from "./reorder-person-collection.command.js";
+export type { IReorderPersonCollectionInput } from "./reorder-person-collection.command.js";

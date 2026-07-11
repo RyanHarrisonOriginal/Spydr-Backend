@@ -1,6 +1,12 @@
+import type { IDecisionListItem } from "../../../domain/interfaces/decision-repository.js";
 import type { DecisionNode } from "../../../domain/models/decisions/index.js";
 import type { IRepresentationMapper } from "../../../domain/mappers/index.js";
 import { nodeLifecycleResponse } from "./node-lifecycle-response.js";
+
+export interface IDecisionProjectResponse {
+  id: string;
+  title: string;
+}
 
 export interface IDecisionResponse {
   id: string;
@@ -19,6 +25,7 @@ export interface IDecisionResponse {
   archivedAt: string | null;
   isDeleted: boolean;
   deletedAt: string | null;
+  project: IDecisionProjectResponse | null;
   details: {
     rationale: string;
     impact: string;
@@ -32,7 +39,10 @@ export interface IDecisionResponse {
 export class DecisionResponseMapper
   implements IRepresentationMapper<DecisionNode, IDecisionResponse>
 {
-  toRepresentation(domain: DecisionNode): IDecisionResponse {
+  toRepresentation(
+    domain: DecisionNode,
+    project: IDecisionProjectResponse | null = null
+  ): IDecisionResponse {
     return {
       id: domain.id,
       userId: domain.userId,
@@ -49,6 +59,7 @@ export class DecisionResponseMapper
       updatedAt: domain.updatedAt.toISOString(),
       archivedAt: domain.archivedAt?.toISOString() ?? null,
       ...nodeLifecycleResponse(domain),
+      project,
       details: domain.details
         ? {
             rationale: domain.details.rationale,
@@ -60,5 +71,9 @@ export class DecisionResponseMapper
           }
         : null,
     };
+  }
+
+  toListRepresentation(item: IDecisionListItem): IDecisionResponse {
+    return this.toRepresentation(item.decision, item.project);
   }
 }

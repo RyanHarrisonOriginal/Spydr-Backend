@@ -97,6 +97,7 @@ model Organization {
   relationships SpydrNodeRelationship[]
   outlookSnapshots SpydrOutlookSnapshot[]
   outlookTemplates SpydrOutlookTemplate[]
+  personCollectionSorts SpydrPersonCollectionSort[]
 
   @@map("organizations")
 }
@@ -352,4 +353,21 @@ model SpydrTaskDetails {
   @@index([dueDate], map: "idx_spydr_task_due_date")
   @@index([assigneePersonNodeId], map: "idx_spydr_task_assignee")
   @@map("spydr_task_details")
+}
+
+model SpydrPersonCollectionSort {
+  id           String       @id(map: "spydr_person_collection_sort_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId        String       @map("org_id") @db.Uuid
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, map: "spydr_person_collection_sort_org_id_fkey")
+  personNodeId String       @map("person_node_id") @db.Uuid
+  nodeId       String       @map("node_id") @db.Uuid
+  nodeType     String       @map("node_type")
+  sortOrder    Int          @map("sort_order")
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime     @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([orgId, personNodeId, nodeId], map: "spydr_person_collection_sort_person_node_uq")
+  @@index([orgId, personNodeId, nodeType, sortOrder], map: "idx_person_collection_sort_list")
+  @@index([nodeId], map: "idx_person_collection_sort_node")
+  @@map("spydr_person_collection_sort")
 }
