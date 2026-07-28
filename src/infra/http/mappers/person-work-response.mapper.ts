@@ -12,6 +12,7 @@ import { TaskResponseMapper, type ITaskResponse } from "./task-response.mapper.j
 export interface IPersonWorkProjectEntryResponse {
   project: IProjectResponse;
   roles: string[];
+  openTaskCount: number;
   sortOrder: number;
   personSortOrder: number | null;
   globalRank: number;
@@ -50,6 +51,7 @@ export class PersonWorkResponseMapper {
     return {
       project: this.projectMapper.toRepresentation(entry.project),
       roles: entry.roles,
+      openTaskCount: entry.openTaskCount,
       sortOrder: entry.sortOrder,
       personSortOrder: entry.personSortOrder,
       globalRank: entry.globalRank,

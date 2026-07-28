@@ -14,6 +14,10 @@ import {
   projectInvolvesPerson,
 } from "../../../../domain/utils/person-project-roles.js";
 
+function isOpenTaskStatus(status: string): boolean {
+  return status !== "completed" && status !== "archived";
+}
+
 function buildGlobalRankLookup<T extends { id: string; sortOrder: number }>(
   items: readonly T[]
 ): Map<string, number> {
@@ -50,12 +54,39 @@ export class PostgresPersonWorkRepository implements IPersonWorkRepository {
       this.tasks.listByOrgWithProjects(orgId),
     ]);
 
-    const linkedProjects = allProjects.filter((project) =>
-      projectInvolvesPerson(project, personNodeId)
-    );
     const linkedTaskItems = allTaskItems.filter(
       (item) => item.task.details?.assigneePersonNodeId === personNodeId
     );
+
+    const openTaskCountByProject = new Map<string, number>();
+    const taskProjectIds = new Set<string>();
+    for (const item of linkedTaskItems) {
+      const projectId = item.project?.id;
+      if (!projectId) continue;
+      taskProjectIds.add(projectId);
+      if (isOpenTaskStatus(item.task.status)) {
+        openTaskCountByProject.set(
+          projectId,
+          (openTaskCountByProject.get(projectId) ?? 0) + 1
+        );
+      }
+    }
+
+    const projectById = new Map(allProjects.map((project) => [project.id, project]));
+    const linkedProjectIds = new Set<string>();
+
+    for (const project of allProjects) {
+      if (projectInvolvesPerson(project, personNodeId)) {
+        linkedProjectIds.add(project.id);
+      }
+    }
+    for (const projectId of taskProjectIds) {
+      linkedProjectIds.add(projectId);
+    }
+
+    const linkedProjects = [...linkedProjectIds]
+      .map((id) => projectById.get(id))
+      .filter((project): project is ProjectNode => Boolean(project));
 
     const projectSortMap = await this.personCollectionSort.getSortOrderMap(
       orgId,
@@ -77,7 +108,8 @@ export class PostgresPersonWorkRepository implements IPersonWorkRepository {
       linkedProjects,
       personNodeId,
       projectSortMap,
-      projectGlobalRanks
+      projectGlobalRanks,
+      openTaskCountByProject
     );
     const taskEntries = this.buildTaskEntries(
       linkedTaskItems,
@@ -110,11 +142,13 @@ export class PostgresPersonWorkRepository implements IPersonWorkRepository {
     projects: ProjectNode[],
     personNodeId: string,
     personSortMap: Map<string, number>,
-    globalRanks: Map<string, number>
+    globalRanks: Map<string, number>,
+    openTaskCountByProject: Map<string, number>
   ): IPersonWorkProjectEntry[] {
     const withOrder = projects.map((project) => ({
       project,
       roles: getPersonProjectRoles(project, personNodeId),
+      openTaskCount: openTaskCountByProject.get(project.id) ?? 0,
       sortOrder: project.sortOrder,
       personSortOrder: personSortMap.get(project.id) ?? null,
       id: project.id,
@@ -125,6 +159,7 @@ export class PostgresPersonWorkRepository implements IPersonWorkRepository {
     return withOrder.map((entry, index) => ({
       project: entry.project,
       roles: entry.roles,
+      openTaskCount: entry.openTaskCount,
       sortOrder: entry.sortOrder,
       personSortOrder: entry.personSortOrder,
       globalRank: globalRanks.get(entry.project.id) ?? index + 1,
