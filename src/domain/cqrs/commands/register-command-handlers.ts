@@ -39,7 +39,6 @@ export function registerCommandHandlers(
   repositories: IPersistenceRepositories
 ): void {
   commandBus.registerMany([
-    new CreateOrganizationCommandHandler(repositories.organizations),
     new CreateProjectAreaCommandHandler(repositories.projectAreas),
     new UpdateProjectAreaCommandHandler(repositories.projectAreas),
     new DeleteProjectAreaCommandHandler(repositories.projectAreas),
@@ -94,6 +93,11 @@ export function registerCommandHandlers(
       repositories.personCollectionSort
     ),
   ]);
+
+  // Registered after people handlers so org create can dispatch CreatePersonCommand.
+  commandBus.register(
+    new CreateOrganizationCommandHandler(repositories.organizations, commandBus)
+  );
 
   // Registered after the bus is populated so apply can dispatch create commands.
   commandBus.register(new ApplyActiveNoteCommandHandler(commandBus));
