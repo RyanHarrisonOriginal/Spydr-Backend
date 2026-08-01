@@ -17,6 +17,8 @@ import {
   type IPersistenceRepositories,
 } from "./infra/persistence/index.js";
 import { createHttpApp } from "./infra/http/index.js";
+import { LazyActiveNoteAIProvider } from "./infra/ai/index.js";
+import type { ActiveNoteAIProvider } from "./domain/active-notes/index.js";
 
 export interface IBackendConfig {
   apiPrefix: string;
@@ -45,6 +47,7 @@ export interface IBackendOverrides {
   config?: Partial<IBackendConfig>;
   prisma?: PrismaClient;
   repositories?: IPersistenceRepositories;
+  activeNoteAIProvider?: ActiveNoteAIProvider;
 }
 
 export function resolveBackendConfig(
@@ -66,7 +69,11 @@ export function createBackend(overrides: IBackendOverrides = {}): IBackend {
       overrides.repositories ?? createPersistenceRepositories(prisma),
     prisma,
   };
-  registerQueryHandlers(services.queryBus, services.repositories);
+  const activeNoteAIProvider =
+    overrides.activeNoteAIProvider ?? new LazyActiveNoteAIProvider();
+  registerQueryHandlers(services.queryBus, services.repositories, {
+    activeNoteAIProvider,
+  });
   registerCommandHandlers(services.commandBus, services.repositories);
 
   const app =

@@ -17,6 +17,7 @@ import { createResourcesRouter } from "./routes/resources.router.js";
 import { createDashboardRouter } from "./routes/dashboard.router.js";
 import { createTasksRouter } from "./routes/tasks.router.js";
 import { createCollectionsRouter } from "./routes/collections.router.js";
+import { createActiveNotesRouter } from "./routes/active-notes.router.js";
 
 export interface IHttpAppOptions {
   apiPrefix?: string;
@@ -60,6 +61,10 @@ export function createHttpApp(options: IHttpAppOptions): Express {
   app.use(`${apiPrefix}/dashboard`, createDashboardRouter(options.queryBus));
   app.use(`${apiPrefix}/tasks`, createTasksRouter(options.queryBus, options.commandBus));
   app.use(`${apiPrefix}/collections`, createCollectionsRouter(options.commandBus));
+  app.use(
+    `${apiPrefix}/active-notes`,
+    createActiveNotesRouter(options.queryBus, options.commandBus)
+  );
 
   return app;
 }

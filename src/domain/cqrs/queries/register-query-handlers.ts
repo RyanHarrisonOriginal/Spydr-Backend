@@ -1,5 +1,7 @@
+import type { ActiveNoteAIProvider } from "../../active-notes/index.js";
 import type { IPersistenceRepositories } from "../../../infra/persistence/index.js";
 import type { IQueryBus } from "./query-bus.js";
+import { AnalyzeActiveNoteQueryHandler } from "./active-notes/index.js";
 import { ListOrganizationsQueryHandler } from "./organizations/index.js";
 import { ListDecisionsQueryHandler } from "./decisions/index.js";
 import { ListIdeasQueryHandler } from "./ideas/index.js";
@@ -19,9 +21,14 @@ import { ListResourcesQueryHandler } from "./resources/index.js";
 import { ListTasksQueryHandler, GetTaskQueryHandler } from "./tasks/index.js";
 import { GetWorkspaceDashboardQueryHandler } from "./dashboard/index.js";
 
+export interface IRegisterQueryHandlersOptions {
+  activeNoteAIProvider?: ActiveNoteAIProvider;
+}
+
 export function registerQueryHandlers(
   queryBus: IQueryBus,
-  repositories: IPersistenceRepositories
+  repositories: IPersistenceRepositories,
+  options: IRegisterQueryHandlersOptions = {}
 ): void {
   queryBus.registerMany([
     new ListOrganizationsQueryHandler(repositories.organizations),
@@ -41,4 +48,13 @@ export function registerQueryHandlers(
     new GetTaskQueryHandler(repositories.tasks),
     new GetWorkspaceDashboardQueryHandler(repositories.workspaceDashboard),
   ]);
+
+  if (options.activeNoteAIProvider) {
+    queryBus.register(
+      new AnalyzeActiveNoteQueryHandler(
+        repositories.projects,
+        options.activeNoteAIProvider
+      )
+    );
+  }
 }

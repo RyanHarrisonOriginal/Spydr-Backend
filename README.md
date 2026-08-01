@@ -59,7 +59,18 @@ Copy `.env.example` to `.env`. Do not commit `.env`.
 | `DATABASE_URL` | Yes | PostgreSQL connection string. |
 | `CLERK_PUBLISHABLE_KEY` | Yes | Same publishable key as the frontend. |
 | `CLERK_SECRET_KEY` | Yes | Clerk secret key for token verification. |
+| `OPENAI_API_KEY` | For Active Notes analyze | Server-side OpenAI key used by `POST /api/active-notes/analyze`. |
+| `OPENAI_ACTIVE_NOTE_MODEL` | No | Model override (default `gpt-4o-mini`). |
 | `PORT` | No | HTTP port (default **3001**). |
+
+### Active Notes (increment 1)
+
+`POST /api/active-notes/analyze` accepts free-form text and returns structured Spydr object proposals. It does **not** persist proposals or create Spydr objects. Requires auth + `X-Org-Id`, and `OPENAI_API_KEY`.
+
+```bash
+npm test
+npm run dev
+```
 
 ## HTTP API
 

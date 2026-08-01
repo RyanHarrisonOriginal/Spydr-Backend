@@ -4,7 +4,7 @@ This document describes the product purpose, user flows, main entities, and serv
 
 ## Product purpose
 
-**Spydr — Structured Thinking Engine:** A note-taking and organization app where users define **hierarchical ontologies** and create **nodes** that follow type rules (parent/child, lifecycle). Users organize thoughts, ideas, and projects in a tree/graph and can attach rich notes to nodes.
+**Spydr:** A note-taking and organization app where users define **hierarchical ontologies** and create **nodes** that follow type rules (parent/child, lifecycle). Users organize thoughts, ideas, and projects in a tree/graph and can attach rich notes to nodes.
 
 ## Main entities
 

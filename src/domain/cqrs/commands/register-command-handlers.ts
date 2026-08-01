@@ -1,5 +1,6 @@
 import type { IPersistenceRepositories } from "../../../infra/persistence/index.js";
 import type { ICommandBus } from "./command-bus.js";
+import { ApplyActiveNoteCommandHandler } from "./active-notes/index.js";
 import {
   CreateOrganizationCommandHandler,
 } from "./organizations/index.js";
@@ -93,4 +94,7 @@ export function registerCommandHandlers(
       repositories.personCollectionSort
     ),
   ]);
+
+  // Registered after the bus is populated so apply can dispatch create commands.
+  commandBus.register(new ApplyActiveNoteCommandHandler(commandBus));
 }

@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { createBackend } from "./bootstrap.js";
 
 const backend = createBackend();

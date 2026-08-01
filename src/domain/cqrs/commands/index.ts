@@ -3,6 +3,7 @@ export { CommandHandlerNotFoundError } from "./command.js";
 export type { ICommandBus } from "./command-bus.js";
 export { CommandBus } from "./command-bus.js";
 export { registerCommandHandlers } from "./register-command-handlers.js";
+export * from "./active-notes/index.js";
 export * from "./organizations/index.js";
 export * from "./project-areas/index.js";
 export * from "./people/index.js";
