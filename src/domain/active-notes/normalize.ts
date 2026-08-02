@@ -281,8 +281,9 @@ function isConsistentWithRouting(
     return proposal.operationType === "no_action";
   }
 
+  // Destination is already narrowed away from no_action above.
   if (proposal.operationType === "no_action") {
-    return routing.destination === "no_action";
+    return false;
   }
 
   if (routing.destination === "existing_project") {
