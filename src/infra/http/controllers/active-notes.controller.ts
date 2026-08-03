@@ -41,7 +41,7 @@ export class ActiveNotesController {
           projectId: parsed.data.projectId ?? null,
         })
       );
-
+      console.log(result);
       res.json(result);
     } catch (error) {
       if (error instanceof ActiveNoteAnalysisError) {

@@ -11,12 +11,15 @@ import {
 } from "./segments.js";
 import {
   ACTIVE_NOTE_EXISTING_PROJECT_MATCH_CONFIDENCE_FLOOR,
+  ACTIVE_NOTE_MAX_NOTE_TITLE_LENGTH,
+  ACTIVE_NOTE_MAX_PROJECT_TITLE_LENGTH,
   ACTIVE_NOTE_MAX_PROPOSALS,
   type ActiveNoteAIOutput,
   type ActiveNoteCandidateProject,
   type ActiveNoteObjectType,
   type ActiveNoteProposal,
   type ActiveNoteRoutingDecision,
+  type ActiveNoteSegment,
   type ActiveNoteSegmentRoute,
 } from "./types.js";
 
@@ -189,6 +192,220 @@ function resolveSuggestedProjectId(
       ? routing.projectId?.trim() || null
       : null)
   );
+}
+
+function segmentProjectRef(segmentRef: string): string {
+  return `project_${segmentRef}`;
+}
+
+function truncateTitle(value: string, maxLength: number): string {
+  const trimmed = value.trim();
+  if (trimmed.length <= maxLength) return trimmed;
+  return `${trimmed.slice(0, maxLength - 1)}…`;
+}
+
+function repairProposalFromSegment(
+  proposal: ActiveNoteProposal,
+  segment: ActiveNoteSegment | undefined,
+  sourceText: string,
+  warnings: string[]
+): ActiveNoteProposal {
+  const segmentText = segment?.text?.trim() || sourceText.trim();
+  const segmentSubject =
+    segment?.subject?.trim() || noteTitleFromSource(segmentText);
+  const next: ActiveNoteProposal = {
+    ...proposal,
+    payload: { ...proposal.payload },
+    evidence: [...proposal.evidence],
+  };
+
+  if (
+    TITLED_OBJECT_TYPES.has(next.objectType) &&
+    !next.payload.title?.trim()
+  ) {
+    const maxLength =
+      next.objectType === "project"
+        ? ACTIVE_NOTE_MAX_PROJECT_TITLE_LENGTH
+        : ACTIVE_NOTE_MAX_NOTE_TITLE_LENGTH;
+    warnings.push(`Filled missing title on ${next.ref} from segment`);
+    next.payload.title = truncateTitle(segmentSubject, maxLength);
+  }
+
+  if (next.objectType === "person" && !next.payload.name?.trim()) {
+    if (next.payload.title?.trim()) {
+      next.payload.name = next.payload.title.trim();
+    }
+  }
+
+  if (next.objectType === "note" && !next.payload.content?.trim()) {
+    next.payload.content = segmentText;
+  }
+
+  if (next.evidence.length === 0 && next.operationType !== "no_action") {
+    warnings.push(`Filled missing evidence on ${next.ref}`);
+    next.evidence = [segmentText.slice(0, 500)];
+  }
+
+  return next;
+}
+
+function buildSynthesizedProjectProposal(
+  segment: ActiveNoteSegment,
+  segmentRef: string,
+  projectRef: string
+): ActiveNoteProposal {
+  return {
+    ref: projectRef,
+    operationType: "suggest_create",
+    objectType: "project",
+    parent: null,
+    attachment: null,
+    payload: {
+      title: truncateTitle(
+        segment.subject,
+        ACTIVE_NOTE_MAX_PROJECT_TITLE_LENGTH
+      ),
+      description: segment.text,
+    },
+    explicitlyStated: false,
+    confidence: 0.5,
+    evidence: [segment.text.slice(0, 500)],
+    reason: `New project for ${segment.subject}`,
+    segmentRef,
+    requiresProject: false,
+    suggestedProjectId: null,
+  };
+}
+
+function buildSynthesizedNoteProposal(
+  segment: ActiveNoteSegment,
+  segmentRef: string,
+  projectRef: string
+): ActiveNoteProposal {
+  return {
+    ref: `note_${segmentRef}`,
+    operationType: "create",
+    objectType: "note",
+    parent: { projectId: null, projectRef },
+    attachment: { type: "project", id: null, ref: projectRef },
+    payload: {
+      title: truncateTitle(segment.subject, ACTIVE_NOTE_MAX_NOTE_TITLE_LENGTH),
+      content: segment.text,
+    },
+    explicitlyStated: false,
+    confidence: 0.5,
+    evidence: [segment.text.slice(0, 500)],
+    reason: `Journal entry for ${segment.subject}`,
+    segmentRef,
+    requiresProject: true,
+    suggestedProjectId: null,
+  };
+}
+
+function ensureNewProjectPackage(
+  proposals: ActiveNoteProposal[],
+  route: ActiveNoteSegmentRoute,
+  segment: ActiveNoteSegment,
+  seenRefs: Set<string>,
+  warnings: string[]
+): void {
+  const segmentProposals = proposals.filter(
+    (proposal) => proposal.segmentRef === route.segmentRef
+  );
+  const projectRef = segmentProjectRef(route.segmentRef);
+  let projectProposals = segmentProposals.filter(
+    (proposal) => proposal.objectType === "project"
+  );
+
+  if (projectProposals.length === 0) {
+    if (!seenRefs.has(projectRef)) {
+      proposals.push(
+        buildSynthesizedProjectProposal(segment, route.segmentRef, projectRef)
+      );
+      seenRefs.add(projectRef);
+      projectProposals = proposals.filter(
+        (proposal) =>
+          proposal.segmentRef === route.segmentRef &&
+          proposal.objectType === "project"
+      );
+      warnings.push(
+        `Synthesized Project proposal for new_project segment ${route.segmentRef}`
+      );
+    }
+  } else if (projectProposals.length > 1) {
+    const keep = projectProposals[0]!.ref;
+    for (let index = proposals.length - 1; index >= 0; index -= 1) {
+      const item = proposals[index]!;
+      if (
+        item.segmentRef === route.segmentRef &&
+        item.objectType === "project" &&
+        item.ref !== keep
+      ) {
+        proposals.splice(index, 1);
+      }
+    }
+    projectProposals = proposals.filter(
+      (proposal) =>
+        proposal.segmentRef === route.segmentRef &&
+        proposal.objectType === "project"
+    );
+    warnings.push(
+      `Kept only one Project proposal for new_project segment ${route.segmentRef}`
+    );
+  }
+
+  const resolvedProjectRef = projectProposals[0]?.ref ?? projectRef;
+
+  for (const proposal of proposals) {
+    if (
+      proposal.segmentRef !== route.segmentRef ||
+      proposal.objectType === "project" ||
+      proposal.operationType === "no_action"
+    ) {
+      continue;
+    }
+
+    if (!parentProjectId(proposal) && !parentProjectRef(proposal)) {
+      proposal.parent = { projectId: null, projectRef: resolvedProjectRef };
+      proposal.requiresProject = true;
+    } else if (
+      parentProjectRef(proposal) &&
+      !projectProposals.some(
+        (projectProposal) => projectProposal.ref === parentProjectRef(proposal)
+      )
+    ) {
+      proposal.parent = { projectId: null, projectRef: resolvedProjectRef };
+    }
+
+    if (
+      proposal.objectType === "note" &&
+      !proposal.attachment?.id &&
+      !proposal.attachment?.ref
+    ) {
+      proposal.attachment = {
+        type: "project",
+        id: null,
+        ref: resolvedProjectRef,
+      };
+    }
+  }
+
+  const hasChild = proposals.some(
+    (proposal) =>
+      proposal.segmentRef === route.segmentRef &&
+      proposal.operationType !== "no_action" &&
+      proposal.objectType !== "project"
+  );
+  const noteRef = `note_${route.segmentRef}`;
+  if (!hasChild && !seenRefs.has(noteRef)) {
+    proposals.push(
+      buildSynthesizedNoteProposal(segment, route.segmentRef, resolvedProjectRef)
+    );
+    seenRefs.add(noteRef);
+    warnings.push(
+      `Synthesized Note proposal for new_project segment ${route.segmentRef}`
+    );
+  }
 }
 
 export function parseActiveNoteAIOutput(raw: unknown): ActiveNoteAIOutput {
@@ -541,45 +758,52 @@ export function normalizeActiveNoteAIOutput(input: {
       warnings.push(`Removed ${proposal.ref}: missing segment assignment`);
       continue;
     }
+    const segment = segments.find((item) => item.ref === segmentRef);
+    const repairedProposal = repairProposalFromSegment(
+      proposal,
+      segment,
+      input.sourceText,
+      warnings
+    );
     const segmentRoute = routeBySegment.get(segmentRef);
     const proposalRouting = segmentRoute
       ? routingDecisionFromRoute(segmentRoute)
       : routing;
 
-    if (!isConsistentWithRouting(proposal, proposalRouting)) {
+    if (!isConsistentWithRouting(repairedProposal, proposalRouting)) {
       warnings.push(
-        `Removed ${proposal.objectType} proposal inconsistent with ${proposalRouting.destination} routing`
+        `Removed ${repairedProposal.objectType} proposal inconsistent with ${proposalRouting.destination} routing`
       );
       continue;
     }
 
-    if (!hasUsablePayload(proposal)) {
+    if (!hasUsablePayload(repairedProposal)) {
       warnings.push(
-        hasRequiredLlmTitle(proposal)
-          ? `Removed ${proposal.objectType} proposal ${proposal.ref} with empty payload`
-          : `Removed ${proposal.objectType} proposal ${proposal.ref}: missing LLM title`
+        hasRequiredLlmTitle(repairedProposal)
+          ? `Removed ${repairedProposal.objectType} proposal ${repairedProposal.ref} with empty payload`
+          : `Removed ${repairedProposal.objectType} proposal ${repairedProposal.ref}: missing LLM title`
       );
       continue;
     }
 
     let next: ActiveNoteProposal = {
-      ...proposal,
-      ref: proposal.ref.trim(),
-      reason: proposal.reason.trim(),
-      evidence: uniqueStrings(proposal.evidence),
+      ...repairedProposal,
+      ref: repairedProposal.ref.trim(),
+      reason: repairedProposal.reason.trim(),
+      evidence: uniqueStrings(repairedProposal.evidence),
       segmentRef,
-      payload: { ...proposal.payload },
-      parent: proposal.parent
+      payload: { ...repairedProposal.payload },
+      parent: repairedProposal.parent
         ? {
-            projectId: proposal.parent.projectId ?? null,
-            projectRef: proposal.parent.projectRef ?? null,
+            projectId: repairedProposal.parent.projectId ?? null,
+            projectRef: repairedProposal.parent.projectRef ?? null,
           }
         : null,
-      attachment: proposal.attachment
+      attachment: repairedProposal.attachment
         ? {
-            type: proposal.attachment.type,
-            id: proposal.attachment.id ?? null,
-            ref: proposal.attachment.ref ?? null,
+            type: repairedProposal.attachment.type,
+            id: repairedProposal.attachment.id ?? null,
+            ref: repairedProposal.attachment.ref ?? null,
           }
         : null,
     };
@@ -678,16 +902,58 @@ export function normalizeActiveNoteAIOutput(input: {
             requiresProject: true,
             suggestedProjectId: null,
           };
+        } else if (proposalRouting.destination === "new_project") {
+          projectRef = segmentProjectRef(segmentRef);
+          next = {
+            ...next,
+            parent: { projectId: null, projectRef },
+            requiresProject: true,
+            suggestedProjectId: null,
+          };
+          if (
+            next.objectType === "note" &&
+            !next.attachment?.id &&
+            !next.attachment?.ref
+          ) {
+            next = {
+              ...next,
+              attachment: { type: "project", id: null, ref: projectRef },
+            };
+          }
         } else if (next.objectType === "note" && !hadExplicitAttachment) {
-          warnings.push(
-            "Removed generic note without attachment or project parent"
-          );
-          continue;
+          if (
+            proposalRouting.destination === "existing_project" &&
+            proposalRouting.projectId
+          ) {
+            projectId = proposalRouting.projectId;
+            next = {
+              ...next,
+              parent: { projectId, projectRef: null },
+              requiresProject: true,
+              suggestedProjectId: projectId,
+              attachment: { type: "project", id: projectId, ref: null },
+            };
+          } else {
+            warnings.push(
+              "Kept note without attachment or project parent for user selection"
+            );
+            next = {
+              ...next,
+              parent: null,
+              requiresProject: true,
+              suggestedProjectId: null,
+            };
+          }
         } else {
           warnings.push(
-            `Removed ${next.objectType} proposal without projectId or projectRef`
+            `Kept ${next.objectType} proposal without projectId or projectRef for user selection`
           );
-          continue;
+          next = {
+            ...next,
+            parent: null,
+            requiresProject: true,
+            suggestedProjectId: null,
+          };
         }
       } else {
         next = {
@@ -772,16 +1038,50 @@ export function normalizeActiveNoteAIOutput(input: {
       }
     }
 
-    // Generic note fallback rejection: notes need explicit parent or attachment.
+    // Generic note fallback: ensure notes have a parent or attachment when possible.
     if (next.objectType === "note") {
       const hasAttachment = Boolean(
         next.attachment?.id || next.attachment?.ref
       );
-      if (!hasAttachment && !hadExplicitParent) {
-        warnings.push(
-          "Removed generic note without attachment or project parent"
-        );
-        continue;
+      const hasParent = Boolean(parentProjectId(next) || parentProjectRef(next));
+      if (!hasAttachment && !hasParent) {
+        if (proposalRouting.destination === "new_project") {
+          const projectRef = segmentProjectRef(segmentRef);
+          next = {
+            ...next,
+            parent: { projectId: null, projectRef },
+            requiresProject: true,
+            attachment: { type: "project", id: null, ref: projectRef },
+          };
+        } else if (
+          proposalRouting.destination === "existing_project" &&
+          proposalRouting.projectId
+        ) {
+          next = {
+            ...next,
+            parent: {
+              projectId: proposalRouting.projectId,
+              projectRef: null,
+            },
+            requiresProject: true,
+            suggestedProjectId: proposalRouting.projectId,
+            attachment: {
+              type: "project",
+              id: proposalRouting.projectId,
+              ref: null,
+            },
+          };
+        } else {
+          warnings.push(
+            "Kept note without attachment or project parent for user selection"
+          );
+          next = {
+            ...next,
+            parent: null,
+            requiresProject: true,
+            suggestedProjectId: null,
+          };
+        }
       }
       if (!hasAttachment && hadExplicitParent && !next.reason?.trim()) {
         warnings.push(
@@ -827,11 +1127,6 @@ export function normalizeActiveNoteAIOutput(input: {
       }
     }
 
-    if (next.evidence.length === 0 && next.operationType !== "no_action") {
-      warnings.push(`Removed ${next.objectType} proposal without evidence`);
-      continue;
-    }
-
     proposals.push(next);
     if (proposals.length >= ACTIVE_NOTE_MAX_PROPOSALS) {
       warnings.push(`Limited proposals to ${ACTIVE_NOTE_MAX_PROPOSALS}`);
@@ -844,38 +1139,10 @@ export function normalizeActiveNoteAIOutput(input: {
     const route = routes[routeIndex]!;
     if (route.destination !== "new_project") continue;
 
-    const segmentProposals = proposals.filter(
-      (p) => p.segmentRef === route.segmentRef
-    );
-    const projectProposals = segmentProposals.filter(
-      (p) => p.objectType === "project"
-    );
+    const segment = segments.find((item) => item.ref === route.segmentRef);
+    if (!segment) continue;
 
-    if (projectProposals.length === 0) {
-      for (let i = proposals.length - 1; i >= 0; i -= 1) {
-        if (proposals[i]?.segmentRef === route.segmentRef) {
-          proposals.splice(i, 1);
-        }
-      }
-      warnings.push(
-        `new_project routing for ${route.segmentRef} had no Project proposal with an LLM title`
-      );
-    } else if (projectProposals.length > 1) {
-      const keep = projectProposals[0]!.ref;
-      for (let i = proposals.length - 1; i >= 0; i -= 1) {
-        const item = proposals[i]!;
-        if (
-          item.segmentRef === route.segmentRef &&
-          item.objectType === "project" &&
-          item.ref !== keep
-        ) {
-          proposals.splice(i, 1);
-        }
-      }
-      warnings.push(
-        `Kept only one Project proposal for new_project segment ${route.segmentRef}`
-      );
-    }
+    ensureNewProjectPackage(proposals, route, segment, seenRefs, warnings);
   }
 
   // Drop children whose projectRef no longer exists after filtering.
@@ -890,10 +1157,30 @@ export function normalizeActiveNoteAIOutput(input: {
   for (const proposal of proposals) {
     const projectRef = parentProjectRef(proposal);
     if (projectRef && !finalProjectRefs.has(projectRef)) {
-      warnings.push(
-        `Removed ${proposal.ref}: parent.projectRef no longer present`
-      );
-      continue;
+      const route = routeBySegment.get(proposal.segmentRef ?? "");
+      if (route?.destination === "new_project") {
+        const synthesizedRef = segmentProjectRef(route.segmentRef);
+        warnings.push(
+          `Remapped missing parent.projectRef on ${proposal.ref} to ${synthesizedRef}`
+        );
+        proposal.parent = { projectId: null, projectRef: synthesizedRef };
+        if (
+          proposal.objectType === "note" &&
+          !proposal.attachment?.id &&
+          !proposal.attachment?.ref
+        ) {
+          proposal.attachment = {
+            type: "project",
+            id: null,
+            ref: synthesizedRef,
+          };
+        }
+      } else {
+        warnings.push(
+          `Removed ${proposal.ref}: parent.projectRef no longer present`
+        );
+        continue;
+      }
     }
     if (
       proposal.attachment?.ref &&
@@ -920,23 +1207,11 @@ export function normalizeActiveNoteAIOutput(input: {
       (p) => p.segmentRef === route.segmentRef
     );
     if (hasActionableProposals(segmentProposals)) {
-      if (route.destination === "new_project") {
-        const hasNote = segmentProposals.some((p) => p.objectType === "note");
-        const hasOtherChildren = segmentProposals.some(
-          (p) =>
-            p.operationType !== "no_action" &&
-            p.objectType !== "project" &&
-            p.objectType !== "note"
-        );
-        const projectRef = segmentProposals.find(
-          (p) => p.objectType === "project"
-        )?.ref;
-        if (!hasNote && !hasOtherChildren && projectRef) {
-          warnings.push(
-            `new_project segment ${route.segmentRef} is missing a Note proposal with an LLM title`
-          );
-        }
-      }
+      continue;
+    }
+
+    if (route.destination === "new_project") {
+      ensureNewProjectPackage(reconciled, route, segment, seenRefs, warnings);
       continue;
     }
 

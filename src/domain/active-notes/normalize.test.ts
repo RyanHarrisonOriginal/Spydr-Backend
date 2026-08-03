@@ -329,7 +329,10 @@ describe("normalizeActiveNoteAIOutput routing", () => {
     });
 
     expect(result.routing.destination).toBe("new_project");
-    expect(result.proposals.some((p) => p.objectType === "idea")).toBe(false);
+    expect(result.proposals.some((p) => p.objectType === "idea")).toBe(true);
+    expect(result.proposals.find((p) => p.objectType === "idea")?.parent?.projectRef).toBe(
+      "project_seg_1"
+    );
   });
 
   it("allows idea_only without a project when no candidates exist", () => {
@@ -526,7 +529,7 @@ describe("normalizeActiveNoteAIOutput routing", () => {
     ).toEqual(new Set(["proj-vital", "proj-abl", "proj-review"]));
   });
 
-  it("removes notes missing an LLM title instead of inventing one", () => {
+  it("fills notes missing an LLM title from the segment subject", () => {
     const result = normalizeActiveNoteAIOutput({
       sourceText:
         "ABL Automation has taken a back seat to other audits for Hilco and KPMG",
@@ -553,10 +556,9 @@ describe("normalizeActiveNoteAIOutput routing", () => {
       }),
     });
 
-    expect(result.proposals.some((p) => p.objectType === "note")).toBe(false);
-    expect(result.warnings).toContain(
-      "Removed note proposal note_1: missing LLM title"
-    );
+    expect(result.proposals.some((p) => p.objectType === "note")).toBe(true);
+    expect(result.proposals[0]?.payload.title).toBe("Test Subject");
+    expect(result.warnings).toContain("Filled missing title on note_1 from segment");
   });
 
   it("keeps LLM-provided note titles even when they look truncated", () => {
@@ -716,9 +718,9 @@ describe("normalizeActiveNoteAIOutput routing", () => {
 
     expect(result.routing.destination).toBe("new_project");
     expect(result.proposals.some((p) => p.objectType === "project")).toBe(true);
-    expect(result.proposals.some((p) => p.objectType === "note")).toBe(false);
+    expect(result.proposals.some((p) => p.objectType === "note")).toBe(true);
     expect(result.warnings).toContain(
-      "new_project segment seg_1 is missing a Note proposal with an LLM title"
+      "Synthesized Note proposal for new_project segment seg_1"
     );
   });
 
@@ -866,7 +868,7 @@ describe("normalizeActiveNoteAIOutput routing", () => {
     expect(result.proposals[0]?.parent?.projectId).toBe("proj-1");
   });
 
-  it("rejects task when routing cannot supply a project parent", () => {
+  it("keeps task when routing cannot supply a project parent", () => {
     const result = normalizeActiveNoteAIOutput({
       sourceText: "Build the proof of concept.",
       allowedProjectIds: new Set(),
@@ -897,14 +899,11 @@ describe("normalizeActiveNoteAIOutput routing", () => {
       }),
     });
 
-    expect(result.proposals.some((p) => p.objectType === "task")).toBe(false);
-    expect(result.proposals.some((p) => p.objectType === "note")).toBe(false);
-    expect(result.warnings.some((w) => w.includes("no actionable proposals"))).toBe(
-      true
-    );
+    expect(result.proposals.some((p) => p.objectType === "task")).toBe(true);
+    expect(result.proposals[0]?.requiresProject).toBe(true);
   });
 
-  it("does not synthesize untitled proposals when new_project lacks a Project proposal", () => {
+  it("synthesizes a new_project package when the model omits the Project proposal", () => {
     const sourceText = "I want to build a big multi-step program.";
     const result = normalizeActiveNoteAIOutput({
       sourceText,
@@ -936,11 +935,14 @@ describe("normalizeActiveNoteAIOutput routing", () => {
       }, "Multi-step Program"),
     });
 
-    expect(result.proposals.some((p) => p.objectType === "project")).toBe(false);
-    expect(result.proposals.some((p) => p.objectType === "note")).toBe(false);
+    expect(result.proposals.some((p) => p.objectType === "project")).toBe(true);
+    expect(result.proposals.some((p) => p.objectType === "task")).toBe(true);
     expect(result.warnings).toContain(
-      "new_project routing for seg_1 had no Project proposal with an LLM title"
+      "Synthesized Project proposal for new_project segment seg_1"
     );
+    expect(
+      result.proposals.find((p) => p.ref === "task_1")?.parent?.projectRef
+    ).toBe("project_seg_1");
   });
 
   it("removes invented due dates and priorities", () => {
@@ -971,5 +973,57 @@ describe("normalizeActiveNoteAIOutput routing", () => {
 
     expect(result.proposals[0]?.payload.dueDate).toBeNull();
     expect(result.proposals[0]?.payload.priority).toBeUndefined();
+  });
+
+  it("synthesizes new_project packages when the model returns routes but no proposals", () => {
+    const segments = [
+      {
+        ref: "seg_1",
+        text: "The Active Note routing is working much better now.",
+        subject: "Active Note Routing",
+      },
+      {
+        ref: "seg_2",
+        text: "For Spydr, I want the system to split the note into statements.",
+        subject: "Spydr Note Handling",
+      },
+    ];
+
+    const result = normalizeActiveNoteAIOutput({
+      sourceText: segments.map((segment) => segment.text).join("\n"),
+      allowedProjectIds: new Set(),
+      raw: {
+        routing: {
+          destination: "new_project",
+          projectId: null,
+          relatedTaskId: null,
+          reason: "Multi-project note",
+          confidence: 0,
+        },
+        impact: null,
+        summary: "Split into segments requiring new projects.",
+        segments,
+        routes: segments.map((segment) => ({
+          segmentRef: segment.ref,
+          destination: "new_project" as const,
+          projectId: null,
+          relatedTaskId: null,
+          reason: "No catalog match",
+          confidence: 0,
+          impact: null,
+        })),
+        proposals: [],
+        candidateProjects: [],
+        warnings: [],
+      },
+    });
+
+    expect(result.proposals.length).toBeGreaterThanOrEqual(4);
+    expect(
+      result.proposals.filter((proposal) => proposal.objectType === "project")
+    ).toHaveLength(2);
+    expect(
+      result.proposals.filter((proposal) => proposal.objectType === "note")
+    ).toHaveLength(2);
   });
 });

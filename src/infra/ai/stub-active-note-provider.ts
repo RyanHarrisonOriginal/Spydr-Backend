@@ -951,7 +951,7 @@ export function buildStubActiveNoteOutput(
     content.includes("abl automation") &&
     (content.includes("kai li") || content.includes("customer business review"))
   ) {
-    return multiSubjectOutput(input);
+    return finalizeStub(multiSubjectOutput(input));
   }
   if (
     content.includes("eight-week") ||
