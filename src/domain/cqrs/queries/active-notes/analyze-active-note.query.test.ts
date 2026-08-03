@@ -80,6 +80,8 @@ describe("AnalyzeActiveNoteQueryHandler", () => {
       findByIdForOrg: vi.fn(async () => project),
     } as unknown as IProjectRepository;
 
+    const sourceText =
+      "Last night I sparred a big guy and had problems landing a teep.";
     const aiOutput: ActiveNoteAIOutput = {
       routing: {
         destination: "existing_project",
@@ -93,6 +95,24 @@ describe("AnalyzeActiveNoteQueryHandler", () => {
         reason: "Observation with optional follow-up",
       },
       summary: "Sparring observation about teep difficulty.",
+      segments: [
+        {
+          ref: "seg_1",
+          text: sourceText,
+          subject: "Teep Sparring",
+        },
+      ],
+      routes: [
+        {
+          segmentRef: "seg_1",
+          destination: "existing_project",
+          projectId: "proj-1",
+          relatedTaskId: null,
+          reason: "Matches selected project",
+          confidence: 0.9,
+          impact: null,
+        },
+      ],
       proposals: [
         {
           ref: "note_1",
@@ -102,13 +122,13 @@ describe("AnalyzeActiveNoteQueryHandler", () => {
           attachment: { type: "project", id: "proj-1", ref: null },
           payload: {
             title: "Difficulty landing teeps against a larger opponent",
-            content:
-              "Last night I sparred a big guy and had problems landing a teep.",
+            content: sourceText,
           },
           explicitlyStated: true,
           confidence: 0.95,
           evidence: ["had problems landing a teep"],
           reason: "Project observation",
+          segmentRef: "seg_1",
         },
         {
           ref: "task_1",
@@ -123,6 +143,7 @@ describe("AnalyzeActiveNoteQueryHandler", () => {
           confidence: 0.7,
           evidence: ["had problems landing a teep"],
           reason: "Implied drill",
+          segmentRef: "seg_1",
         },
       ],
       candidateProjects: [],
@@ -136,8 +157,7 @@ describe("AnalyzeActiveNoteQueryHandler", () => {
     const handler = new AnalyzeActiveNoteQueryHandler(projects, aiProvider);
     const result = await handler.execute(
       new AnalyzeActiveNoteQuery("user-1", "org-1", {
-        content:
-          "Last night I sparred a big guy and had problems landing a teep.",
+        content: sourceText,
         projectId: "proj-1",
       })
     );

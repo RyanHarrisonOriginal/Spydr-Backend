@@ -1,7 +1,23 @@
-export const ACTIVE_NOTE_PROMPT_VERSION = "active-note-v3";
+export const ACTIVE_NOTE_PROMPT_VERSION = "active-note-v8.0";
+
+/** Maximum characters for a suggested new Project title. */
+export const ACTIVE_NOTE_MAX_PROJECT_TITLE_LENGTH = 40;
+
+/** Maximum characters for a Note subject (payload.title). */
+export const ACTIVE_NOTE_MAX_NOTE_TITLE_LENGTH = 50;
+
+/** Minimum match confidence to route a segment to an existing catalog project. */
+export const ACTIVE_NOTE_EXISTING_PROJECT_MATCH_CONFIDENCE_FLOOR = 0.6;
+
+/** When active projects exceed this count, only the top scored subset is injected. */
+export const ACTIVE_NOTE_CATALOG_ALL_THRESHOLD = 20;
+
+/** Scored catalog cap when active projects exceed ACTIVE_NOTE_CATALOG_ALL_THRESHOLD. */
+export const ACTIVE_NOTE_CATALOG_SCORED_LIMIT = 15;
 
 export const ACTIVE_NOTE_MAX_CONTENT_LENGTH = 8000;
-export const ACTIVE_NOTE_MAX_PROPOSALS = 8;
+export const ACTIVE_NOTE_MAX_PROPOSALS = 12;
+export const ACTIVE_NOTE_MAX_SEGMENTS = 5;
 
 export type ActiveNoteOperationType =
   | "create"
@@ -46,6 +62,22 @@ export interface ActiveNoteImpact {
   reason: string;
 }
 
+export interface ActiveNoteSegment {
+  ref: string;
+  text: string;
+  subject: string;
+}
+
+export interface ActiveNoteSegmentRoute {
+  segmentRef: string;
+  destination: ActiveNoteRoutingDestination;
+  projectId?: string | null;
+  relatedTaskId?: string | null;
+  reason: string;
+  confidence: number;
+  impact?: ActiveNoteImpact | null;
+}
+
 export interface ActiveNoteProposalPayload {
   title?: string;
   description?: string;
@@ -78,6 +110,8 @@ export interface ActiveNoteProposal {
   confidence: number;
   evidence: string[];
   reason: string;
+  /** When set, ties this proposal to a segment in a multi-subject note. */
+  segmentRef?: string | null;
   /**
    * Compatibility fields derived during normalization for existing UI/apply.
    * Prefer parent.projectId / parent.projectRef for new consumers.
@@ -96,6 +130,8 @@ export interface ActiveNoteAIOutput {
   routing: ActiveNoteRoutingDecision;
   impact?: ActiveNoteImpact | null;
   summary: string;
+  segments: ActiveNoteSegment[];
+  routes: ActiveNoteSegmentRoute[];
   proposals: ActiveNoteProposal[];
   candidateProjects: ActiveNoteCandidateProject[];
   warnings: string[];

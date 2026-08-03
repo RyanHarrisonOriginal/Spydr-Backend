@@ -6,6 +6,17 @@ import type {
   ActiveNoteProposal,
 } from "../../domain/active-notes/index.js";
 
+type StubOutput = Omit<ActiveNoteAIOutput, "segments" | "routes"> &
+  Partial<Pick<ActiveNoteAIOutput, "segments" | "routes">>;
+
+function finalizeStub(output: StubOutput): ActiveNoteAIOutput {
+  return {
+    ...output,
+    segments: output.segments ?? [],
+    routes: output.routes ?? [],
+  };
+}
+
 function delay(ms = 400) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -46,7 +57,7 @@ function baseWarnings(): string[] {
   return ["Using stub Active Note AI provider (no OPENAI_API_KEY)."];
 }
 
-function observationOutput(input: ActiveNoteAIInput): ActiveNoteAIOutput {
+function observationOutput(input: ActiveNoteAIInput): StubOutput {
   const projectId = preferredProjectId(input);
   const relatedTaskId = preferredRelatedTaskId(input);
   const proposals: ActiveNoteProposal[] = [
@@ -91,14 +102,63 @@ function observationOutput(input: ActiveNoteAIInput): ActiveNoteAIOutput {
     });
   }
 
+  if (!projectId) {
+    return {
+      routing: {
+        destination: "new_project",
+        projectId: null,
+        relatedTaskId: null,
+        reason: "No existing project available; log observation under a new project",
+        confidence: 0.78,
+      },
+      impact: null,
+      summary:
+        "Stub analysis: sparring observation about teep difficulty. No person created from “big guy”.",
+      proposals: [
+        {
+          ref: "project_1",
+          operationType: "suggest_create",
+          objectType: "project",
+          parent: null,
+          attachment: null,
+          payload: {
+            title: "Teep sparring development",
+            description:
+              "Work on landing teeps more reliably during sparring.",
+          },
+          explicitlyStated: false,
+          confidence: 0.78,
+          evidence: ["had problems landing a teep"],
+          reason: "Container for logging the sparring observation",
+        },
+        {
+          ref: "note_1",
+          operationType: "create",
+          objectType: "note",
+          parent: { projectId: null, projectRef: "project_1" },
+          attachment: { type: "project", id: null, ref: "project_1" },
+          payload: {
+            title: "Difficulty landing teeps against a larger opponent",
+            content:
+              "During sparring, I had difficulty landing a teep against a larger opponent.",
+          },
+          explicitlyStated: true,
+          confidence: 0.94,
+          evidence: ["had problems landing a teep"],
+          reason: "Preserve the Active Note under the new project",
+        },
+      ],
+      candidateProjects: candidateProjects(input),
+      warnings: baseWarnings(),
+    };
+  }
+
   return {
     routing: {
-      destination: projectId ? "existing_project" : "no_action",
+      destination: "existing_project",
       projectId,
       relatedTaskId,
-      reason: projectId
-        ? "Matches existing training project and teep practice context"
-        : "No project available",
+      reason: "Matches existing training project and teep practice context",
       confidence: 0.9,
     },
     impact: {
@@ -115,7 +175,7 @@ function observationOutput(input: ActiveNoteAIInput): ActiveNoteAIOutput {
   };
 }
 
-function explicitTaskOutput(input: ActiveNoteAIInput): ActiveNoteAIOutput {
+function explicitTaskOutput(input: ActiveNoteAIInput): StubOutput {
   const projectId = preferredProjectId(input);
   if (!projectId) {
     return {
@@ -202,11 +262,74 @@ function explicitTaskOutput(input: ActiveNoteAIInput): ActiveNoteAIOutput {
   };
 }
 
-function decisionOutput(input: ActiveNoteAIInput): ActiveNoteAIOutput {
+function decisionOutput(input: ActiveNoteAIInput): StubOutput {
   const projectId = preferredProjectId(input);
+  if (!projectId) {
+    return {
+      routing: {
+        destination: "new_project",
+        projectId: null,
+        relatedTaskId: null,
+        reason: "No existing project available; host decision under a new project",
+        confidence: 0.8,
+      },
+      impact: null,
+      summary: "Stub analysis: decision detected.",
+      proposals: [
+        {
+          ref: "project_1",
+          operationType: "suggest_create",
+          objectType: "project",
+          parent: null,
+          attachment: null,
+          payload: {
+            title: "Active Notes AI approach",
+            description: "Decide and track how Active Notes uses AI.",
+          },
+          explicitlyStated: false,
+          confidence: 0.8,
+          evidence: ["I decided"],
+          reason: "Container for the decision",
+        },
+        {
+          ref: "decision_1",
+          operationType: "create",
+          objectType: "decision",
+          parent: { projectId: null, projectRef: "project_1" },
+          attachment: null,
+          payload: {
+            title: "Use Claude for Active Notes",
+            rationale: "I decided to use Claude for Active Notes.",
+          },
+          explicitlyStated: true,
+          confidence: 0.91,
+          evidence: ["I decided"],
+          reason: "Committed decision stated in the note",
+        },
+        {
+          ref: "note_1",
+          operationType: "create",
+          objectType: "note",
+          parent: { projectId: null, projectRef: "project_1" },
+          attachment: { type: "project", id: null, ref: "project_1" },
+          payload: {
+            title: "Decision context",
+            content: input.content.trim(),
+          },
+          explicitlyStated: true,
+          confidence: 0.8,
+          evidence: ["I decided"],
+          reason: "Preserve the Active Note under the new project",
+        },
+      ],
+      candidateProjects: candidateProjects(input),
+      warnings: baseWarnings(),
+    };
+  }
+
   return {
     routing: {
-      destination: projectId ? "existing_project" : "no_action",
+      destination: "existing_project",
       projectId,
       relatedTaskId: null,
       reason: "Committed choice affecting project execution",
@@ -239,7 +362,7 @@ function decisionOutput(input: ActiveNoteAIInput): ActiveNoteAIOutput {
   };
 }
 
-function ideaOutput(input: ActiveNoteAIInput): ActiveNoteAIOutput {
+function ideaOutput(input: ActiveNoteAIInput): StubOutput {
   const projectId = preferredProjectId(input);
   return {
     routing: {
@@ -280,7 +403,7 @@ function ideaOutput(input: ActiveNoteAIInput): ActiveNoteAIOutput {
   };
 }
 
-function namedPersonOutput(input: ActiveNoteAIInput): ActiveNoteAIOutput {
+function namedPersonOutput(input: ActiveNoteAIInput): StubOutput {
   const projectId = preferredProjectId(input);
   if (!projectId) {
     return {
@@ -391,7 +514,7 @@ function namedPersonOutput(input: ActiveNoteAIInput): ActiveNoteAIOutput {
   };
 }
 
-function newProjectOutput(input: ActiveNoteAIInput): ActiveNoteAIOutput {
+function newProjectOutput(input: ActiveNoteAIInput): StubOutput {
   return {
     routing: {
       destination: "new_project",
@@ -475,7 +598,7 @@ function newProjectOutput(input: ActiveNoteAIInput): ActiveNoteAIOutput {
   };
 }
 
-function fallbackOutput(input: ActiveNoteAIInput): ActiveNoteAIOutput {
+function fallbackOutput(input: ActiveNoteAIInput): StubOutput {
   const projectId = preferredProjectId(input);
   const trimmed = input.content.trim();
   const snippet = trimmed.slice(0, 80);
@@ -521,8 +644,8 @@ function fallbackOutput(input: ActiveNoteAIInput): ActiveNoteAIOutput {
         projectId: null,
         relatedTaskId: null,
         reason:
-          "No existing project clearly fits; suggest a new project container",
-        confidence: 0.72,
+          "No existing project candidates available; log note under a new project",
+        confidence: 0.78,
       },
       impact: null,
       summary: `Stub analysis: unmatched note → new project for “${snippet}${trimmed.length > 80 ? "…" : ""}”`,
@@ -537,10 +660,25 @@ function fallbackOutput(input: ActiveNoteAIInput): ActiveNoteAIOutput {
             title,
             description: trimmed,
           },
-          explicitlyStated: true,
-          confidence: 0.72,
+          explicitlyStated: false,
+          confidence: 0.78,
           evidence: [snippet || trimmed],
-          reason: "Unmatched work needs a project home; no extras invented",
+          reason: "Unmatched note needs a project home",
+        },
+        {
+          ref: "note_1",
+          operationType: "create",
+          objectType: "note",
+          parent: { projectId: null, projectRef: "project_1" },
+          attachment: { type: "project", id: null, ref: "project_1" },
+          payload: {
+            title,
+            content: trimmed,
+          },
+          explicitlyStated: true,
+          confidence: 0.8,
+          evidence: [snippet || trimmed],
+          reason: "Preserve the Active Note under the new project",
         },
       ],
       candidateProjects: candidateProjects(input),
@@ -583,38 +721,265 @@ function fallbackOutput(input: ActiveNoteAIInput): ActiveNoteAIOutput {
   };
 }
 
+function multiSubjectOutput(input: ActiveNoteAIInput): StubOutput {
+  const findProject = (needle: string) =>
+    input.candidateProjects.find((project) =>
+      project.title.toLowerCase().includes(needle)
+    ) ?? null;
+
+  const vital = findProject("vital");
+  const abl = findProject("abl");
+  const review =
+    findProject("customer") ??
+    findProject("business") ??
+    input.candidateProjects[0] ??
+    null;
+
+  const seg1 =
+    "Currently waiting for Quick books data to become available for Vital Pak";
+  const seg2 =
+    "ABL Automation has taken a back seat to other audits for Hilco and KPMG";
+  const seg3 = "Kai Li will take over customer business review from Joe";
+
+  const routeFor = (
+    segmentRef: string,
+    project: { id: string; title: string } | null,
+    reason: string
+  ) =>
+    project
+      ? {
+          segmentRef,
+          destination: "existing_project" as const,
+          projectId: project.id,
+          relatedTaskId: null,
+          reason,
+          confidence: 0.86,
+          impact: {
+            type: "project_context" as const,
+            reason: "Segment status/context for this project",
+          },
+        }
+      : {
+          segmentRef,
+          destination: "new_project" as const,
+          projectId: null,
+          relatedTaskId: null,
+          reason: `${reason}; no candidate project matched`,
+          confidence: 0.8,
+          impact: null,
+        };
+
+  const routes = [
+    routeFor("seg_1", vital, "Vital Pak QuickBooks wait"),
+    routeFor("seg_2", abl, "ABL Automation deprioritized"),
+    routeFor("seg_3", review, "Customer business review handoff"),
+  ];
+
+  const noteFor = (
+    ref: string,
+    segmentRef: string,
+    text: string,
+    projectId: string | null,
+    projectRef: string | null
+  ): ActiveNoteProposal => ({
+    ref,
+    operationType: projectId ? "attach_context" : "create",
+    objectType: "note",
+    parent: projectId
+      ? { projectId, projectRef: null }
+      : { projectId: null, projectRef },
+    attachment: projectId
+      ? { type: "project", id: projectId, ref: null }
+      : { type: "project", id: null, ref: projectRef },
+    payload: {
+      title: text.length > 80 ? `${text.slice(0, 79)}…` : text,
+      content: text,
+    },
+    explicitlyStated: true,
+    confidence: 0.88,
+    evidence: [text],
+    reason: "Log this segment on its project",
+    segmentRef,
+  });
+
+  const proposals: ActiveNoteProposal[] = [];
+  if (!vital) {
+    proposals.push({
+      ref: "project_seg_1",
+      operationType: "suggest_create",
+      objectType: "project",
+      parent: null,
+      attachment: null,
+      payload: {
+        title: "Vital Pak",
+        description: seg1,
+      },
+      explicitlyStated: true,
+      confidence: 0.8,
+      evidence: [seg1],
+      reason: "Container for Vital Pak context",
+      segmentRef: "seg_1",
+    });
+  }
+  proposals.push(
+    noteFor(
+      "note_seg_1",
+      "seg_1",
+      seg1,
+      vital?.id ?? null,
+      vital ? null : "project_seg_1"
+    )
+  );
+
+  if (!abl) {
+    proposals.push({
+      ref: "project_seg_2",
+      operationType: "suggest_create",
+      objectType: "project",
+      parent: null,
+      attachment: null,
+      payload: {
+        title: "ABL Automation",
+        description: seg2,
+      },
+      explicitlyStated: true,
+      confidence: 0.8,
+      evidence: [seg2],
+      reason: "Container for ABL Automation context",
+      segmentRef: "seg_2",
+    });
+  }
+  proposals.push(
+    noteFor(
+      "note_seg_2",
+      "seg_2",
+      seg2,
+      abl?.id ?? null,
+      abl ? null : "project_seg_2"
+    )
+  );
+
+  if (!review) {
+    proposals.push({
+      ref: "project_seg_3",
+      operationType: "suggest_create",
+      objectType: "project",
+      parent: null,
+      attachment: null,
+      payload: {
+        title: "Customer business review",
+        description: seg3,
+      },
+      explicitlyStated: false,
+      confidence: 0.8,
+      evidence: [seg3],
+      reason: "Container for customer business review handoff",
+      segmentRef: "seg_3",
+    });
+  }
+  proposals.push(
+    noteFor(
+      "note_seg_3",
+      "seg_3",
+      seg3,
+      review?.id ?? null,
+      review ? null : "project_seg_3"
+    )
+  );
+  proposals.push(
+    {
+      ref: "person_kai",
+      operationType: "create",
+      objectType: "person",
+      parent: null,
+      attachment: null,
+      payload: { name: "Kai Li" },
+      explicitlyStated: true,
+      confidence: 0.92,
+      evidence: ["Kai Li"],
+      reason: "Named person taking over the review",
+      segmentRef: "seg_3",
+    },
+    {
+      ref: "person_joe",
+      operationType: "create",
+      objectType: "person",
+      parent: null,
+      attachment: null,
+      payload: { name: "Joe" },
+      explicitlyStated: true,
+      confidence: 0.9,
+      evidence: ["from Joe"],
+      reason: "Named person handing off the review",
+      segmentRef: "seg_3",
+    }
+  );
+
+  return finalizeStub({
+    routing: {
+      destination: routes.every((r) => r.destination === "existing_project")
+        ? "existing_project"
+        : "new_project",
+      projectId: null,
+      relatedTaskId: null,
+      reason:
+        "Multi-project note with 3 contexts: Vital Pak; ABL Automation; Customer business review",
+      confidence: 0.84,
+    },
+    impact: null,
+    summary:
+      "Split into Vital Pak, ABL Automation, and customer business review contexts.",
+    segments: [
+      { ref: "seg_1", text: seg1, subject: "Vital Pak" },
+      { ref: "seg_2", text: seg2, subject: "ABL Automation" },
+      { ref: "seg_3", text: seg3, subject: "Customer business review" },
+    ],
+    routes,
+    proposals,
+    candidateProjects: candidateProjects(input),
+    warnings: baseWarnings(),
+  });
+}
+
 export function buildStubActiveNoteOutput(
   input: ActiveNoteAIInput
 ): ActiveNoteAIOutput {
   const content = input.content.trim().toLowerCase();
 
   if (
+    content.includes("vital pak") &&
+    content.includes("abl automation") &&
+    (content.includes("kai li") || content.includes("customer business review"))
+  ) {
+    return multiSubjectOutput(input);
+  }
+  if (
     content.includes("eight-week") ||
     content.includes("eight week") ||
     (content.includes("lead teep") && content.includes("drill"))
   ) {
-    return newProjectOutput(input);
+    return finalizeStub(newProjectOutput(input));
   }
   if (
     content.includes("sparred a big guy") ||
     content.includes("problems landing a teep")
   ) {
-    return observationOutput(input);
+    return finalizeStub(observationOutput(input));
   }
   if (content.includes("practice teep setups")) {
-    return explicitTaskOutput(input);
+    return finalizeStub(explicitTaskOutput(input));
   }
   if (content.includes("i decided") || content.includes("decided to")) {
-    return decisionOutput(input);
+    return finalizeStub(decisionOutput(input));
   }
   if (content.includes("maybe ") || content.includes("could produce")) {
-    return ideaOutput(input);
+    return finalizeStub(ideaOutput(input));
   }
   if (content.includes("coach marcus")) {
-    return namedPersonOutput(input);
+    return finalizeStub(namedPersonOutput(input));
   }
 
-  return fallbackOutput(input);
+  return finalizeStub(fallbackOutput(input));
 }
 
 /** Deterministic fake analyzer for local UI work without OpenAI. */

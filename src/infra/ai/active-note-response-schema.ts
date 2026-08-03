@@ -8,6 +8,8 @@ export const ACTIVE_NOTE_RESPONSE_SCHEMA = {
       "routing",
       "impact",
       "summary",
+      "segments",
+      "routes",
       "proposals",
       "candidateProjects",
       "warnings",
@@ -64,6 +66,76 @@ export const ACTIVE_NOTE_RESPONSE_SCHEMA = {
         ],
       },
       summary: { type: "string" },
+      segments: {
+        type: "array",
+        minItems: 1,
+        items: {
+          type: "object",
+          additionalProperties: false,
+          required: ["ref", "text", "subject"],
+          properties: {
+            ref: { type: "string" },
+            text: { type: "string" },
+            subject: { type: "string" },
+          },
+        },
+      },
+      routes: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          required: [
+            "segmentRef",
+            "destination",
+            "projectId",
+            "relatedTaskId",
+            "reason",
+            "confidence",
+            "impact",
+          ],
+          properties: {
+            segmentRef: { type: "string" },
+            destination: {
+              type: "string",
+              enum: [
+                "existing_project",
+                "new_project",
+                "idea_only",
+                "no_action",
+              ],
+            },
+            projectId: { type: ["string", "null"] },
+            relatedTaskId: { type: ["string", "null"] },
+            reason: { type: "string" },
+            confidence: { type: "number" },
+            impact: {
+              anyOf: [
+                {
+                  type: "object",
+                  additionalProperties: false,
+                  required: ["type", "reason"],
+                  properties: {
+                    type: {
+                      type: "string",
+                      enum: [
+                        "task_context",
+                        "new_task",
+                        "project_context",
+                        "decision",
+                        "idea",
+                        "mixed",
+                      ],
+                    },
+                    reason: { type: "string" },
+                  },
+                },
+                { type: "null" },
+              ],
+            },
+          },
+        },
+      },
       proposals: {
         type: "array",
         items: {
@@ -80,6 +152,7 @@ export const ACTIVE_NOTE_RESPONSE_SCHEMA = {
             "confidence",
             "evidence",
             "reason",
+            "segmentRef",
           ],
           properties: {
             ref: { type: "string" },
@@ -157,6 +230,7 @@ export const ACTIVE_NOTE_RESPONSE_SCHEMA = {
               items: { type: "string" },
             },
             reason: { type: "string" },
+            segmentRef: { type: ["string", "null"] },
           },
         },
       },

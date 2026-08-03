@@ -365,7 +365,10 @@ export class ApplyActiveNoteCommandHandler
       throw new Error("A project is required to create this note");
     }
 
-    const title = payload.title?.trim() || "Note";
+    const title =
+      payload.title?.trim() ||
+      payload.content?.trim().split(/\r?\n/)[0]?.trim().slice(0, 80) ||
+      "Active note";
     const body =
       payload.content?.trim() ||
       payload.description?.trim() ||

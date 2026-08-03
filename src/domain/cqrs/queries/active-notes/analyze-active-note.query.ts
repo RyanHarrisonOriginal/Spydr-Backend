@@ -3,7 +3,7 @@ import {
   ActiveNoteAnalysisError,
   collectTaskProjectMap,
   normalizeActiveNoteAIOutput,
-  selectCandidateProjects,
+  selectProjectCatalog,
   toProjectContext,
   type ActiveNoteAIOutput,
   type ActiveNoteAIProvider,
@@ -92,7 +92,7 @@ export class AnalyzeActiveNoteQueryHandler
     content: string
   ): Promise<AnalysisContext> {
     const orgProjects = await this.projects.listByOrg(orgId);
-    const candidateProjects = selectCandidateProjects(content, orgProjects, 5);
+    const candidateProjects = selectProjectCatalog(content, orgProjects);
 
     const candidateProjectContexts: ActiveNoteProjectContext[] = [];
     for (const candidate of candidateProjects) {

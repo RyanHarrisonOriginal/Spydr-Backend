@@ -9,29 +9,31 @@ export function buildActiveNoteUserPrompt(input: {
   candidateProjects: ActiveNoteCandidateProject[];
   candidateProjectContexts?: ActiveNoteProjectContext[];
 }): string {
+  const projectCatalog =
+    input.candidateProjectContexts ??
+    (input.selectedProject ? [input.selectedProject] : []);
+
   const context = {
     stageGuidance: {
-      route:
-        "Prefer existing_project on clear fit; else run NEW PROJECT COHESION TEST → new_project when cohesive; idea_only only for idle speculation",
-      interpret:
-        "If existing_project, set impact (task_context | new_task | project_context | decision | idea | mixed); if new_project, impact=null",
-      plan:
-        "For new_project: one outcome-titled Project, then Tasks/Decisions/Ideas/Notes only as supported (projectRef)",
+      split:
+        "Split into independent subject segments when needed (cap 5). One segment for single-subject notes. Do not assign projects during split.",
+      match:
+        "Match each segment to the single best catalog project with confidence, or new_project when no catalog entry fits (confidence >= 0.60 for existing_project).",
+      act:
+        "Run segment intent test per segment (Decision→Task→Idea→Note). new_project = Project + primary child (never Project alone). Every payload.title required.",
     },
     selectedProject: input.selectedProject,
+    projectCatalog,
     candidateProjects: input.candidateProjects,
-    candidateProjectContexts:
-      input.candidateProjectContexts ??
-      (input.selectedProject ? [input.selectedProject] : []),
   };
 
   return [
-    "Analyze the following Active Note as one coherent change to the user's execution structure.",
+    "Analyze the following Active Note using SPLIT → MATCH → ACT.",
     "",
     "User note:",
     input.content,
     "",
-    "Available project context (do not invent ids outside this list):",
+    "Available project catalog (do not invent ids outside this list):",
     JSON.stringify(context, null, 2),
     "",
     "Return JSON matching the required schema only.",

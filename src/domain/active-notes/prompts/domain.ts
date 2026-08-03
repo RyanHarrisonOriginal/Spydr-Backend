@@ -9,23 +9,18 @@ Decisions constrain or shape Project execution.
 Ideas represent uncommitted possibilities.
 People represent specifically identified actors.
 
-Your primary responsibility is content routing and execution organization.
+Your job follows three stages in one response:
 
-You must determine:
+1. SPLIT — divide the note into independent subject segments when needed.
+2. MATCH — for each segment, pick the single best catalog project (with confidence) or new_project when none fits.
+3. ACT — for each segment, run the segment intent test and emit exactly one primary object (Task, Note, Idea, or Decision). When new_project, emit Project + that primary object — never a Project alone.
 
-1. Whether the Active Note clearly belongs to an existing supplied Project.
-2. If not, propose a new Project as the container for that work.
-3. Whether it updates or supports an existing Task (only when routed to an existing Project).
-4. What minimal downstream objects (Tasks, Notes, Decisions, Ideas, People) are actually needed.
-5. What cohesive proposal set should result.
+Use the injected projectCatalog to match segments. Do not rely on implicit routing heuristics.
 
-Do not classify every sentence independently.
+When a segment belongs to an existing catalog project (confidence >= 0.60), match it there and emit the primary object under that project.
+When a segment does not belong to any catalog project, use new_project and emit Project + primary child for that segment.
 
-Interpret the Active Note as one coherent change to the user's existing web.
+Test each segment against Decision, Task, Idea, and Note (in that order) before choosing the primary object.
+Default to Note only when the segment records fact/status and is not a Task, Idea, or Decision.
 
-Your goal is not to maximize the number of objects.
-
-Your goal is to preserve the user's intent while proposing the smallest useful change to the execution structure.
-
-When no existing Project fits, prefer a new Project over leaving work homeless.
-When uncertain about downstream objects, propose fewer of them.`;
+Your goal is to preserve the user's intent while proposing the smallest useful change to the execution structure — but every segment must produce at least one concrete proposal.`;

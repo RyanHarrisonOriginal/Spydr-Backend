@@ -18,6 +18,24 @@ function baseOutput(
       reason: "Useful project narrative",
     },
     summary: "Test summary",
+    segments: [
+      {
+        ref: "seg_1",
+        text: "Test segment text",
+        subject: "Test Subject",
+      },
+    ],
+    routes: [
+      {
+        segmentRef: "seg_1",
+        destination: "existing_project",
+        projectId: "proj-1",
+        relatedTaskId: null,
+        reason: "Matches existing project",
+        confidence: 0.9,
+        impact: null,
+      },
+    ],
     proposals: [],
     candidateProjects: [
       {
@@ -29,6 +47,39 @@ function baseOutput(
     warnings: [],
     ...overrides,
   };
+}
+
+function withSourceSegment(
+  sourceText: string,
+  overrides: Partial<ActiveNoteAIOutput> = {},
+  subject = "Test Subject"
+): ActiveNoteAIOutput {
+  const routing =
+    overrides.routing ??
+    ({
+      destination: "existing_project",
+      projectId: "proj-1",
+      relatedTaskId: null,
+      reason: "Matches existing project",
+      confidence: 0.9,
+    } as ActiveNoteAIOutput["routing"]);
+
+  return baseOutput({
+    segments: [{ ref: "seg_1", text: sourceText, subject }],
+    routes: [
+      {
+        segmentRef: "seg_1",
+        destination: routing.destination,
+        projectId: routing.projectId ?? null,
+        relatedTaskId: routing.relatedTaskId ?? null,
+        reason: routing.reason,
+        confidence: routing.confidence,
+        impact: overrides.impact ?? null,
+      },
+    ],
+    ...overrides,
+    routing,
+  });
 }
 
 describe("normalizeActiveNoteAIOutput routing", () => {
@@ -111,11 +162,12 @@ describe("normalizeActiveNoteAIOutput routing", () => {
   });
 
   it("keeps existing task context attachment", () => {
+    const sourceText = "Last night the taller guy caught every naked teep I threw.";
     const result = normalizeActiveNoteAIOutput({
-      sourceText: "Last night the taller guy caught every naked teep I threw.",
+      sourceText,
       allowedProjectIds: new Set(["proj-1"]),
       taskProjectMap: new Map([["task-teep", "proj-1"]]),
-      raw: baseOutput({
+      raw: withSourceSegment(sourceText, {
         routing: {
           destination: "existing_project",
           projectId: "proj-1",
@@ -136,15 +188,16 @@ describe("normalizeActiveNoteAIOutput routing", () => {
             attachment: { type: "task", id: "task-teep", ref: null },
             payload: {
               title: "Naked teeps caught by taller opponent",
-              content: "Last night the taller guy caught every naked teep I threw.",
+              content: sourceText,
             },
             explicitlyStated: true,
             confidence: 0.93,
             evidence: ["caught every naked teep"],
             reason: "Progress note for existing task",
+            segmentRef: "seg_1",
           },
         ],
-      }),
+      }, "Teep Sparring"),
     });
 
     expect(result.routing.relatedTaskId).toBe("task-teep");
@@ -240,12 +293,13 @@ describe("normalizeActiveNoteAIOutput routing", () => {
     expect(result.proposals[0]?.objectType).toBe("idea");
   });
 
-  it("allows idea_only without forcing a project", () => {
+  it("remaps idea_only to new_project when the segment does not match the catalog", () => {
+    const sourceText =
+      "Maybe I could make an app that builds martial arts training plans.";
     const result = normalizeActiveNoteAIOutput({
-      sourceText:
-        "Maybe I could make an app that builds martial arts training plans.",
+      sourceText,
       allowedProjectIds: new Set(["proj-1"]),
-      raw: baseOutput({
+      raw: withSourceSegment(sourceText, {
         routing: {
           destination: "idea_only",
           projectId: null,
@@ -268,9 +322,50 @@ describe("normalizeActiveNoteAIOutput routing", () => {
             confidence: 0.8,
             evidence: ["Maybe I could make an app"],
             reason: "Project selection required",
+            segmentRef: "seg_1",
           },
         ],
-      }),
+      }, "Training Plan App"),
+    });
+
+    expect(result.routing.destination).toBe("new_project");
+    expect(result.proposals.some((p) => p.objectType === "idea")).toBe(false);
+  });
+
+  it("allows idea_only without a project when no candidates exist", () => {
+    const sourceText =
+      "Maybe I could make an app that builds martial arts training plans.";
+    const result = normalizeActiveNoteAIOutput({
+      sourceText,
+      allowedProjectIds: new Set(),
+      raw: withSourceSegment(sourceText, {
+        routing: {
+          destination: "idea_only",
+          projectId: null,
+          relatedTaskId: null,
+          reason: "Uncommitted possibility without strong project fit",
+          confidence: 0.8,
+        },
+        impact: null,
+        candidateProjects: [],
+        proposals: [
+          {
+            ref: "idea_1",
+            operationType: "create",
+            objectType: "idea",
+            parent: null,
+            attachment: null,
+            payload: {
+              title: "Martial arts training plan app",
+            },
+            explicitlyStated: true,
+            confidence: 0.8,
+            evidence: ["Maybe I could make an app"],
+            reason: "Project selection required",
+            segmentRef: "seg_1",
+          },
+        ],
+      }, "Training Plan App"),
     });
 
     expect(result.routing.destination).toBe("idea_only");
@@ -278,7 +373,226 @@ describe("normalizeActiveNoteAIOutput routing", () => {
     expect(result.proposals[0]?.parent).toBeNull();
   });
 
-  it("rejects a generic note fallback without attachment or parent", () => {
+  it("normalizes multi-segment notes into per-segment routes and notes", () => {
+    const result = normalizeActiveNoteAIOutput({
+      sourceText: [
+        "Currently waiting for Quick books data to become available for Vital Pak",
+        "",
+        "ABL Automation has taken a back seat to other audits for Hilco and KPMG",
+        "",
+        "Kai Li will take over customer business review from Joe",
+      ].join("\n"),
+      allowedProjectIds: new Set(["proj-vital", "proj-abl", "proj-review"]),
+      raw: baseOutput({
+        routing: {
+          destination: "existing_project",
+          projectId: null,
+          relatedTaskId: null,
+          reason: "Multi-project note with 3 contexts",
+          confidence: 0.85,
+        },
+        impact: null,
+        segments: [
+          {
+            ref: "seg_1",
+            text: "Currently waiting for Quick books data to become available for Vital Pak",
+            subject: "Vital Pak",
+          },
+          {
+            ref: "seg_2",
+            text: "ABL Automation has taken a back seat to other audits for Hilco and KPMG",
+            subject: "ABL Automation",
+          },
+          {
+            ref: "seg_3",
+            text: "Kai Li will take over customer business review from Joe",
+            subject: "Customer business review",
+          },
+        ],
+        routes: [
+          {
+            segmentRef: "seg_1",
+            destination: "existing_project",
+            projectId: "proj-vital",
+            relatedTaskId: null,
+            reason: "Vital Pak context",
+            confidence: 0.9,
+            impact: { type: "project_context", reason: "Status wait" },
+          },
+          {
+            segmentRef: "seg_2",
+            destination: "existing_project",
+            projectId: "proj-abl",
+            relatedTaskId: null,
+            reason: "ABL Automation context",
+            confidence: 0.88,
+            impact: { type: "project_context", reason: "Priority shift" },
+          },
+          {
+            segmentRef: "seg_3",
+            destination: "existing_project",
+            projectId: "proj-review",
+            relatedTaskId: null,
+            reason: "Customer business review handoff",
+            confidence: 0.87,
+            impact: { type: "project_context", reason: "Ownership change" },
+          },
+        ],
+        candidateProjects: [
+          {
+            id: "proj-vital",
+            title: "Vital Pak",
+            relevanceReason: "Vital Pak",
+          },
+          {
+            id: "proj-abl",
+            title: "ABL Automation",
+            relevanceReason: "ABL Automation",
+          },
+          {
+            id: "proj-review",
+            title: "Customer business review",
+            relevanceReason: "Customer business review",
+          },
+        ],
+        proposals: [
+          {
+            ref: "note_1",
+            operationType: "create",
+            objectType: "note",
+            parent: { projectId: "proj-vital", projectRef: null },
+            attachment: { type: "project", id: "proj-vital", ref: null },
+            payload: {
+              title: "Waiting for QuickBooks data",
+              content:
+                "Currently waiting for Quick books data to become available for Vital Pak",
+            },
+            explicitlyStated: true,
+            confidence: 0.9,
+            evidence: ["waiting for Quick books data"],
+            reason: "Vital Pak status",
+            segmentRef: "seg_1",
+          },
+          {
+            ref: "note_2",
+            operationType: "create",
+            objectType: "note",
+            parent: { projectId: "proj-abl", projectRef: null },
+            attachment: { type: "project", id: "proj-abl", ref: null },
+            payload: {
+              title: "ABL Automation deprioritized",
+              content:
+                "ABL Automation has taken a back seat to other audits for Hilco and KPMG",
+            },
+            explicitlyStated: true,
+            confidence: 0.9,
+            evidence: ["ABL Automation has taken a back seat"],
+            reason: "ABL status",
+            segmentRef: "seg_2",
+          },
+          {
+            ref: "note_3",
+            operationType: "create",
+            objectType: "note",
+            parent: { projectId: "proj-review", projectRef: null },
+            attachment: { type: "project", id: "proj-review", ref: null },
+            payload: {
+              title: "Kai Li takes over customer business review",
+              content:
+                "Kai Li will take over customer business review from Joe",
+            },
+            explicitlyStated: true,
+            confidence: 0.9,
+            evidence: ["Kai Li will take over"],
+            reason: "Handoff note",
+            segmentRef: "seg_3",
+          },
+        ],
+      }),
+    });
+
+    expect(result.segments).toHaveLength(3);
+    expect(result.routes).toHaveLength(3);
+    expect(result.routing.projectId).toBeNull();
+    expect(result.routing.reason).toMatch(/3 contexts/i);
+    expect(result.proposals).toHaveLength(3);
+    expect(
+      result.proposals.map((p) => p.segmentRef).sort()
+    ).toEqual(["seg_1", "seg_2", "seg_3"]);
+    expect(
+      new Set(
+        result.proposals.map((p) => p.parent?.projectId ?? p.suggestedProjectId)
+      )
+    ).toEqual(new Set(["proj-vital", "proj-abl", "proj-review"]));
+  });
+
+  it("removes notes missing an LLM title instead of inventing one", () => {
+    const result = normalizeActiveNoteAIOutput({
+      sourceText:
+        "ABL Automation has taken a back seat to other audits for Hilco and KPMG",
+      allowedProjectIds: new Set(["proj-1"]),
+      raw: baseOutput({
+        proposals: [
+          {
+            ref: "note_1",
+            operationType: "create",
+            objectType: "note",
+            parent: { projectId: "proj-1", projectRef: null },
+            attachment: { type: "project", id: "proj-1", ref: null },
+            payload: {
+              content:
+                "ABL Automation has taken a back seat to other audits for Hilco and KPMG",
+            },
+            explicitlyStated: true,
+            confidence: 0.8,
+            evidence: ["ABL Automation has taken a back seat"],
+            reason: "Status observation",
+            segmentRef: "seg_1",
+          },
+        ],
+      }),
+    });
+
+    expect(result.proposals.some((p) => p.objectType === "note")).toBe(false);
+    expect(result.warnings).toContain(
+      "Removed note proposal note_1: missing LLM title"
+    );
+  });
+
+  it("keeps LLM-provided note titles even when they look truncated", () => {
+    const content =
+      "ABL Automation has taken a back seat to other audits for Hilco and KPMG";
+    const result = normalizeActiveNoteAIOutput({
+      sourceText: content,
+      allowedProjectIds: new Set(["proj-1"]),
+      raw: baseOutput({
+        proposals: [
+          {
+            ref: "note_1",
+            operationType: "create",
+            objectType: "note",
+            parent: { projectId: "proj-1", projectRef: null },
+            attachment: { type: "project", id: "proj-1", ref: null },
+            payload: {
+              title: "ABL Automation has taken a back",
+              content,
+            },
+            explicitlyStated: true,
+            confidence: 0.8,
+            evidence: ["ABL Automation has taken a back seat"],
+            reason: "Status observation",
+            segmentRef: "seg_1",
+          },
+        ],
+      }),
+    });
+
+    expect(result.proposals[0]?.payload.title).toBe(
+      "ABL Automation has taken a back"
+    );
+  });
+
+  it("attaches orphan notes to the routed existing project", () => {
     const result = normalizeActiveNoteAIOutput({
       sourceText: "Random prose with no useful routing.",
       allowedProjectIds: new Set(["proj-1"]),
@@ -300,11 +614,112 @@ describe("normalizeActiveNoteAIOutput routing", () => {
       }),
     });
 
-    expect(
-      result.proposals.every(
-        (p) => p.objectType !== "note" || p.operationType === "no_action"
-      )
-    ).toBe(true);
+    expect(result.routing.destination).toBe("existing_project");
+    expect(result.proposals[0]?.objectType).toBe("note");
+    expect(result.proposals[0]?.parent?.projectId).toBe("proj-1");
+    expect(result.proposals[0]?.attachment?.id).toBe("proj-1");
+  });
+
+  it("logs observational no_action results onto the most likely project", () => {
+    const sourceText =
+      "ABL Automation has taken a back seat to other audits for Hilco and KPMG";
+    const result = normalizeActiveNoteAIOutput({
+      sourceText,
+      allowedProjectIds: new Set(["proj-abl"]),
+      fallbackCandidateProjects: [
+        {
+          id: "proj-abl",
+          title: "ABL Automation",
+          relevanceReason: "Title overlap",
+        },
+      ],
+      raw: withSourceSegment(sourceText, {
+        routing: {
+          destination: "no_action",
+          projectId: null,
+          relatedTaskId: null,
+          reason: "No useful Spydr change",
+          confidence: 0.8,
+        },
+        impact: null,
+        candidateProjects: [
+          {
+            id: "proj-abl",
+            title: "ABL Automation",
+            relevanceReason: "Title overlap",
+          },
+        ],
+        proposals: [
+          {
+            ref: "no_action_1",
+            operationType: "no_action",
+            objectType: "note",
+            parent: null,
+            attachment: null,
+            payload: { title: "No action" },
+            explicitlyStated: false,
+            confidence: 1,
+            evidence: [],
+            reason: "No useful execution change detected",
+            segmentRef: "seg_1",
+          },
+        ],
+      }, "ABL Automation"),
+    });
+
+    expect(result.routing.destination).toBe("existing_project");
+    expect(result.routing.projectId).toBe("proj-abl");
+    expect(result.proposals.some((p) => p.objectType === "note")).toBe(false);
+    expect(result.warnings.some((w) => w.includes("no actionable proposals"))).toBe(
+      true
+    );
+  });
+
+  it("preserves new_project when segment does not match the catalog", () => {
+    const sourceText = "Random observational note about something unrelated.";
+    const result = normalizeActiveNoteAIOutput({
+      sourceText,
+      allowedProjectIds: new Set(["proj-abl"]),
+      raw: withSourceSegment(sourceText, {
+        routing: {
+          destination: "new_project",
+          projectId: null,
+          relatedTaskId: null,
+          reason: "Distinct subject",
+          confidence: 0.6,
+        },
+        impact: null,
+        candidateProjects: [
+          {
+            id: "proj-abl",
+            title: "ABL Automation",
+            relevanceReason: "Title overlap",
+          },
+        ],
+        proposals: [
+          {
+            ref: "project_1",
+            operationType: "suggest_create",
+            objectType: "project",
+            parent: null,
+            attachment: null,
+            payload: { title: "Unrelated subject" },
+            explicitlyStated: false,
+            confidence: 0.6,
+            evidence: ["Random observational note"],
+            reason: "New container",
+            segmentRef: "seg_1",
+          },
+        ],
+      }, "Unrelated Subject"),
+    });
+
+    expect(result.routing.destination).toBe("new_project");
+    expect(result.proposals.some((p) => p.objectType === "project")).toBe(true);
+    expect(result.proposals.some((p) => p.objectType === "note")).toBe(false);
+    expect(result.warnings).toContain(
+      "new_project segment seg_1 is missing a Note proposal with an LLM title"
+    );
   });
 
   it("rejects vague person proposals", () => {
@@ -348,9 +763,9 @@ describe("normalizeActiveNoteAIOutput routing", () => {
     expect(result.proposals.some((p) => p.objectType === "note")).toBe(true);
   });
 
-  it("removes invalid projectId and relatedTaskId from routing", () => {
+  it("rematches invalid routing projectId when the segment matches the catalog", () => {
     const result = normalizeActiveNoteAIOutput({
-      sourceText: "Practice teep setups.",
+      sourceText: "Practice teep setups for Muay Thai Development.",
       allowedProjectIds: new Set(["proj-1"]),
       taskProjectMap: new Map([["task-1", "proj-1"]]),
       raw: baseOutput({
@@ -378,8 +793,10 @@ describe("normalizeActiveNoteAIOutput routing", () => {
       }),
     });
 
-    expect(result.routing.destination).toBe("no_action");
-    expect(result.routing.projectId).toBeNull();
+    expect(result.routing.destination).toBe("existing_project");
+    expect(result.routing.projectId).toBe("proj-1");
+    expect(result.routing.relatedTaskId).toBeNull();
+    expect(result.proposals[0]?.objectType).toBe("task");
   });
 
   it("removes proposals inconsistent with existing_project routing", () => {
@@ -452,7 +869,7 @@ describe("normalizeActiveNoteAIOutput routing", () => {
   it("rejects task when routing cannot supply a project parent", () => {
     const result = normalizeActiveNoteAIOutput({
       sourceText: "Build the proof of concept.",
-      allowedProjectIds: new Set(["proj-1"]),
+      allowedProjectIds: new Set(),
       raw: baseOutput({
         routing: {
           destination: "idea_only",
@@ -462,6 +879,7 @@ describe("normalizeActiveNoteAIOutput routing", () => {
           confidence: 0.5,
         },
         impact: null,
+        candidateProjects: [],
         proposals: [
           {
             ref: "task_1",
@@ -480,13 +898,18 @@ describe("normalizeActiveNoteAIOutput routing", () => {
     });
 
     expect(result.proposals.some((p) => p.objectType === "task")).toBe(false);
+    expect(result.proposals.some((p) => p.objectType === "note")).toBe(false);
+    expect(result.warnings.some((w) => w.includes("no actionable proposals"))).toBe(
+      true
+    );
   });
 
-  it("downgrades new_project routing with no Project proposal", () => {
+  it("does not synthesize untitled proposals when new_project lacks a Project proposal", () => {
+    const sourceText = "I want to build a big multi-step program.";
     const result = normalizeActiveNoteAIOutput({
-      sourceText: "I want to build a big multi-step program.",
+      sourceText,
       allowedProjectIds: new Set(["proj-1"]),
-      raw: baseOutput({
+      raw: withSourceSegment(sourceText, {
         routing: {
           destination: "new_project",
           projectId: null,
@@ -507,13 +930,17 @@ describe("normalizeActiveNoteAIOutput routing", () => {
             confidence: 0.7,
             evidence: ["build a big multi-step program"],
             reason: "Orphan task",
+            segmentRef: "seg_1",
           },
         ],
-      }),
+      }, "Multi-step Program"),
     });
 
-    expect(result.routing.destination).toBe("no_action");
-    expect(result.proposals[0]?.operationType).toBe("no_action");
+    expect(result.proposals.some((p) => p.objectType === "project")).toBe(false);
+    expect(result.proposals.some((p) => p.objectType === "note")).toBe(false);
+    expect(result.warnings).toContain(
+      "new_project routing for seg_1 had no Project proposal with an LLM title"
+    );
   });
 
   it("removes invented due dates and priorities", () => {

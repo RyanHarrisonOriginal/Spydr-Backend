@@ -54,6 +54,22 @@ export const activeNoteImpactSchema = z.object({
   reason: z.string().min(1),
 });
 
+export const activeNoteSegmentSchema = z.object({
+  ref: z.string().trim().min(1),
+  text: z.string().trim().min(1),
+  subject: z.string().trim().min(1),
+});
+
+export const activeNoteSegmentRouteSchema = z.object({
+  segmentRef: z.string().trim().min(1),
+  destination: activeNoteRoutingDestinationSchema,
+  projectId: z.string().nullable().optional(),
+  relatedTaskId: z.string().nullable().optional(),
+  reason: z.string().min(1),
+  confidence: z.number().min(0).max(1),
+  impact: activeNoteImpactSchema.nullable().optional(),
+});
+
 export const activeNoteProposalSchema = z.object({
   ref: z.string().trim().min(1),
   operationType: activeNoteOperationTypeSchema,
@@ -88,12 +104,15 @@ export const activeNoteProposalSchema = z.object({
   confidence: z.number().min(0).max(1),
   evidence: z.array(z.string()).default([]),
   reason: z.string().min(1),
+  segmentRef: z.string().trim().min(1).nullable().optional(),
 });
 
 export const activeNoteAIOutputSchema = z.object({
   routing: activeNoteRoutingSchema,
   impact: activeNoteImpactSchema.nullable().optional(),
   summary: z.string().min(1),
+  segments: z.array(activeNoteSegmentSchema).default([]),
+  routes: z.array(activeNoteSegmentRouteSchema).default([]),
   proposals: z.array(activeNoteProposalSchema).default([]),
   candidateProjects: z
     .array(

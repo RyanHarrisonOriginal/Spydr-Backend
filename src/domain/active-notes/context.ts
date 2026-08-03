@@ -4,6 +4,10 @@ import type {
   ActiveNoteCandidateProject,
   ActiveNoteProjectContext,
 } from "./types.js";
+import {
+  ACTIVE_NOTE_CATALOG_ALL_THRESHOLD,
+  ACTIVE_NOTE_CATALOG_SCORED_LIMIT,
+} from "./types.js";
 
 function sortByUpdatedDesc<T extends { updatedAt: Date }>(items: T[]): T[] {
   return [...items].sort(
@@ -103,6 +107,33 @@ export function scoreProjectMatch(
   }
 
   return overlap + titleOverlap * 2 + Math.min(taskOverlap, 4);
+}
+
+/** Hybrid catalog: all active projects when ≤20, else top scored by note overlap. */
+export function selectProjectCatalog(
+  content: string,
+  projects: ProjectNode[]
+): ActiveNoteCandidateProject[] {
+  const activeProjects = projects.filter(
+    (project) =>
+      !project.isDeleted &&
+      project.status !== "archived" &&
+      project.status !== "completed"
+  );
+
+  if (activeProjects.length <= ACTIVE_NOTE_CATALOG_ALL_THRESHOLD) {
+    return activeProjects.map((project) => ({
+      id: project.id,
+      title: project.title,
+      relevanceReason: "Active project in catalog",
+    }));
+  }
+
+  return selectCandidateProjects(
+    content,
+    projects,
+    ACTIVE_NOTE_CATALOG_SCORED_LIMIT
+  );
 }
 
 export function selectCandidateProjects(

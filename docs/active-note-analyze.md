@@ -150,13 +150,13 @@ Normalization converts `attach_context` into a Note `create` while preserving `a
 Composed from:
 
 - `src/domain/active-notes/prompts/domain.ts`
-- `routing.ts`
+- `segmentation.ts` (SPLIT)
+- `matching.ts` (MATCH)
 - `object-definitions.ts`
-- `project-cohesion.ts`
-- `planning.ts`
+- `planning.ts` (ACT)
 - `guardrails.ts`
 
-Prompt version: `active-note-v3`.
+Prompt version: `active-note-v7.6`.
 
 ## Routing policy (v3)
 
