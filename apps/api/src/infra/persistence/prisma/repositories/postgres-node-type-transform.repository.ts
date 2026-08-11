@@ -134,7 +134,14 @@ export class PostgresNodeTypeTransformRepository
       : [...row.tags];
 
     await this.db.$transaction(async (tx) => {
-      await this.recordHistory(tx, request, row.nodeType, "task", snapshot, now);
+      await this.recordHistory(
+        tx,
+        request,
+        row.nodeType as TransformableNodeType,
+        "task",
+        snapshot,
+        now
+      );
 
       if (linkedChildren.length > 0) {
         await this.migrateProjectChildrenToTarget(tx, {
@@ -220,7 +227,14 @@ export class PostgresNodeTypeTransformRepository
       : [...row.tags];
 
     await this.db.$transaction(async (tx) => {
-      await this.recordHistory(tx, request, row.nodeType, "note", snapshot, now);
+      await this.recordHistory(
+        tx,
+        request,
+        row.nodeType as TransformableNodeType,
+        "note",
+        snapshot,
+        now
+      );
 
       if (linkedChildren.length > 0) {
         await this.migrateProjectChildrenToTarget(tx, {
@@ -331,7 +345,14 @@ export class PostgresNodeTypeTransformRepository
     });
 
     await this.db.$transaction(async (tx) => {
-      await this.recordHistory(tx, request, row.nodeType, "project", snapshot, now);
+      await this.recordHistory(
+        tx,
+        request,
+        row.nodeType as TransformableNodeType,
+        "project",
+        snapshot,
+        now
+      );
       await tx.spydrTaskDetails.deleteMany({ where: { nodeId: row.id } });
       await this.removeProjectParentRelationships(tx, request.orgId, row.id);
 
@@ -383,7 +404,14 @@ export class PostgresNodeTypeTransformRepository
     const taskDetails = defaultTaskDetailsFromSource({ now });
 
     await this.db.$transaction(async (tx) => {
-      await this.recordHistory(tx, request, row.nodeType, "task", snapshot, now);
+      await this.recordHistory(
+        tx,
+        request,
+        row.nodeType as TransformableNodeType,
+        "task",
+        snapshot,
+        now
+      );
 
       await tx.spydrNode.update({
         where: { id: row.id },
@@ -435,7 +463,14 @@ export class PostgresNodeTypeTransformRepository
     });
 
     await this.db.$transaction(async (tx) => {
-      await this.recordHistory(tx, request, row.nodeType, "project", snapshot, now);
+      await this.recordHistory(
+        tx,
+        request,
+        row.nodeType as TransformableNodeType,
+        "project",
+        snapshot,
+        now
+      );
       await this.removeProjectParentRelationships(tx, request.orgId, row.id);
 
       await tx.spydrNode.update({
@@ -486,7 +521,14 @@ export class PostgresNodeTypeTransformRepository
     const taskDetails = defaultTaskDetailsFromSource({ now });
 
     await this.db.$transaction(async (tx) => {
-      await this.recordHistory(tx, request, row.nodeType, "task", snapshot, now);
+      await this.recordHistory(
+        tx,
+        request,
+        row.nodeType as TransformableNodeType,
+        "task",
+        snapshot,
+        now
+      );
       await tx.spydrIdeaDetails.deleteMany({ where: { nodeId: row.id } });
 
       await tx.spydrNode.update({
@@ -540,7 +582,14 @@ export class PostgresNodeTypeTransformRepository
     });
 
     await this.db.$transaction(async (tx) => {
-      await this.recordHistory(tx, request, row.nodeType, "project", snapshot, now);
+      await this.recordHistory(
+        tx,
+        request,
+        row.nodeType as TransformableNodeType,
+        "project",
+        snapshot,
+        now
+      );
       await tx.spydrIdeaDetails.deleteMany({ where: { nodeId: row.id } });
       await this.removeProjectParentRelationships(tx, request.orgId, row.id);
 
@@ -833,7 +882,7 @@ export class PostgresNodeTypeTransformRepository
         userId: request.userId,
         fromType,
         toType,
-        snapshot,
+        snapshot: snapshot as unknown as Prisma.InputJsonValue,
         transformedAt: now,
       },
     });

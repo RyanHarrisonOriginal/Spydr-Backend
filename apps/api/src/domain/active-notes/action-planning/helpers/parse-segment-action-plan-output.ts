@@ -13,15 +13,36 @@ import type {
 } from "../types/index.js";
 import { ActiveNoteAnalysisError } from "../../types/shared.js";
 
+type TaskRelatedParsedAction = ParsedSegmentActionPlanAction & {
+  type: "attach_note_to_task" | "use_existing_task";
+};
+
+type AttachNotePayload = {
+  subject: string;
+  content: string;
+};
+
+function isAttachNotePayload(
+  payload: ParsedSegmentActionPlanAction["payload"]
+): payload is AttachNotePayload {
+  return (
+    payload != null &&
+    typeof payload === "object" &&
+    "subject" in payload &&
+    typeof payload.subject === "string" &&
+    "content" in payload &&
+    typeof payload.content === "string"
+  );
+}
+
 function downgradeTaskActionToProjectNote(
-  action: Extract<
-    ParsedSegmentActionPlanAction,
-    { type: "attach_note_to_task" | "use_existing_task" }
-  >,
+  action: TaskRelatedParsedAction,
   originalText: string
 ): Extract<ExistingProjectSegmentActionPlan["action"], { type: "create_note" }> {
   const payload =
-    action.type === "attach_note_to_task" ? action.payload : undefined;
+    action.type === "attach_note_to_task" && isAttachNotePayload(action.payload)
+      ? action.payload
+      : undefined;
 
   return {
     type: "create_note",
@@ -46,34 +67,48 @@ function resolveTaskAction(
     return action as ExistingProjectSegmentActionPlan["action"];
   }
 
+  const taskAction = action as TaskRelatedParsedAction;
   const taskIds = collectProjectTaskIds(projectContext);
-  if (!action.targetTaskId || !taskIds.has(action.targetTaskId)) {
-    return downgradeTaskActionToProjectNote(action, originalText);
+  if (!taskAction.targetTaskId || !taskIds.has(taskAction.targetTaskId)) {
+    return downgradeTaskActionToProjectNote(taskAction, originalText);
   }
 
   const expectedTaskTitle = findProjectTaskTitle(
     projectContext,
-    action.targetTaskId
+    taskAction.targetTaskId
   );
-  const targetTaskTitle = expectedTaskTitle ?? action.targetTaskTitle;
+  const targetTaskTitle =
+    expectedTaskTitle ?? taskAction.targetTaskTitle ?? "Linked task";
 
-  if (action.type === "use_existing_task") {
+  if (taskAction.type === "use_existing_task") {
+    if (!taskAction.targetTaskId) {
+      return downgradeTaskActionToProjectNote(taskAction, originalText);
+    }
+
     return {
       type: "use_existing_task",
-      confidence: action.confidence,
-      reason: action.reason,
-      targetTaskId: action.targetTaskId,
+      confidence: taskAction.confidence,
+      reason: taskAction.reason,
+      targetTaskId: taskAction.targetTaskId,
       targetTaskTitle,
     };
   }
 
+  if (!isAttachNotePayload(taskAction.payload)) {
+    return downgradeTaskActionToProjectNote(taskAction, originalText);
+  }
+
+  if (!taskAction.targetTaskId) {
+    return downgradeTaskActionToProjectNote(taskAction, originalText);
+  }
+
   return {
     type: "attach_note_to_task",
-    confidence: action.confidence,
-    reason: action.reason,
-    targetTaskId: action.targetTaskId,
+    confidence: taskAction.confidence,
+    reason: taskAction.reason,
+    targetTaskId: taskAction.targetTaskId,
     targetTaskTitle,
-    payload: action.payload!,
+    payload: taskAction.payload,
   };
 }
 

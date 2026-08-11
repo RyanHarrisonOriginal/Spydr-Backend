@@ -1,4 +1,5 @@
-import type { EmbeddedSegment, SegmentWithProjectMatches } from "../../pipeline/types/index.js";
+import type { EmbeddedSegment } from "../../pipeline/types/index.js";
+import type { SegmentWithProjectMatches } from "../types/index.js";
 import {
   DEFAULT_PROJECT_SEARCH_LIMIT,
   type ProjectRetrievalService,

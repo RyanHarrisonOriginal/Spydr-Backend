@@ -133,7 +133,7 @@ const segmentActionPlanActionSchema = z
         }
         createTaskPayloadSchema.parse(value.payload);
         return;
-      case "create_note":
+      case "create_note": {
         if (!value.payload) {
           ctx.addIssue({
             code: "custom",
@@ -142,14 +142,15 @@ const segmentActionPlanActionSchema = z
           });
           return;
         }
-        createNotePayloadSchema.parse(value.payload);
+        const notePayload = createNotePayloadSchema.parse(value.payload);
         validateGeneratedLabel(
-          value.payload.subject,
+          notePayload.subject,
           "Note subject",
           ctx,
           ["payload", "subject"]
         );
         return;
+      }
       case "attach_note_to_task":
         if (!value.targetTaskId || !value.targetTaskTitle) {
           ctx.addIssue({

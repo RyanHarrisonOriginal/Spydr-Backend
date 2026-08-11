@@ -1,20 +1,13 @@
-import type { ActiveNoteSegment } from "../segmentation/types/index.js";
-import type { SegmentWithProjectAssignment } from "../project-routing/types/index.js";
-import type {
-  ActiveNoteActionPlanResult,
-  SegmentActionPlan,
-} from "../action-planning/types/index.js";
+import type { SegmentWithActionPlan, SegmentActionPlan, ActiveNoteActionPlanResult } from "../action-planning/types/index.js";
 import { assertSegmentContextualTextMatches } from "../action-planning/helpers/attach-segment-lineage-to-action-plan.js";
 import type { ActiveNoteEmbeddedSegmentationResult } from "../pipeline/types/index.js";
 import type {
   ActiveNoteProjectAssignmentResult,
   ActiveNoteProjectContextResult,
 } from "../project-routing/types/index.js";
-import type { ActiveNoteSegmentationResult } from "../segmentation/types/index.js";
+import type { ActiveNoteSegmentationResult, ActiveNoteSegment } from "../segmentation/types/index.js";
 
-export type SegmentWithActionPlan = SegmentWithProjectAssignment & {
-  actionPlan: SegmentActionPlan;
-};
+export type { SegmentWithActionPlan } from "../action-planning/types/index.js";
 
 export interface ActiveNoteAIOutput {
   segments: ActiveNoteSegment[];
