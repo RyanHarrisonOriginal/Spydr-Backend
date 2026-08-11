@@ -1,0 +1,120 @@
+{
+  "segmentCount": 7,
+  "actionPlanCount": 5,
+  "segments": [
+    {
+      "topic": "Meeting with Amy",
+      "sourceText": "Met with Amy today about the Commercial Scorecard rollout.",
+      "contextualText": "I met with Amy today about the Commercial Scorecard rollout."
+    },
+    {
+      "topic": "Amy's Feedback",
+      "sourceText": "She liked the overall direction but wants managers to have a clearer way to compare rep performance over time before we launch.",
+      "contextualText": "Amy liked the overall direction of the Commercial Scorecard rollout but wants managers to have a clearer way to compare rep performance over time before we launch."
+    },
+    {
+      "topic": "Rep-Level Trend View",
+      "sourceText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version.",
+      "contextualText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version of the Commercial Scorecard."
+    },
+    {
+      "topic": "Eric's Update on Inventory App",
+      "sourceText": "Eric mentioned the inventory app being built for the Southwest region is making good progress,",
+      "contextualText": "Eric mentioned that the inventory app being built for the Southwest region is making good progress."
+    },
+    {
+      "topic": "Alignment with Florida Team",
+      "sourceText": "but we still need to align with the Florida team so we don't end up with two different solutions solving the same problem.",
+      "contextualText": "However, we still need to align with the Florida team on the inventory app so we don't end up with two different solutions solving the same problem."
+    },
+    {
+      "topic": "Querying Snowflake",
+      "sourceText": "I decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive.",
+      "contextualText": "I decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive."
+    },
+    {
+      "topic": "Reusable Framework for SupplyOne",
+      "sourceText": "Maybe we should eventually create a reusable framework for internal SupplyOne applications so every new app follows the same authentication, security, and deployment patterns.",
+      "contextualText": "Maybe we should eventually create a reusable framework for internal SupplyOne applications so that every new app follows the same authentication, security, and deployment patterns."
+    }
+  ],
+  "actionPlans": [
+    {
+      "originalText": "Met with Amy today about the Commercial Scorecard rollout.",
+      "projectId": "5c264779-dafd-4db2-82a5-6476158ed80f",
+      "projectName": "Commercial Scorecard v2",
+      "intent": "progress_update",
+      "action": {
+        "type": "attach_note_to_task",
+        "confidence": 0.9,
+        "reason": "The segment provides an update on a meeting with Amy regarding the Commercial Scorecard rollout, which is relevant to the ongoing task of presenting the scorecard to her for final sign off.",
+        "targetTaskId": "d68d13d1-a89a-448a-a4f4-df916aef099d",
+        "targetTaskTitle": "Present Commercial Scorecard v2 to Amy for final sign off",
+        "payload": {
+          "subject": "Meeting update with Amy",
+          "content": "Met with Amy today about the Commercial Scorecard rollout."
+        }
+      },
+      "topic": "Meeting with Amy",
+      "contextualText": "I met with Amy today about the Commercial Scorecard rollout.",
+      "taskId": "d68d13d1-a89a-448a-a4f4-df916aef099d"
+    },
+    {
+      "originalText": "She liked the overall direction but wants managers to have a clearer way to compare rep performance over time before we launch.",
+      "projectId": "5c264779-dafd-4db2-82a5-6476158ed80f",
+      "projectName": "Commercial Scorecard v2",
+      "intent": "project_context",
+      "action": {
+        "type": "attach_note_to_task",
+        "confidence": 0.9,
+        "reason": "The segment expresses a need for clearer comparison of rep performance, which relates to the ongoing work on the Commercial Scorecard v2 and can inform the existing tasks about user feedback.",
+        "targetTaskId": "96705ac7-116d-4aea-9732-efe92e09296c",
+        "targetTaskTitle": "check metrics at a rep level commercial scorecard",
+        "payload": {
+          "subject": "Feedback on Rep Performance Comparison",
+          "content": "She liked the overall direction but wants managers to have a clearer way to compare rep performance over time before we launch."
+        }
+      },
+      "topic": "Amy's Feedback",
+      "contextualText": "Amy liked the overall direction of the Commercial Scorecard rollout but wants managers to have a clearer way to compare rep performance over time before we launch.",
+      "taskId": "96705ac7-116d-4aea-9732-efe92e09296c"
+    },
+    {
+      "originalText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version.",
+      "projectId": "5c264779-dafd-4db2-82a5-6476158ed80f",
+      "projectName": "Commercial Scorecard v2",
+      "intent": "task_action",
+      "action": {
+        "type": "create_task",
+        "confidence": 0.9,
+        "reason": "The segment expresses distinct concrete work that needs to be performed, specifically adding a rep-level trend view and validating quarter-to-date calculations, which are not adequately represented by existing tasks.",
+        "payload": {
+          "title": "Add rep-level trend view and validate QTD calculations",
+          "description": "Add a rep-level trend view and validate the quarter-to-date calculations before presenting the final version."
+        }
+      },
+      "topic": "Rep-Level Trend View",
+      "contextualText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version of the Commercial Scorecard."
+    },
+    {
+      "destination": "new_project_candidate",
+      "originalText": "Eric mentioned the inventory app being built for the Southwest region is making good progress,",
+      "projectId": null,
+      "projectName": "Southwest Inventory App",
+      "confidence": 0.75,
+      "reason": "The segment indicates a distinct project focused on developing an inventory app for a specific region.",
+      "topic": "Eric's Update on Inventory App",
+      "contextualText": "Eric mentioned that the inventory app being built for the Southwest region is making good progress."
+    },
+    {
+      "destination": "new_project_candidate",
+      "originalText": "Maybe we should eventually create a reusable framework for internal SupplyOne applications so every new app follows the same authentication, security, and deployment patterns.",
+      "projectId": null,
+      "projectName": "SupplyOne Framework",
+      "confidence": 0.75,
+      "reason": "The segment discusses a distinct effort to create a reusable framework, indicating a potential need for its own project.",
+      "topic": "Reusable Framework for SupplyOne",
+      "contextualText": "Maybe we should eventually create a reusable framework for internal SupplyOne applications so that every new app follows the same authentication, security, and deployment patterns."
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "segmentCount": 7,
+  "segments": [
+    {
+      "topic": "Meeting with Amy",
+      "sourceText": "Met with Amy today about the Commercial Scorecard rollout.",
+      "contextualText": "I met with Amy today about the Commercial Scorecard rollout."
+    },
+    {
+      "topic": "Amy's Feedback",
+      "sourceText": "She liked the overall direction but wants managers to have a clearer way to compare rep performance over time before we launch.",
+      "contextualText": "Amy liked the overall direction of the Commercial Scorecard rollout but wants managers to have a clearer way to compare rep performance over time before we launch."
+    },
+    {
+      "topic": "Rep-Level Trend View",
+      "sourceText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version.",
+      "contextualText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version of the Commercial Scorecard."
+    },
+    {
+      "topic": "Eric's Update on Inventory App",
+      "sourceText": "Eric mentioned the inventory app being built for the Southwest region is making good progress,",
+      "contextualText": "Eric mentioned that the inventory app being built for the Southwest region is making good progress."
+    },
+    {
+      "topic": "Alignment with Florida Team",
+      "sourceText": "but we still need to align with the Florida team so we don't end up with two different solutions solving the same problem.",
+      "contextualText": "However, we still need to align with the Florida team on the inventory app so we don't end up with two different solutions solving the same problem."
+    },
+    {
+      "topic": "Querying Snowflake",
+      "sourceText": "I decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive.",
+      "contextualText": "I decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive."
+    },
+    {
+      "topic": "Reusable Framework for SupplyOne",
+      "sourceText": "Maybe we should eventually create a reusable framework for internal SupplyOne applications so every new app follows the same authentication, security, and deployment patterns.",
+      "contextualText": "Maybe we should eventually create a reusable framework for internal SupplyOne applications so that every new app follows the same authentication, security, and deployment patterns."
+    }
+  ]
+}

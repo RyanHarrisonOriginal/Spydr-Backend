@@ -1,0 +1,71 @@
+import type { PrismaClient } from "@prisma/client";
+import type { IPersistenceRepositories } from "../../../infra/persistence/index.js";
+import {
+  tryEnqueueProjectEmbeddings,
+  type ProjectEmbeddingEnqueueFn,
+} from "../../../infra/jobs/project-embedding-enqueue.js";
+import type { ICommand, ICommandHandler } from "./command.js";
+import { CommandBus, type ICommandBus } from "./command-bus.js";
+import {
+  collectPreMutationProjectIds,
+  isProjectEmbeddingTrackedCommand,
+  resolveProjectEmbeddingRefreshIds,
+} from "./project-embedding/resolve-project-embedding-refresh-ids.js";
+
+export interface EmbeddingAwareCommandBusOptions {
+  inner?: ICommandBus;
+  repositories: IPersistenceRepositories;
+  prisma: PrismaClient;
+  enqueue?: ProjectEmbeddingEnqueueFn;
+}
+
+export class EmbeddingAwareCommandBus implements ICommandBus {
+  private readonly inner: ICommandBus;
+
+  constructor(private readonly options: EmbeddingAwareCommandBusOptions) {
+    this.inner = options.inner ?? new CommandBus();
+  }
+
+  register<TCommand extends ICommand<TResult>, TResult>(
+    handler: ICommandHandler<TCommand, TResult>
+  ): void {
+    this.inner.register(handler);
+  }
+
+  registerMany(handlers: ICommandHandler<ICommand<unknown>, unknown>[]): void {
+    this.inner.registerMany(handlers);
+  }
+
+  async execute<TCommand extends ICommand<TResult>, TResult>(
+    command: TCommand
+  ): Promise<TResult> {
+    const preMutationProjectIds = isProjectEmbeddingTrackedCommand(command)
+      ? await collectPreMutationProjectIds(
+          command,
+          this.options.repositories,
+          this.options.prisma
+        )
+      : [];
+
+    const result = await this.inner.execute<TCommand, TResult>(command);
+
+    if (isProjectEmbeddingTrackedCommand(command)) {
+      const projectIds = await resolveProjectEmbeddingRefreshIds({
+        command,
+        result,
+        repositories: this.options.repositories,
+        prisma: this.options.prisma,
+        preMutationProjectIds,
+      });
+
+      if (projectIds.length > 0) {
+        await tryEnqueueProjectEmbeddings(
+          projectIds,
+          this.options.enqueue
+        );
+      }
+    }
+
+    return result;
+  }
+}

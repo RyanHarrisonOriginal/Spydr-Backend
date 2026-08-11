@@ -1,0 +1,8 @@
+{
+  "runAt": "2026-08-10T05:39:32.172Z",
+  "input": {
+    "content": "Met with Amy today about the Commercial Scorecard rollout. \n\nShe liked the overall direction but wants managers to have a clearer way to compare rep performance over time before we launch.\n\nI need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version.\n\nEric mentioned the inventory app being built for the Southwest region is making good progress, but we still need to align with the Florida team so we don't end up with two different solutions solving the same problem.\n\nI decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive.\n\nMaybe we should eventually create a reusable framework for internal SupplyOne applications so every new app follows the same authentication, security, and deployment patterns.",
+    "orgId": "d0a8684d-bb03-420a-b60b-91d7a08aa9d9",
+    "userId": "debug-script-user"
+  }
+}

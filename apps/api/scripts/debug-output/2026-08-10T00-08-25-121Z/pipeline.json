@@ -1,0 +1,948 @@
+{
+  "runAt": "2026-08-10T00:08:25.122Z",
+  "outputDir": "C:\\Users\\Ryanh\\Documents\\apps\\spydah-ontology-backend\\apps\\api\\scripts\\debug-output\\2026-08-10T00-08-25-121Z",
+  "input": {
+    "content": "Met with Amy today about the Commercial Scorecard rollout. \n\nShe liked the overall direction but wants managers to have a clearer way to compare rep performance over time before we launch.\n\nI need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version.\n\nEric mentioned the inventory app being built for the Southwest region is making good progress, but we still need to align with the Florida team so we don't end up with two different solutions solving the same problem.\n\nI decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive.\n\nMaybe we should eventually create a reusable framework for internal SupplyOne applications so every new app follows the same authentication, security, and deployment patterns.",
+    "orgId": "d0a8684d-bb03-420a-b60b-91d7a08aa9d9",
+    "userId": "debug-script-user"
+  },
+  "steps": {
+    "segmentation": {
+      "segmentCount": 6,
+      "segments": [
+        {
+          "topic": "Meeting with Amy",
+          "sourceText": "Met with Amy today about the Commercial Scorecard rollout.",
+          "contextualText": "I met with Amy today about the Commercial Scorecard rollout."
+        },
+        {
+          "topic": "Amy's Feedback",
+          "sourceText": "She liked the overall direction but wants managers to have a clearer way to compare rep performance over time before we launch.",
+          "contextualText": "Amy liked the overall direction of the Commercial Scorecard rollout but wants managers to have a clearer way to compare rep performance over time before we launch."
+        },
+        {
+          "topic": "Rep-Level Trend View",
+          "sourceText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version.",
+          "contextualText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version of the Commercial Scorecard."
+        },
+        {
+          "topic": "Eric's Update on Inventory App",
+          "sourceText": "Eric mentioned the inventory app being built for the Southwest region is making good progress, but we still need to align with the Florida team so we don't end up with two different solutions solving the same problem.",
+          "contextualText": "Eric mentioned that the inventory app being built for the Southwest region is making good progress, but we still need to align with the Florida team so we don't end up with two different solutions solving the same problem."
+        },
+        {
+          "topic": "Fallback to Snowflake",
+          "sourceText": "I decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive.",
+          "contextualText": "I decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive."
+        },
+        {
+          "topic": "Reusable Framework for Applications",
+          "sourceText": "Maybe we should eventually create a reusable framework for internal SupplyOne applications so every new app follows the same authentication, security, and deployment patterns.",
+          "contextualText": "We should eventually create a reusable framework for internal SupplyOne applications so every new app follows the same authentication, security, and deployment patterns."
+        }
+      ]
+    },
+    "embeddings": {
+      "segmentCount": 6,
+      "segments": [
+        {
+          "topic": "Meeting with Amy",
+          "sourceText": "Met with Amy today about the Commercial Scorecard rollout.",
+          "contextualText": "I met with Amy today about the Commercial Scorecard rollout.",
+          "embedding": {
+            "dimensions": 1536,
+            "preview": [
+              -0.0013341903686523438,
+              -0.011077880859375,
+              0.009613037109375,
+              -0.037139892578125,
+              -0.01224517822265625,
+              0.025665283203125,
+              0.005603790283203125,
+              -0.0347900390625
+            ]
+          }
+        },
+        {
+          "topic": "Amy's Feedback",
+          "sourceText": "She liked the overall direction but wants managers to have a clearer way to compare rep performance over time before we launch.",
+          "contextualText": "Amy liked the overall direction of the Commercial Scorecard rollout but wants managers to have a clearer way to compare rep performance over time before we launch.",
+          "embedding": {
+            "dimensions": 1536,
+            "preview": [
+              0.0221405029296875,
+              0.001583099365234375,
+              0.0123291015625,
+              0.0008845329284667969,
+              0.0171051025390625,
+              0.028656005859375,
+              0.0282440185546875,
+              -0.06524658203125
+            ]
+          }
+        },
+        {
+          "topic": "Rep-Level Trend View",
+          "sourceText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version.",
+          "contextualText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version of the Commercial Scorecard.",
+          "embedding": {
+            "dimensions": 1536,
+            "preview": [
+              0.0249481201171875,
+              0.035125732421875,
+              0.05181884765625,
+              -0.0382080078125,
+              -0.019134521484375,
+              0.0175018310546875,
+              0.00408172607421875,
+              -0.03369140625
+            ]
+          }
+        },
+        {
+          "topic": "Eric's Update on Inventory App",
+          "sourceText": "Eric mentioned the inventory app being built for the Southwest region is making good progress, but we still need to align with the Florida team so we don't end up with two different solutions solving the same problem.",
+          "contextualText": "Eric mentioned that the inventory app being built for the Southwest region is making good progress, but we still need to align with the Florida team so we don't end up with two different solutions solving the same problem.",
+          "embedding": {
+            "dimensions": 1536,
+            "preview": [
+              -0.021270751953125,
+              0.0162200927734375,
+              0.03936767578125,
+              0.039703369140625,
+              -0.0176849365234375,
+              0.021026611328125,
+              0.0736083984375,
+              0.0011510848999023438
+            ]
+          }
+        },
+        {
+          "topic": "Fallback to Snowflake",
+          "sourceText": "I decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive.",
+          "contextualText": "I decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive.",
+          "embedding": {
+            "dimensions": 1536,
+            "preview": [
+              -0.00516510009765625,
+              0.0103759765625,
+              0.03656005859375,
+              -0.0181427001953125,
+              0.0261993408203125,
+              -0.0049896240234375,
+              -0.0345458984375,
+              0.0204925537109375
+            ]
+          }
+        },
+        {
+          "topic": "Reusable Framework for Applications",
+          "sourceText": "Maybe we should eventually create a reusable framework for internal SupplyOne applications so every new app follows the same authentication, security, and deployment patterns.",
+          "contextualText": "We should eventually create a reusable framework for internal SupplyOne applications so every new app follows the same authentication, security, and deployment patterns.",
+          "embedding": {
+            "dimensions": 1536,
+            "preview": [
+              -0.04010009765625,
+              -0.01666259765625,
+              0.060333251953125,
+              0.031005859375,
+              0.04681396484375,
+              -0.01554107666015625,
+              0.0149078369140625,
+              0.0308990478515625
+            ]
+          }
+        }
+      ]
+    },
+    "projectContext": {
+      "segmentCount": 6,
+      "segments": [
+        {
+          "topic": "Meeting with Amy",
+          "sourceText": "Met with Amy today about the Commercial Scorecard rollout.",
+          "contextualText": "I met with Amy today about the Commercial Scorecard rollout.",
+          "embedding": {
+            "dimensions": 1536,
+            "preview": [
+              -0.0013341903686523438,
+              -0.011077880859375,
+              0.009613037109375,
+              -0.037139892578125,
+              -0.01224517822265625,
+              0.025665283203125,
+              0.005603790283203125,
+              -0.0347900390625
+            ]
+          },
+          "retrievalCandidates": [
+            {
+              "projectId": "5c264779-dafd-4db2-82a5-6476158ed80f",
+              "projectName": "Commercial Scorecard v2",
+              "similarity": 0.6422093056445913,
+              "retrievalContext": "PROJECT: Commercial Scorecard v2\n\nOPEN TASKS:\n- Present Commercial Scorecard v2 to Amy for final sign off\n- check metrics at a rep level commercial scorecard: [2026-06-29T14:16:12.686Z] rep level metric aside from retention looks good\n- Tie out all metrics on all levels on Commercial Scorecard v2: [2026-08-03T14:25:14.936Z] Need to make sure QTD ties out for all levels\n\n[2026-08-03T14:23:43.604Z] - YTD for all regions is good\n- Rep level wallet share metric needs attention\n-\n- Commercial Scorecard v2 documentation\n\nRECENT CONTEXT:\n- Untitled Node - 2026-07-08-14:11:59: <ul><li><p>All trends are implanted</p></li><li><p>finishing up QTD tie out</p></li><li><p>After QTD and retention (rep level only) checks out, we will meet with Amy and Mike for final sign off</p></li></ul><p></p>\n- Untitled Node - 2026-07-06-14:07:14: <ul><li><p>added QTD sub toggle (current quarter vs last completed quarter)</p></li><li><p>ties to legacy QTD now</p></li><li><p>still making sure all metrics works with QTD toggle</p></li></ul><p></p>\n- Rep validation is progression\n- Joe currently tying out rep level retention. so far not tying out\n- Metrics ties on region level and overall\n- QTD Some targets are not pulling through"
+            },
+            {
+              "projectId": "fd1e7b43-607d-4f98-8508-3248c6c34142",
+              "projectName": "Sales Rep Performance (only Amy Packer)",
+              "similarity": 0.5659332687234074,
+              "retrievalContext": "PROJECT: Sales Rep Performance (only Amy Packer)\n\nOPEN TASKS:\n- get PR Reviewed by team\n- update dash with correct schema\n- send dashboard to Amy"
+            },
+            {
+              "projectId": "05000292-aa14-4391-8bf5-1a004612fd75",
+              "projectName": "BoxMaker Detailed Budget",
+              "similarity": 0.42034496234139285,
+              "retrievalContext": "PROJECT: BoxMaker Detailed Budget\n\nRECENT CONTEXT:\n- Follow up sent to Kristi: email sent to Krist: Following up on our most recent conversation on this topic. According to my notes, your team submitted a rep-level budget to Dave Whitney, which he approved. The remaining item was to push that budget down to the commodity and market segment level so it can be included in the Power BI suite of reports. Do we have any updates on that?\n- Email from Kristi: Hi Ryan,\n\n I have not been able to get clarity with the breakdown between what we submitted in our commercial review vs your spreadsheet but have time allocated this afternoon. \n\nThank you,\nKristi Duvall\nVice President of Sales | kduvall@supplyone.com\n18251‑B Cascade Ave S\nTukwila\nWA \n98188\nT: 425‑291‑1236\nM: 206-369-7592\nPlease note our email addresses have changed!"
+            },
+            {
+              "projectId": "3011c793-7903-4a97-8c3a-8489d4967254",
+              "projectName": "Net Working Capital Analytics Enhancement",
+              "similarity": 0.41439461730997773,
+              "retrievalContext": "PROJECT: Net Working Capital Analytics Enhancement\n\nOPEN TASKS:\n- Put together interview questions for stakeholders\n- Konrad to schedule meetings with regional stakeholders\n\nRECENT DECISIONS:\n- Every aspect of the tool needs to be actionable and geared towards target personas"
+            },
+            {
+              "projectId": "7d7635c9-a2b9-438a-a1f9-4f4e12015b9f",
+              "projectName": "SAS Commissions App",
+              "similarity": 0.4134063740098004,
+              "retrievalContext": "PROJECT: SAS Commissions App\n\nDESCRIPTION:\nData management hub module dedicated to the presentation of commission calculations for SAS reps\n\nOPEN TASKS:\n- complete SAS commission calc page: [2026-08-03T14:12:05.943Z] stored procedures and app logic is in place and is currently testable\n\n[2026-07-27T14:05:44.363Z] waiting to hear back from mark re sas commission logic updates\n\nRECENT DECISIONS:\n- File Uploader Added to Customer Prime\n- Customer prime must also go down to an invoice level to show revenue and gp\n- Users should have access to Customer Prime using Connected User access methodology\n- Sas_start_dt to be left blank if there is no identified sas_sales_agent\n\nRECENT CONTEXT:\n- Untitled Node - 2026-07-20-15:05:44: <ul><li><p>Townhall was delayed due to debate over aspects of the commission logic</p></li></ul><p></p>\n- Untitled Node - 2026-07-14-18:09:36: <p>During August commissions tool will be compared against manual calculations provided by Kyle</p>\n- 6/25 Meeting: <ul><li><p>Sas_start_dt to be left blank if there is no identified sas_sales_agent </p></li><li><p>Zip_codes missing for some rows due to potential gaps in naming conventions. Nhat to double check names prior to launch. </p></li><li><p>Data fields that OW did not have access to</p><ul><li><p>multi_location_account_model -- </p></li><li><p>sas_initiation_status -- </p></li><li><p>sas_sales_agent_email -- originating_sales_agent_email -- </p></li><li><p>updated_at -- </p></li><li><p>parent_id -- </p></li><li><p>py_revenue - </p></li></ul></li><li><p>Clarification Prior to upload: -- </p><ul><li><p>Revenues were shared in the template as YTD revenue as of a few weeks ago; this should be a live figure that refreshes on some regular cadence from PBI instead of a static value.</p></li></ul></li></ul><p></p>\n- Nhat loading in preliminary file: Will send Link to the app tomorrow\n- DBT Model refactoring: Calcs to be done on postgres side\n- Townhall Presentation: - Townhall for sales rep's 2nd week of July re SAS commissions\n\n- Hoping to have connected users access in place by then\n\n- users should have access to customer prime using connected user methodology"
+            }
+          ]
+        },
+        {
+          "topic": "Amy's Feedback",
+          "sourceText": "She liked the overall direction but wants managers to have a clearer way to compare rep performance over time before we launch.",
+          "contextualText": "Amy liked the overall direction of the Commercial Scorecard rollout but wants managers to have a clearer way to compare rep performance over time before we launch.",
+          "embedding": {
+            "dimensions": 1536,
+            "preview": [
+              0.0221405029296875,
+              0.001583099365234375,
+              0.0123291015625,
+              0.0008845329284667969,
+              0.0171051025390625,
+              0.028656005859375,
+              0.0282440185546875,
+              -0.06524658203125
+            ]
+          },
+          "retrievalCandidates": [
+            {
+              "projectId": "5c264779-dafd-4db2-82a5-6476158ed80f",
+              "projectName": "Commercial Scorecard v2",
+              "similarity": 0.6391986811688152,
+              "retrievalContext": "PROJECT: Commercial Scorecard v2\n\nOPEN TASKS:\n- Present Commercial Scorecard v2 to Amy for final sign off\n- check metrics at a rep level commercial scorecard: [2026-06-29T14:16:12.686Z] rep level metric aside from retention looks good\n- Tie out all metrics on all levels on Commercial Scorecard v2: [2026-08-03T14:25:14.936Z] Need to make sure QTD ties out for all levels\n\n[2026-08-03T14:23:43.604Z] - YTD for all regions is good\n- Rep level wallet share metric needs attention\n-\n- Commercial Scorecard v2 documentation\n\nRECENT CONTEXT:\n- Untitled Node - 2026-07-08-14:11:59: <ul><li><p>All trends are implanted</p></li><li><p>finishing up QTD tie out</p></li><li><p>After QTD and retention (rep level only) checks out, we will meet with Amy and Mike for final sign off</p></li></ul><p></p>\n- Untitled Node - 2026-07-06-14:07:14: <ul><li><p>added QTD sub toggle (current quarter vs last completed quarter)</p></li><li><p>ties to legacy QTD now</p></li><li><p>still making sure all metrics works with QTD toggle</p></li></ul><p></p>\n- Rep validation is progression\n- Joe currently tying out rep level retention. so far not tying out\n- Metrics ties on region level and overall\n- QTD Some targets are not pulling through"
+            },
+            {
+              "projectId": "fd1e7b43-607d-4f98-8508-3248c6c34142",
+              "projectName": "Sales Rep Performance (only Amy Packer)",
+              "similarity": 0.5356712379533716,
+              "retrievalContext": "PROJECT: Sales Rep Performance (only Amy Packer)\n\nOPEN TASKS:\n- get PR Reviewed by team\n- update dash with correct schema\n- send dashboard to Amy"
+            },
+            {
+              "projectId": "580a3fa5-a5a1-440e-b071-2ef2e69eea89",
+              "projectName": "Sales Performance Dashboard",
+              "similarity": 0.4618598184774725,
+              "retrievalContext": "PROJECT: Sales Performance Dashboard\n\nDESCRIPTION:\nOne stop shop dashboard for SupplyOne sales reps"
+            },
+            {
+              "projectId": "7d7635c9-a2b9-438a-a1f9-4f4e12015b9f",
+              "projectName": "SAS Commissions App",
+              "similarity": 0.4069223572452547,
+              "retrievalContext": "PROJECT: SAS Commissions App\n\nDESCRIPTION:\nData management hub module dedicated to the presentation of commission calculations for SAS reps\n\nOPEN TASKS:\n- complete SAS commission calc page: [2026-08-03T14:12:05.943Z] stored procedures and app logic is in place and is currently testable\n\n[2026-07-27T14:05:44.363Z] waiting to hear back from mark re sas commission logic updates\n\nRECENT DECISIONS:\n- File Uploader Added to Customer Prime\n- Customer prime must also go down to an invoice level to show revenue and gp\n- Users should have access to Customer Prime using Connected User access methodology\n- Sas_start_dt to be left blank if there is no identified sas_sales_agent\n\nRECENT CONTEXT:\n- Untitled Node - 2026-07-20-15:05:44: <ul><li><p>Townhall was delayed due to debate over aspects of the commission logic</p></li></ul><p></p>\n- Untitled Node - 2026-07-14-18:09:36: <p>During August commissions tool will be compared against manual calculations provided by Kyle</p>\n- 6/25 Meeting: <ul><li><p>Sas_start_dt to be left blank if there is no identified sas_sales_agent </p></li><li><p>Zip_codes missing for some rows due to potential gaps in naming conventions. Nhat to double check names prior to launch. </p></li><li><p>Data fields that OW did not have access to</p><ul><li><p>multi_location_account_model -- </p></li><li><p>sas_initiation_status -- </p></li><li><p>sas_sales_agent_email -- originating_sales_agent_email -- </p></li><li><p>updated_at -- </p></li><li><p>parent_id -- </p></li><li><p>py_revenue - </p></li></ul></li><li><p>Clarification Prior to upload: -- </p><ul><li><p>Revenues were shared in the template as YTD revenue as of a few weeks ago; this should be a live figure that refreshes on some regular cadence from PBI instead of a static value.</p></li></ul></li></ul><p></p>\n- Nhat loading in preliminary file: Will send Link to the app tomorrow\n- DBT Model refactoring: Calcs to be done on postgres side\n- Townhall Presentation: - Townhall for sales rep's 2nd week of July re SAS commissions\n\n- Hoping to have connected users access in place by then\n\n- users should have access to customer prime using connected user methodology"
+            },
+            {
+              "projectId": "59c06c6b-e058-492c-ae26-c0f3809393b5",
+              "projectName": "Commercial Business Review Dashboard",
+              "similarity": 0.4040035976929126,
+              "retrievalContext": "PROJECT: Commercial Business Review Dashboard\n\nOPEN TASKS:\n- Knowledge Transfer for Customer Business Review Dashboard: Joe will do the knowledge transfer to Kai Li for the Customer Business Review dashboard.\n- Development of Customer Business Review Dashboard: Kai Li will take over the development of the Customer Business Review dashboard.\n- Kai to Start work on CBR\n\nRECENT CONTEXT:\n- Kai Li will take over customer business review from Joe: Kai Li will take over customer business review from Joe"
+            }
+          ]
+        },
+        {
+          "topic": "Rep-Level Trend View",
+          "sourceText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version.",
+          "contextualText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version of the Commercial Scorecard.",
+          "embedding": {
+            "dimensions": 1536,
+            "preview": [
+              0.0249481201171875,
+              0.035125732421875,
+              0.05181884765625,
+              -0.0382080078125,
+              -0.019134521484375,
+              0.0175018310546875,
+              0.00408172607421875,
+              -0.03369140625
+            ]
+          },
+          "retrievalCandidates": [
+            {
+              "projectId": "5c264779-dafd-4db2-82a5-6476158ed80f",
+              "projectName": "Commercial Scorecard v2",
+              "similarity": 0.6176526008332881,
+              "retrievalContext": "PROJECT: Commercial Scorecard v2\n\nOPEN TASKS:\n- Present Commercial Scorecard v2 to Amy for final sign off\n- check metrics at a rep level commercial scorecard: [2026-06-29T14:16:12.686Z] rep level metric aside from retention looks good\n- Tie out all metrics on all levels on Commercial Scorecard v2: [2026-08-03T14:25:14.936Z] Need to make sure QTD ties out for all levels\n\n[2026-08-03T14:23:43.604Z] - YTD for all regions is good\n- Rep level wallet share metric needs attention\n-\n- Commercial Scorecard v2 documentation\n\nRECENT CONTEXT:\n- Untitled Node - 2026-07-08-14:11:59: <ul><li><p>All trends are implanted</p></li><li><p>finishing up QTD tie out</p></li><li><p>After QTD and retention (rep level only) checks out, we will meet with Amy and Mike for final sign off</p></li></ul><p></p>\n- Untitled Node - 2026-07-06-14:07:14: <ul><li><p>added QTD sub toggle (current quarter vs last completed quarter)</p></li><li><p>ties to legacy QTD now</p></li><li><p>still making sure all metrics works with QTD toggle</p></li></ul><p></p>\n- Rep validation is progression\n- Joe currently tying out rep level retention. so far not tying out\n- Metrics ties on region level and overall\n- QTD Some targets are not pulling through"
+            },
+            {
+              "projectId": "580a3fa5-a5a1-440e-b071-2ef2e69eea89",
+              "projectName": "Sales Performance Dashboard",
+              "similarity": 0.5055426323056849,
+              "retrievalContext": "PROJECT: Sales Performance Dashboard\n\nDESCRIPTION:\nOne stop shop dashboard for SupplyOne sales reps"
+            },
+            {
+              "projectId": "7d7635c9-a2b9-438a-a1f9-4f4e12015b9f",
+              "projectName": "SAS Commissions App",
+              "similarity": 0.4835900772477707,
+              "retrievalContext": "PROJECT: SAS Commissions App\n\nDESCRIPTION:\nData management hub module dedicated to the presentation of commission calculations for SAS reps\n\nOPEN TASKS:\n- complete SAS commission calc page: [2026-08-03T14:12:05.943Z] stored procedures and app logic is in place and is currently testable\n\n[2026-07-27T14:05:44.363Z] waiting to hear back from mark re sas commission logic updates\n\nRECENT DECISIONS:\n- File Uploader Added to Customer Prime\n- Customer prime must also go down to an invoice level to show revenue and gp\n- Users should have access to Customer Prime using Connected User access methodology\n- Sas_start_dt to be left blank if there is no identified sas_sales_agent\n\nRECENT CONTEXT:\n- Untitled Node - 2026-07-20-15:05:44: <ul><li><p>Townhall was delayed due to debate over aspects of the commission logic</p></li></ul><p></p>\n- Untitled Node - 2026-07-14-18:09:36: <p>During August commissions tool will be compared against manual calculations provided by Kyle</p>\n- 6/25 Meeting: <ul><li><p>Sas_start_dt to be left blank if there is no identified sas_sales_agent </p></li><li><p>Zip_codes missing for some rows due to potential gaps in naming conventions. Nhat to double check names prior to launch. </p></li><li><p>Data fields that OW did not have access to</p><ul><li><p>multi_location_account_model -- </p></li><li><p>sas_initiation_status -- </p></li><li><p>sas_sales_agent_email -- originating_sales_agent_email -- </p></li><li><p>updated_at -- </p></li><li><p>parent_id -- </p></li><li><p>py_revenue - </p></li></ul></li><li><p>Clarification Prior to upload: -- </p><ul><li><p>Revenues were shared in the template as YTD revenue as of a few weeks ago; this should be a live figure that refreshes on some regular cadence from PBI instead of a static value.</p></li></ul></li></ul><p></p>\n- Nhat loading in preliminary file: Will send Link to the app tomorrow\n- DBT Model refactoring: Calcs to be done on postgres side\n- Townhall Presentation: - Townhall for sales rep's 2nd week of July re SAS commissions\n\n- Hoping to have connected users access in place by then\n\n- users should have access to customer prime using connected user methodology"
+            },
+            {
+              "projectId": "fd1e7b43-607d-4f98-8508-3248c6c34142",
+              "projectName": "Sales Rep Performance (only Amy Packer)",
+              "similarity": 0.4630535432061994,
+              "retrievalContext": "PROJECT: Sales Rep Performance (only Amy Packer)\n\nOPEN TASKS:\n- get PR Reviewed by team\n- update dash with correct schema\n- send dashboard to Amy"
+            },
+            {
+              "projectId": "9fd7ae98-166d-42e0-8f9c-eae0390dceaa",
+              "projectName": "PVC Monthly Analysis",
+              "similarity": 0.4596013090536677,
+              "retrievalContext": "PROJECT: PVC Monthly Analysis\n\nDESCRIPTION:\nCreate analysis agent to send PVC to FP&A Team monthly"
+            }
+          ]
+        },
+        {
+          "topic": "Eric's Update on Inventory App",
+          "sourceText": "Eric mentioned the inventory app being built for the Southwest region is making good progress, but we still need to align with the Florida team so we don't end up with two different solutions solving the same problem.",
+          "contextualText": "Eric mentioned that the inventory app being built for the Southwest region is making good progress, but we still need to align with the Florida team so we don't end up with two different solutions solving the same problem.",
+          "embedding": {
+            "dimensions": 1536,
+            "preview": [
+              -0.021270751953125,
+              0.0162200927734375,
+              0.03936767578125,
+              0.039703369140625,
+              -0.0176849365234375,
+              0.021026611328125,
+              0.0736083984375,
+              0.0011510848999023438
+            ]
+          },
+          "retrievalCandidates": [
+            {
+              "projectId": "ef0beeec-04b3-4563-acf4-84166f5c40df",
+              "projectName": "Inventory Management Tool Meeting",
+              "similarity": 0.42639779661789645,
+              "retrievalContext": "PROJECT: Inventory Management Tool Meeting\n\nDESCRIPTION:\nScheduling a meeting with Steve Pinder regarding the inventory management tool."
+            },
+            {
+              "projectId": "6c12985d-709e-4fbc-b189-87bebf38c57b",
+              "projectName": "Gainesville Database Migration",
+              "similarity": 0.415937169411136,
+              "retrievalContext": "PROJECT: Gainesville Database Migration\n\nOPEN TASKS:\n- Procure mapping file from Jennie Ernst\n\nRECENT CONTEXT:\n- waiting mapping from tiffany McMillian (IT)\n- Nhat to reach out to Jenie + Megan L + Dan G to acquire mapping files\n- Nhat sent out request to site for mapping files\n- Jennie Ernst confirmed she will get us final mapping file: - Customer\n- Items"
+            },
+            {
+              "projectId": "a393098e-ec6a-4e58-944f-bfda775896a2",
+              "projectName": "FCT INVENTORY WAREHOUSE Refactor",
+              "similarity": 0.40822431104806556,
+              "retrievalContext": "PROJECT: FCT INVENTORY WAREHOUSE Refactor\n\nOPEN TASKS:\n- get approval of testing vs production data for fct inventory warehouse refactor\n- get approval on the pull request for fct inventory warehouse refactor"
+            },
+            {
+              "projectId": "8c0347fe-3ae0-4d4b-b70a-78a1da9f069a",
+              "projectName": "Florida Load Adjustment",
+              "similarity": 0.40680822665074634,
+              "retrievalContext": "PROJECT: Florida Load Adjustment"
+            },
+            {
+              "projectId": "3011c793-7903-4a97-8c3a-8489d4967254",
+              "projectName": "Net Working Capital Analytics Enhancement",
+              "similarity": 0.4039012813834273,
+              "retrievalContext": "PROJECT: Net Working Capital Analytics Enhancement\n\nOPEN TASKS:\n- Put together interview questions for stakeholders\n- Konrad to schedule meetings with regional stakeholders\n\nRECENT DECISIONS:\n- Every aspect of the tool needs to be actionable and geared towards target personas"
+            }
+          ]
+        },
+        {
+          "topic": "Fallback to Snowflake",
+          "sourceText": "I decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive.",
+          "contextualText": "I decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive.",
+          "embedding": {
+            "dimensions": 1536,
+            "preview": [
+              -0.00516510009765625,
+              0.0103759765625,
+              0.03656005859375,
+              -0.0181427001953125,
+              0.0261993408203125,
+              -0.0049896240234375,
+              -0.0345458984375,
+              0.0204925537109375
+            ]
+          },
+          "retrievalCandidates": [
+            {
+              "projectId": "be12b0a2-bcb4-4ccb-b9f4-7ef2ea8f2192",
+              "projectName": "Sales Agent DMH",
+              "similarity": 0.4237837652308958,
+              "retrievalContext": "PROJECT: Sales Agent DMH\n\nOPEN TASKS:\n- Automate Sales Agent data writeback to Snowflake\n\nRECENT DECISIONS:\n- Use PgBouncer"
+            },
+            {
+              "projectId": "d212f644-cb74-4d46-bb1b-c4867fa360f7",
+              "projectName": "PVC Performance Optimization",
+              "similarity": 0.38364178691516404,
+              "retrievalContext": "PROJECT: PVC Performance Optimization\n\nDESCRIPTION:\nCurrent PVC Excel reports are cumbersome and slow. There are multiple tabs with fairly complex formulas on top of pivots sourced from PowerBI semantic models. Our task here to offload these calculations into upstream artifacts to relieve local processing needed in the excel files.\n\nOPEN TASKS:\n- Implement PVC Enriched view: - Add equipment flag\n- removes unused columns\n\nRECENT DECISIONS:\n- Leverage dbt models\n\nRECENT CONTEXT:\n- Untitled Node - 2026-07-08-14:14:32: <ul><li><p>Model development started</p></li><li><p>getting errors. currently working through them</p></li></ul><p></p>"
+            },
+            {
+              "projectId": "b9448311-af15-4832-9005-27cbdbe2bac3",
+              "projectName": "Cognos Integration",
+              "similarity": 0.31963185389275117,
+              "retrievalContext": "PROJECT: Cognos Integration\n\nOPEN TASKS:\n- Joe to follow up with Konrad to confirm next steps\n- Set up monthly automation to run TM1 extraction into snowflake\n\nRECENT CONTEXT:\n- Untitled Node - 2026-07-06-14:05:15: <p>still waiting for Konrad</p>"
+            },
+            {
+              "projectId": "6a03d969-c89b-4f19-a105-0340c7482113",
+              "projectName": "Lamb & Associates Go Live",
+              "similarity": 0.31890874751699316,
+              "retrievalContext": "PROJECT: Lamb & Associates Go Live\n\nRECENT DECISIONS:\n- Use new D&B integration for Customer enrichments\n\nRECENT CONTEXT:\n- Dun & Bradsteet: blocked by D&B integration. Todd Hanna opted not do the manual verification of AI suggested parents and segments in favor of using the D&B enrichments right away"
+            },
+            {
+              "projectId": "18f04924-16eb-4cd1-9e65-92b0c6a0806a",
+              "projectName": "AD HOC REQUESTS",
+              "similarity": 0.3048369162565119,
+              "retrievalContext": "PROJECT: AD HOC REQUESTS\n\nDESCRIPTION:\nThis project is meant to collect all tasks that are not tied to an actual project and are ad hoc by nature\n\nOPEN TASKS:\n- Create Semantic models based on queries sent by Iva\n- Inventory dashboard trouble shoot greater 180 day flag"
+            }
+          ]
+        },
+        {
+          "topic": "Reusable Framework for Applications",
+          "sourceText": "Maybe we should eventually create a reusable framework for internal SupplyOne applications so every new app follows the same authentication, security, and deployment patterns.",
+          "contextualText": "We should eventually create a reusable framework for internal SupplyOne applications so every new app follows the same authentication, security, and deployment patterns.",
+          "embedding": {
+            "dimensions": 1536,
+            "preview": [
+              -0.04010009765625,
+              -0.01666259765625,
+              0.060333251953125,
+              0.031005859375,
+              0.04681396484375,
+              -0.01554107666015625,
+              0.0149078369140625,
+              0.0308990478515625
+            ]
+          },
+          "retrievalCandidates": [
+            {
+              "projectId": "580a3fa5-a5a1-440e-b071-2ef2e69eea89",
+              "projectName": "Sales Performance Dashboard",
+              "similarity": 0.37698211150963945,
+              "retrievalContext": "PROJECT: Sales Performance Dashboard\n\nDESCRIPTION:\nOne stop shop dashboard for SupplyOne sales reps"
+            },
+            {
+              "projectId": "7d7635c9-a2b9-438a-a1f9-4f4e12015b9f",
+              "projectName": "SAS Commissions App",
+              "similarity": 0.32113727869626174,
+              "retrievalContext": "PROJECT: SAS Commissions App\n\nDESCRIPTION:\nData management hub module dedicated to the presentation of commission calculations for SAS reps\n\nOPEN TASKS:\n- complete SAS commission calc page: [2026-08-03T14:12:05.943Z] stored procedures and app logic is in place and is currently testable\n\n[2026-07-27T14:05:44.363Z] waiting to hear back from mark re sas commission logic updates\n\nRECENT DECISIONS:\n- File Uploader Added to Customer Prime\n- Customer prime must also go down to an invoice level to show revenue and gp\n- Users should have access to Customer Prime using Connected User access methodology\n- Sas_start_dt to be left blank if there is no identified sas_sales_agent\n\nRECENT CONTEXT:\n- Untitled Node - 2026-07-20-15:05:44: <ul><li><p>Townhall was delayed due to debate over aspects of the commission logic</p></li></ul><p></p>\n- Untitled Node - 2026-07-14-18:09:36: <p>During August commissions tool will be compared against manual calculations provided by Kyle</p>\n- 6/25 Meeting: <ul><li><p>Sas_start_dt to be left blank if there is no identified sas_sales_agent </p></li><li><p>Zip_codes missing for some rows due to potential gaps in naming conventions. Nhat to double check names prior to launch. </p></li><li><p>Data fields that OW did not have access to</p><ul><li><p>multi_location_account_model -- </p></li><li><p>sas_initiation_status -- </p></li><li><p>sas_sales_agent_email -- originating_sales_agent_email -- </p></li><li><p>updated_at -- </p></li><li><p>parent_id -- </p></li><li><p>py_revenue - </p></li></ul></li><li><p>Clarification Prior to upload: -- </p><ul><li><p>Revenues were shared in the template as YTD revenue as of a few weeks ago; this should be a live figure that refreshes on some regular cadence from PBI instead of a static value.</p></li></ul></li></ul><p></p>\n- Nhat loading in preliminary file: Will send Link to the app tomorrow\n- DBT Model refactoring: Calcs to be done on postgres side\n- Townhall Presentation: - Townhall for sales rep's 2nd week of July re SAS commissions\n\n- Hoping to have connected users access in place by then\n\n- users should have access to customer prime using connected user methodology"
+            },
+            {
+              "projectId": "9c2a0d78-fba6-4b81-8263-5e86a8d8b45c",
+              "projectName": "Specialty Packaging Go Live",
+              "similarity": 0.30696042343163676,
+              "retrievalContext": "PROJECT: Specialty Packaging Go Live\n\nRECENT CONTEXT:\n- Having intermitent connectivity: <p>Connecting with vendor to resolve</p>"
+            },
+            {
+              "projectId": "3011c793-7903-4a97-8c3a-8489d4967254",
+              "projectName": "Net Working Capital Analytics Enhancement",
+              "similarity": 0.2927454671735883,
+              "retrievalContext": "PROJECT: Net Working Capital Analytics Enhancement\n\nOPEN TASKS:\n- Put together interview questions for stakeholders\n- Konrad to schedule meetings with regional stakeholders\n\nRECENT DECISIONS:\n- Every aspect of the tool needs to be actionable and geared towards target personas"
+            },
+            {
+              "projectId": "eef22fbc-02a5-456f-9563-55033fc7af13",
+              "projectName": "Connected User Access Methodology",
+              "similarity": 0.2898851815284269,
+              "retrievalContext": "PROJECT: Connected User Access Methodology\n\nOPEN TASKS:\n- Add region to the connected user modal\n- get sign off that current connected users page is good\n- get confirmation that connected user logic needs to be added to PBI"
+            }
+          ]
+        }
+      ]
+    },
+    "projectAssignment": {
+      "segmentCount": 6,
+      "segments": [
+        {
+          "topic": "Meeting with Amy",
+          "sourceText": "Met with Amy today about the Commercial Scorecard rollout.",
+          "contextualText": "I met with Amy today about the Commercial Scorecard rollout.",
+          "embedding": {
+            "dimensions": 1536,
+            "preview": [
+              -0.0013341903686523438,
+              -0.011077880859375,
+              0.009613037109375,
+              -0.037139892578125,
+              -0.01224517822265625,
+              0.025665283203125,
+              0.005603790283203125,
+              -0.0347900390625
+            ]
+          },
+          "retrievalCandidates": [
+            {
+              "projectId": "5c264779-dafd-4db2-82a5-6476158ed80f",
+              "projectName": "Commercial Scorecard v2",
+              "similarity": 0.6422093056445913,
+              "retrievalContext": "PROJECT: Commercial Scorecard v2\n\nOPEN TASKS:\n- Present Commercial Scorecard v2 to Amy for final sign off\n- check metrics at a rep level commercial scorecard: [2026-06-29T14:16:12.686Z] rep level metric aside from retention looks good\n- Tie out all metrics on all levels on Commercial Scorecard v2: [2026-08-03T14:25:14.936Z] Need to make sure QTD ties out for all levels\n\n[2026-08-03T14:23:43.604Z] - YTD for all regions is good\n- Rep level wallet share metric needs attention\n-\n- Commercial Scorecard v2 documentation\n\nRECENT CONTEXT:\n- Untitled Node - 2026-07-08-14:11:59: <ul><li><p>All trends are implanted</p></li><li><p>finishing up QTD tie out</p></li><li><p>After QTD and retention (rep level only) checks out, we will meet with Amy and Mike for final sign off</p></li></ul><p></p>\n- Untitled Node - 2026-07-06-14:07:14: <ul><li><p>added QTD sub toggle (current quarter vs last completed quarter)</p></li><li><p>ties to legacy QTD now</p></li><li><p>still making sure all metrics works with QTD toggle</p></li></ul><p></p>\n- Rep validation is progression\n- Joe currently tying out rep level retention. so far not tying out\n- Metrics ties on region level and overall\n- QTD Some targets are not pulling through"
+            },
+            {
+              "projectId": "fd1e7b43-607d-4f98-8508-3248c6c34142",
+              "projectName": "Sales Rep Performance (only Amy Packer)",
+              "similarity": 0.5659332687234074,
+              "retrievalContext": "PROJECT: Sales Rep Performance (only Amy Packer)\n\nOPEN TASKS:\n- get PR Reviewed by team\n- update dash with correct schema\n- send dashboard to Amy"
+            },
+            {
+              "projectId": "05000292-aa14-4391-8bf5-1a004612fd75",
+              "projectName": "BoxMaker Detailed Budget",
+              "similarity": 0.42034496234139285,
+              "retrievalContext": "PROJECT: BoxMaker Detailed Budget\n\nRECENT CONTEXT:\n- Follow up sent to Kristi: email sent to Krist: Following up on our most recent conversation on this topic. According to my notes, your team submitted a rep-level budget to Dave Whitney, which he approved. The remaining item was to push that budget down to the commodity and market segment level so it can be included in the Power BI suite of reports. Do we have any updates on that?\n- Email from Kristi: Hi Ryan,\n\n I have not been able to get clarity with the breakdown between what we submitted in our commercial review vs your spreadsheet but have time allocated this afternoon. \n\nThank you,\nKristi Duvall\nVice President of Sales | kduvall@supplyone.com\n18251‑B Cascade Ave S\nTukwila\nWA \n98188\nT: 425‑291‑1236\nM: 206-369-7592\nPlease note our email addresses have changed!"
+            },
+            {
+              "projectId": "3011c793-7903-4a97-8c3a-8489d4967254",
+              "projectName": "Net Working Capital Analytics Enhancement",
+              "similarity": 0.41439461730997773,
+              "retrievalContext": "PROJECT: Net Working Capital Analytics Enhancement\n\nOPEN TASKS:\n- Put together interview questions for stakeholders\n- Konrad to schedule meetings with regional stakeholders\n\nRECENT DECISIONS:\n- Every aspect of the tool needs to be actionable and geared towards target personas"
+            },
+            {
+              "projectId": "7d7635c9-a2b9-438a-a1f9-4f4e12015b9f",
+              "projectName": "SAS Commissions App",
+              "similarity": 0.4134063740098004,
+              "retrievalContext": "PROJECT: SAS Commissions App\n\nDESCRIPTION:\nData management hub module dedicated to the presentation of commission calculations for SAS reps\n\nOPEN TASKS:\n- complete SAS commission calc page: [2026-08-03T14:12:05.943Z] stored procedures and app logic is in place and is currently testable\n\n[2026-07-27T14:05:44.363Z] waiting to hear back from mark re sas commission logic updates\n\nRECENT DECISIONS:\n- File Uploader Added to Customer Prime\n- Customer prime must also go down to an invoice level to show revenue and gp\n- Users should have access to Customer Prime using Connected User access methodology\n- Sas_start_dt to be left blank if there is no identified sas_sales_agent\n\nRECENT CONTEXT:\n- Untitled Node - 2026-07-20-15:05:44: <ul><li><p>Townhall was delayed due to debate over aspects of the commission logic</p></li></ul><p></p>\n- Untitled Node - 2026-07-14-18:09:36: <p>During August commissions tool will be compared against manual calculations provided by Kyle</p>\n- 6/25 Meeting: <ul><li><p>Sas_start_dt to be left blank if there is no identified sas_sales_agent </p></li><li><p>Zip_codes missing for some rows due to potential gaps in naming conventions. Nhat to double check names prior to launch. </p></li><li><p>Data fields that OW did not have access to</p><ul><li><p>multi_location_account_model -- </p></li><li><p>sas_initiation_status -- </p></li><li><p>sas_sales_agent_email -- originating_sales_agent_email -- </p></li><li><p>updated_at -- </p></li><li><p>parent_id -- </p></li><li><p>py_revenue - </p></li></ul></li><li><p>Clarification Prior to upload: -- </p><ul><li><p>Revenues were shared in the template as YTD revenue as of a few weeks ago; this should be a live figure that refreshes on some regular cadence from PBI instead of a static value.</p></li></ul></li></ul><p></p>\n- Nhat loading in preliminary file: Will send Link to the app tomorrow\n- DBT Model refactoring: Calcs to be done on postgres side\n- Townhall Presentation: - Townhall for sales rep's 2nd week of July re SAS commissions\n\n- Hoping to have connected users access in place by then\n\n- users should have access to customer prime using connected user methodology"
+            }
+          ],
+          "projectAssignment": {
+            "originalText": "Met with Amy today about the Commercial Scorecard rollout.",
+            "destination": "existing_project",
+            "projectId": "5c264779-dafd-4db2-82a5-6476158ed80f",
+            "projectName": "Commercial Scorecard v2",
+            "matchBasis": "direct_project_reference",
+            "confidence": 0.95,
+            "reason": "The segment directly references the 'Commercial Scorecard rollout,' which is clearly identified in the project name 'Commercial Scorecard v2,' establishing a strong connection."
+          }
+        },
+        {
+          "topic": "Amy's Feedback",
+          "sourceText": "She liked the overall direction but wants managers to have a clearer way to compare rep performance over time before we launch.",
+          "contextualText": "Amy liked the overall direction of the Commercial Scorecard rollout but wants managers to have a clearer way to compare rep performance over time before we launch.",
+          "embedding": {
+            "dimensions": 1536,
+            "preview": [
+              0.0221405029296875,
+              0.001583099365234375,
+              0.0123291015625,
+              0.0008845329284667969,
+              0.0171051025390625,
+              0.028656005859375,
+              0.0282440185546875,
+              -0.06524658203125
+            ]
+          },
+          "retrievalCandidates": [
+            {
+              "projectId": "5c264779-dafd-4db2-82a5-6476158ed80f",
+              "projectName": "Commercial Scorecard v2",
+              "similarity": 0.6391986811688152,
+              "retrievalContext": "PROJECT: Commercial Scorecard v2\n\nOPEN TASKS:\n- Present Commercial Scorecard v2 to Amy for final sign off\n- check metrics at a rep level commercial scorecard: [2026-06-29T14:16:12.686Z] rep level metric aside from retention looks good\n- Tie out all metrics on all levels on Commercial Scorecard v2: [2026-08-03T14:25:14.936Z] Need to make sure QTD ties out for all levels\n\n[2026-08-03T14:23:43.604Z] - YTD for all regions is good\n- Rep level wallet share metric needs attention\n-\n- Commercial Scorecard v2 documentation\n\nRECENT CONTEXT:\n- Untitled Node - 2026-07-08-14:11:59: <ul><li><p>All trends are implanted</p></li><li><p>finishing up QTD tie out</p></li><li><p>After QTD and retention (rep level only) checks out, we will meet with Amy and Mike for final sign off</p></li></ul><p></p>\n- Untitled Node - 2026-07-06-14:07:14: <ul><li><p>added QTD sub toggle (current quarter vs last completed quarter)</p></li><li><p>ties to legacy QTD now</p></li><li><p>still making sure all metrics works with QTD toggle</p></li></ul><p></p>\n- Rep validation is progression\n- Joe currently tying out rep level retention. so far not tying out\n- Metrics ties on region level and overall\n- QTD Some targets are not pulling through"
+            },
+            {
+              "projectId": "fd1e7b43-607d-4f98-8508-3248c6c34142",
+              "projectName": "Sales Rep Performance (only Amy Packer)",
+              "similarity": 0.5356712379533716,
+              "retrievalContext": "PROJECT: Sales Rep Performance (only Amy Packer)\n\nOPEN TASKS:\n- get PR Reviewed by team\n- update dash with correct schema\n- send dashboard to Amy"
+            },
+            {
+              "projectId": "580a3fa5-a5a1-440e-b071-2ef2e69eea89",
+              "projectName": "Sales Performance Dashboard",
+              "similarity": 0.4618598184774725,
+              "retrievalContext": "PROJECT: Sales Performance Dashboard\n\nDESCRIPTION:\nOne stop shop dashboard for SupplyOne sales reps"
+            },
+            {
+              "projectId": "7d7635c9-a2b9-438a-a1f9-4f4e12015b9f",
+              "projectName": "SAS Commissions App",
+              "similarity": 0.4069223572452547,
+              "retrievalContext": "PROJECT: SAS Commissions App\n\nDESCRIPTION:\nData management hub module dedicated to the presentation of commission calculations for SAS reps\n\nOPEN TASKS:\n- complete SAS commission calc page: [2026-08-03T14:12:05.943Z] stored procedures and app logic is in place and is currently testable\n\n[2026-07-27T14:05:44.363Z] waiting to hear back from mark re sas commission logic updates\n\nRECENT DECISIONS:\n- File Uploader Added to Customer Prime\n- Customer prime must also go down to an invoice level to show revenue and gp\n- Users should have access to Customer Prime using Connected User access methodology\n- Sas_start_dt to be left blank if there is no identified sas_sales_agent\n\nRECENT CONTEXT:\n- Untitled Node - 2026-07-20-15:05:44: <ul><li><p>Townhall was delayed due to debate over aspects of the commission logic</p></li></ul><p></p>\n- Untitled Node - 2026-07-14-18:09:36: <p>During August commissions tool will be compared against manual calculations provided by Kyle</p>\n- 6/25 Meeting: <ul><li><p>Sas_start_dt to be left blank if there is no identified sas_sales_agent </p></li><li><p>Zip_codes missing for some rows due to potential gaps in naming conventions. Nhat to double check names prior to launch. </p></li><li><p>Data fields that OW did not have access to</p><ul><li><p>multi_location_account_model -- </p></li><li><p>sas_initiation_status -- </p></li><li><p>sas_sales_agent_email -- originating_sales_agent_email -- </p></li><li><p>updated_at -- </p></li><li><p>parent_id -- </p></li><li><p>py_revenue - </p></li></ul></li><li><p>Clarification Prior to upload: -- </p><ul><li><p>Revenues were shared in the template as YTD revenue as of a few weeks ago; this should be a live figure that refreshes on some regular cadence from PBI instead of a static value.</p></li></ul></li></ul><p></p>\n- Nhat loading in preliminary file: Will send Link to the app tomorrow\n- DBT Model refactoring: Calcs to be done on postgres side\n- Townhall Presentation: - Townhall for sales rep's 2nd week of July re SAS commissions\n\n- Hoping to have connected users access in place by then\n\n- users should have access to customer prime using connected user methodology"
+            },
+            {
+              "projectId": "59c06c6b-e058-492c-ae26-c0f3809393b5",
+              "projectName": "Commercial Business Review Dashboard",
+              "similarity": 0.4040035976929126,
+              "retrievalContext": "PROJECT: Commercial Business Review Dashboard\n\nOPEN TASKS:\n- Knowledge Transfer for Customer Business Review Dashboard: Joe will do the knowledge transfer to Kai Li for the Customer Business Review dashboard.\n- Development of Customer Business Review Dashboard: Kai Li will take over the development of the Customer Business Review dashboard.\n- Kai to Start work on CBR\n\nRECENT CONTEXT:\n- Kai Li will take over customer business review from Joe: Kai Li will take over customer business review from Joe"
+            }
+          ],
+          "projectAssignment": {
+            "originalText": "She liked the overall direction but wants managers to have a clearer way to compare rep performance over time before we launch.",
+            "destination": "existing_project",
+            "projectId": "5c264779-dafd-4db2-82a5-6476158ed80f",
+            "projectName": "Commercial Scorecard v2",
+            "matchBasis": "direct_project_reference",
+            "confidence": 0.9,
+            "reason": "The segment directly references the 'Commercial Scorecard rollout', which is clearly identified as part of the 'Commercial Scorecard v2' project."
+          }
+        },
+        {
+          "topic": "Rep-Level Trend View",
+          "sourceText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version.",
+          "contextualText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version of the Commercial Scorecard.",
+          "embedding": {
+            "dimensions": 1536,
+            "preview": [
+              0.0249481201171875,
+              0.035125732421875,
+              0.05181884765625,
+              -0.0382080078125,
+              -0.019134521484375,
+              0.0175018310546875,
+              0.00408172607421875,
+              -0.03369140625
+            ]
+          },
+          "retrievalCandidates": [
+            {
+              "projectId": "5c264779-dafd-4db2-82a5-6476158ed80f",
+              "projectName": "Commercial Scorecard v2",
+              "similarity": 0.6176526008332881,
+              "retrievalContext": "PROJECT: Commercial Scorecard v2\n\nOPEN TASKS:\n- Present Commercial Scorecard v2 to Amy for final sign off\n- check metrics at a rep level commercial scorecard: [2026-06-29T14:16:12.686Z] rep level metric aside from retention looks good\n- Tie out all metrics on all levels on Commercial Scorecard v2: [2026-08-03T14:25:14.936Z] Need to make sure QTD ties out for all levels\n\n[2026-08-03T14:23:43.604Z] - YTD for all regions is good\n- Rep level wallet share metric needs attention\n-\n- Commercial Scorecard v2 documentation\n\nRECENT CONTEXT:\n- Untitled Node - 2026-07-08-14:11:59: <ul><li><p>All trends are implanted</p></li><li><p>finishing up QTD tie out</p></li><li><p>After QTD and retention (rep level only) checks out, we will meet with Amy and Mike for final sign off</p></li></ul><p></p>\n- Untitled Node - 2026-07-06-14:07:14: <ul><li><p>added QTD sub toggle (current quarter vs last completed quarter)</p></li><li><p>ties to legacy QTD now</p></li><li><p>still making sure all metrics works with QTD toggle</p></li></ul><p></p>\n- Rep validation is progression\n- Joe currently tying out rep level retention. so far not tying out\n- Metrics ties on region level and overall\n- QTD Some targets are not pulling through"
+            },
+            {
+              "projectId": "580a3fa5-a5a1-440e-b071-2ef2e69eea89",
+              "projectName": "Sales Performance Dashboard",
+              "similarity": 0.5055426323056849,
+              "retrievalContext": "PROJECT: Sales Performance Dashboard\n\nDESCRIPTION:\nOne stop shop dashboard for SupplyOne sales reps"
+            },
+            {
+              "projectId": "7d7635c9-a2b9-438a-a1f9-4f4e12015b9f",
+              "projectName": "SAS Commissions App",
+              "similarity": 0.4835900772477707,
+              "retrievalContext": "PROJECT: SAS Commissions App\n\nDESCRIPTION:\nData management hub module dedicated to the presentation of commission calculations for SAS reps\n\nOPEN TASKS:\n- complete SAS commission calc page: [2026-08-03T14:12:05.943Z] stored procedures and app logic is in place and is currently testable\n\n[2026-07-27T14:05:44.363Z] waiting to hear back from mark re sas commission logic updates\n\nRECENT DECISIONS:\n- File Uploader Added to Customer Prime\n- Customer prime must also go down to an invoice level to show revenue and gp\n- Users should have access to Customer Prime using Connected User access methodology\n- Sas_start_dt to be left blank if there is no identified sas_sales_agent\n\nRECENT CONTEXT:\n- Untitled Node - 2026-07-20-15:05:44: <ul><li><p>Townhall was delayed due to debate over aspects of the commission logic</p></li></ul><p></p>\n- Untitled Node - 2026-07-14-18:09:36: <p>During August commissions tool will be compared against manual calculations provided by Kyle</p>\n- 6/25 Meeting: <ul><li><p>Sas_start_dt to be left blank if there is no identified sas_sales_agent </p></li><li><p>Zip_codes missing for some rows due to potential gaps in naming conventions. Nhat to double check names prior to launch. </p></li><li><p>Data fields that OW did not have access to</p><ul><li><p>multi_location_account_model -- </p></li><li><p>sas_initiation_status -- </p></li><li><p>sas_sales_agent_email -- originating_sales_agent_email -- </p></li><li><p>updated_at -- </p></li><li><p>parent_id -- </p></li><li><p>py_revenue - </p></li></ul></li><li><p>Clarification Prior to upload: -- </p><ul><li><p>Revenues were shared in the template as YTD revenue as of a few weeks ago; this should be a live figure that refreshes on some regular cadence from PBI instead of a static value.</p></li></ul></li></ul><p></p>\n- Nhat loading in preliminary file: Will send Link to the app tomorrow\n- DBT Model refactoring: Calcs to be done on postgres side\n- Townhall Presentation: - Townhall for sales rep's 2nd week of July re SAS commissions\n\n- Hoping to have connected users access in place by then\n\n- users should have access to customer prime using connected user methodology"
+            },
+            {
+              "projectId": "fd1e7b43-607d-4f98-8508-3248c6c34142",
+              "projectName": "Sales Rep Performance (only Amy Packer)",
+              "similarity": 0.4630535432061994,
+              "retrievalContext": "PROJECT: Sales Rep Performance (only Amy Packer)\n\nOPEN TASKS:\n- get PR Reviewed by team\n- update dash with correct schema\n- send dashboard to Amy"
+            },
+            {
+              "projectId": "9fd7ae98-166d-42e0-8f9c-eae0390dceaa",
+              "projectName": "PVC Monthly Analysis",
+              "similarity": 0.4596013090536677,
+              "retrievalContext": "PROJECT: PVC Monthly Analysis\n\nDESCRIPTION:\nCreate analysis agent to send PVC to FP&A Team monthly"
+            }
+          ],
+          "projectAssignment": {
+            "originalText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version.",
+            "destination": "existing_project",
+            "projectId": "5c264779-dafd-4db2-82a5-6476158ed80f",
+            "projectName": "Commercial Scorecard v2",
+            "matchBasis": "direct_project_reference",
+            "confidence": 0.95,
+            "reason": "The segment specifically references the 'Commercial Scorecard' which is the same distinctive initiative represented by the project name."
+          }
+        },
+        {
+          "topic": "Eric's Update on Inventory App",
+          "sourceText": "Eric mentioned the inventory app being built for the Southwest region is making good progress, but we still need to align with the Florida team so we don't end up with two different solutions solving the same problem.",
+          "contextualText": "Eric mentioned that the inventory app being built for the Southwest region is making good progress, but we still need to align with the Florida team so we don't end up with two different solutions solving the same problem.",
+          "embedding": {
+            "dimensions": 1536,
+            "preview": [
+              -0.021270751953125,
+              0.0162200927734375,
+              0.03936767578125,
+              0.039703369140625,
+              -0.0176849365234375,
+              0.021026611328125,
+              0.0736083984375,
+              0.0011510848999023438
+            ]
+          },
+          "retrievalCandidates": [
+            {
+              "projectId": "ef0beeec-04b3-4563-acf4-84166f5c40df",
+              "projectName": "Inventory Management Tool Meeting",
+              "similarity": 0.42639779661789645,
+              "retrievalContext": "PROJECT: Inventory Management Tool Meeting\n\nDESCRIPTION:\nScheduling a meeting with Steve Pinder regarding the inventory management tool."
+            },
+            {
+              "projectId": "6c12985d-709e-4fbc-b189-87bebf38c57b",
+              "projectName": "Gainesville Database Migration",
+              "similarity": 0.415937169411136,
+              "retrievalContext": "PROJECT: Gainesville Database Migration\n\nOPEN TASKS:\n- Procure mapping file from Jennie Ernst\n\nRECENT CONTEXT:\n- waiting mapping from tiffany McMillian (IT)\n- Nhat to reach out to Jenie + Megan L + Dan G to acquire mapping files\n- Nhat sent out request to site for mapping files\n- Jennie Ernst confirmed she will get us final mapping file: - Customer\n- Items"
+            },
+            {
+              "projectId": "a393098e-ec6a-4e58-944f-bfda775896a2",
+              "projectName": "FCT INVENTORY WAREHOUSE Refactor",
+              "similarity": 0.40822431104806556,
+              "retrievalContext": "PROJECT: FCT INVENTORY WAREHOUSE Refactor\n\nOPEN TASKS:\n- get approval of testing vs production data for fct inventory warehouse refactor\n- get approval on the pull request for fct inventory warehouse refactor"
+            },
+            {
+              "projectId": "8c0347fe-3ae0-4d4b-b70a-78a1da9f069a",
+              "projectName": "Florida Load Adjustment",
+              "similarity": 0.40680822665074634,
+              "retrievalContext": "PROJECT: Florida Load Adjustment"
+            },
+            {
+              "projectId": "3011c793-7903-4a97-8c3a-8489d4967254",
+              "projectName": "Net Working Capital Analytics Enhancement",
+              "similarity": 0.4039012813834273,
+              "retrievalContext": "PROJECT: Net Working Capital Analytics Enhancement\n\nOPEN TASKS:\n- Put together interview questions for stakeholders\n- Konrad to schedule meetings with regional stakeholders\n\nRECENT DECISIONS:\n- Every aspect of the tool needs to be actionable and geared towards target personas"
+            }
+          ],
+          "projectAssignment": {
+            "originalText": "Eric mentioned the inventory app being built for the Southwest region is making good progress, but we still need to align with the Florida team so we don't end up with two different solutions solving the same problem.",
+            "destination": "new_project_candidate",
+            "projectId": null,
+            "projectName": "Inventory App Alignment",
+            "matchBasis": "none",
+            "confidence": 0.75,
+            "reason": "The segment discusses a specific effort regarding the inventory app that requires coordination between regions, indicating a distinct project."
+          }
+        },
+        {
+          "topic": "Fallback to Snowflake",
+          "sourceText": "I decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive.",
+          "contextualText": "I decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive.",
+          "embedding": {
+            "dimensions": 1536,
+            "preview": [
+              -0.00516510009765625,
+              0.0103759765625,
+              0.03656005859375,
+              -0.0181427001953125,
+              0.0261993408203125,
+              -0.0049896240234375,
+              -0.0345458984375,
+              0.0204925537109375
+            ]
+          },
+          "retrievalCandidates": [
+            {
+              "projectId": "be12b0a2-bcb4-4ccb-b9f4-7ef2ea8f2192",
+              "projectName": "Sales Agent DMH",
+              "similarity": 0.4237837652308958,
+              "retrievalContext": "PROJECT: Sales Agent DMH\n\nOPEN TASKS:\n- Automate Sales Agent data writeback to Snowflake\n\nRECENT DECISIONS:\n- Use PgBouncer"
+            },
+            {
+              "projectId": "d212f644-cb74-4d46-bb1b-c4867fa360f7",
+              "projectName": "PVC Performance Optimization",
+              "similarity": 0.38364178691516404,
+              "retrievalContext": "PROJECT: PVC Performance Optimization\n\nDESCRIPTION:\nCurrent PVC Excel reports are cumbersome and slow. There are multiple tabs with fairly complex formulas on top of pivots sourced from PowerBI semantic models. Our task here to offload these calculations into upstream artifacts to relieve local processing needed in the excel files.\n\nOPEN TASKS:\n- Implement PVC Enriched view: - Add equipment flag\n- removes unused columns\n\nRECENT DECISIONS:\n- Leverage dbt models\n\nRECENT CONTEXT:\n- Untitled Node - 2026-07-08-14:14:32: <ul><li><p>Model development started</p></li><li><p>getting errors. currently working through them</p></li></ul><p></p>"
+            },
+            {
+              "projectId": "b9448311-af15-4832-9005-27cbdbe2bac3",
+              "projectName": "Cognos Integration",
+              "similarity": 0.31963185389275117,
+              "retrievalContext": "PROJECT: Cognos Integration\n\nOPEN TASKS:\n- Joe to follow up with Konrad to confirm next steps\n- Set up monthly automation to run TM1 extraction into snowflake\n\nRECENT CONTEXT:\n- Untitled Node - 2026-07-06-14:05:15: <p>still waiting for Konrad</p>"
+            },
+            {
+              "projectId": "6a03d969-c89b-4f19-a105-0340c7482113",
+              "projectName": "Lamb & Associates Go Live",
+              "similarity": 0.31890874751699316,
+              "retrievalContext": "PROJECT: Lamb & Associates Go Live\n\nRECENT DECISIONS:\n- Use new D&B integration for Customer enrichments\n\nRECENT CONTEXT:\n- Dun & Bradsteet: blocked by D&B integration. Todd Hanna opted not do the manual verification of AI suggested parents and segments in favor of using the D&B enrichments right away"
+            },
+            {
+              "projectId": "18f04924-16eb-4cd1-9e65-92b0c6a0806a",
+              "projectName": "AD HOC REQUESTS",
+              "similarity": 0.3048369162565119,
+              "retrievalContext": "PROJECT: AD HOC REQUESTS\n\nDESCRIPTION:\nThis project is meant to collect all tasks that are not tied to an actual project and are ad hoc by nature\n\nOPEN TASKS:\n- Create Semantic models based on queries sent by Iva\n- Inventory dashboard trouble shoot greater 180 day flag"
+            }
+          ],
+          "projectAssignment": {
+            "originalText": "I decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive.",
+            "destination": "unassigned",
+            "projectId": null,
+            "projectName": null,
+            "matchBasis": "none",
+            "confidence": 0.65,
+            "reason": "The segment does not indicate a distinct, durable execution effort that warrants a new Project."
+          }
+        },
+        {
+          "topic": "Reusable Framework for Applications",
+          "sourceText": "Maybe we should eventually create a reusable framework for internal SupplyOne applications so every new app follows the same authentication, security, and deployment patterns.",
+          "contextualText": "We should eventually create a reusable framework for internal SupplyOne applications so every new app follows the same authentication, security, and deployment patterns.",
+          "embedding": {
+            "dimensions": 1536,
+            "preview": [
+              -0.04010009765625,
+              -0.01666259765625,
+              0.060333251953125,
+              0.031005859375,
+              0.04681396484375,
+              -0.01554107666015625,
+              0.0149078369140625,
+              0.0308990478515625
+            ]
+          },
+          "retrievalCandidates": [
+            {
+              "projectId": "580a3fa5-a5a1-440e-b071-2ef2e69eea89",
+              "projectName": "Sales Performance Dashboard",
+              "similarity": 0.37698211150963945,
+              "retrievalContext": "PROJECT: Sales Performance Dashboard\n\nDESCRIPTION:\nOne stop shop dashboard for SupplyOne sales reps"
+            },
+            {
+              "projectId": "7d7635c9-a2b9-438a-a1f9-4f4e12015b9f",
+              "projectName": "SAS Commissions App",
+              "similarity": 0.32113727869626174,
+              "retrievalContext": "PROJECT: SAS Commissions App\n\nDESCRIPTION:\nData management hub module dedicated to the presentation of commission calculations for SAS reps\n\nOPEN TASKS:\n- complete SAS commission calc page: [2026-08-03T14:12:05.943Z] stored procedures and app logic is in place and is currently testable\n\n[2026-07-27T14:05:44.363Z] waiting to hear back from mark re sas commission logic updates\n\nRECENT DECISIONS:\n- File Uploader Added to Customer Prime\n- Customer prime must also go down to an invoice level to show revenue and gp\n- Users should have access to Customer Prime using Connected User access methodology\n- Sas_start_dt to be left blank if there is no identified sas_sales_agent\n\nRECENT CONTEXT:\n- Untitled Node - 2026-07-20-15:05:44: <ul><li><p>Townhall was delayed due to debate over aspects of the commission logic</p></li></ul><p></p>\n- Untitled Node - 2026-07-14-18:09:36: <p>During August commissions tool will be compared against manual calculations provided by Kyle</p>\n- 6/25 Meeting: <ul><li><p>Sas_start_dt to be left blank if there is no identified sas_sales_agent </p></li><li><p>Zip_codes missing for some rows due to potential gaps in naming conventions. Nhat to double check names prior to launch. </p></li><li><p>Data fields that OW did not have access to</p><ul><li><p>multi_location_account_model -- </p></li><li><p>sas_initiation_status -- </p></li><li><p>sas_sales_agent_email -- originating_sales_agent_email -- </p></li><li><p>updated_at -- </p></li><li><p>parent_id -- </p></li><li><p>py_revenue - </p></li></ul></li><li><p>Clarification Prior to upload: -- </p><ul><li><p>Revenues were shared in the template as YTD revenue as of a few weeks ago; this should be a live figure that refreshes on some regular cadence from PBI instead of a static value.</p></li></ul></li></ul><p></p>\n- Nhat loading in preliminary file: Will send Link to the app tomorrow\n- DBT Model refactoring: Calcs to be done on postgres side\n- Townhall Presentation: - Townhall for sales rep's 2nd week of July re SAS commissions\n\n- Hoping to have connected users access in place by then\n\n- users should have access to customer prime using connected user methodology"
+            },
+            {
+              "projectId": "9c2a0d78-fba6-4b81-8263-5e86a8d8b45c",
+              "projectName": "Specialty Packaging Go Live",
+              "similarity": 0.30696042343163676,
+              "retrievalContext": "PROJECT: Specialty Packaging Go Live\n\nRECENT CONTEXT:\n- Having intermitent connectivity: <p>Connecting with vendor to resolve</p>"
+            },
+            {
+              "projectId": "3011c793-7903-4a97-8c3a-8489d4967254",
+              "projectName": "Net Working Capital Analytics Enhancement",
+              "similarity": 0.2927454671735883,
+              "retrievalContext": "PROJECT: Net Working Capital Analytics Enhancement\n\nOPEN TASKS:\n- Put together interview questions for stakeholders\n- Konrad to schedule meetings with regional stakeholders\n\nRECENT DECISIONS:\n- Every aspect of the tool needs to be actionable and geared towards target personas"
+            },
+            {
+              "projectId": "eef22fbc-02a5-456f-9563-55033fc7af13",
+              "projectName": "Connected User Access Methodology",
+              "similarity": 0.2898851815284269,
+              "retrievalContext": "PROJECT: Connected User Access Methodology\n\nOPEN TASKS:\n- Add region to the connected user modal\n- get sign off that current connected users page is good\n- get confirmation that connected user logic needs to be added to PBI"
+            }
+          ],
+          "projectAssignment": {
+            "originalText": "Maybe we should eventually create a reusable framework for internal SupplyOne applications so every new app follows the same authentication, security, and deployment patterns.",
+            "destination": "new_project_candidate",
+            "projectId": null,
+            "projectName": "Reusable Framework Development",
+            "matchBasis": "none",
+            "confidence": 0.75,
+            "reason": "The segment outlines a distinct initiative to create a reusable framework, indicating a durable execution effort."
+          }
+        }
+      ]
+    },
+    "actionPlanning": {
+      "segmentCount": 6,
+      "actionPlanCount": 6,
+      "segments": [
+        {
+          "topic": "Meeting with Amy",
+          "sourceText": "Met with Amy today about the Commercial Scorecard rollout.",
+          "contextualText": "I met with Amy today about the Commercial Scorecard rollout."
+        },
+        {
+          "topic": "Amy's Feedback",
+          "sourceText": "She liked the overall direction but wants managers to have a clearer way to compare rep performance over time before we launch.",
+          "contextualText": "Amy liked the overall direction of the Commercial Scorecard rollout but wants managers to have a clearer way to compare rep performance over time before we launch."
+        },
+        {
+          "topic": "Rep-Level Trend View",
+          "sourceText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version.",
+          "contextualText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version of the Commercial Scorecard."
+        },
+        {
+          "topic": "Eric's Update on Inventory App",
+          "sourceText": "Eric mentioned the inventory app being built for the Southwest region is making good progress, but we still need to align with the Florida team so we don't end up with two different solutions solving the same problem.",
+          "contextualText": "Eric mentioned that the inventory app being built for the Southwest region is making good progress, but we still need to align with the Florida team so we don't end up with two different solutions solving the same problem."
+        },
+        {
+          "topic": "Fallback to Snowflake",
+          "sourceText": "I decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive.",
+          "contextualText": "I decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive."
+        },
+        {
+          "topic": "Reusable Framework for Applications",
+          "sourceText": "Maybe we should eventually create a reusable framework for internal SupplyOne applications so every new app follows the same authentication, security, and deployment patterns.",
+          "contextualText": "We should eventually create a reusable framework for internal SupplyOne applications so every new app follows the same authentication, security, and deployment patterns."
+        }
+      ],
+      "actionPlans": [
+        {
+          "originalText": "Met with Amy today about the Commercial Scorecard rollout.",
+          "projectId": "5c264779-dafd-4db2-82a5-6476158ed80f",
+          "projectName": "Commercial Scorecard v2",
+          "intent": "progress_update",
+          "action": {
+            "type": "attach_note_to_task",
+            "confidence": 0.9,
+            "reason": "The segment provides an update on a meeting with Amy regarding the Commercial Scorecard rollout, which is directly relevant to the existing task of presenting the scorecard to her for final sign-off.",
+            "targetTaskId": "d68d13d1-a89a-448a-a4f4-df916aef099d",
+            "targetTaskTitle": "Present Commercial Scorecard v2 to Amy for final sign off",
+            "payload": {
+              "subject": "Meeting update with Amy",
+              "content": "Met with Amy today about the Commercial Scorecard rollout."
+            }
+          },
+          "topic": "Meeting with Amy",
+          "contextualText": "I met with Amy today about the Commercial Scorecard rollout.",
+          "taskId": "d68d13d1-a89a-448a-a4f4-df916aef099d"
+        },
+        {
+          "originalText": "She liked the overall direction but wants managers to have a clearer way to compare rep performance over time before we launch.",
+          "projectId": "5c264779-dafd-4db2-82a5-6476158ed80f",
+          "projectName": "Commercial Scorecard v2",
+          "intent": "project_context",
+          "action": {
+            "type": "attach_note_to_task",
+            "confidence": 0.9,
+            "reason": "The segment expresses a need for clearer comparison of rep performance, which relates to the ongoing work on metrics and performance evaluation in the project.",
+            "targetTaskId": "96705ac7-116d-4aea-9732-efe92e09296c",
+            "targetTaskTitle": "check metrics at a rep level commercial scorecard",
+            "payload": {
+              "subject": "Need for clearer rep performance comparison",
+              "content": "She liked the overall direction but wants managers to have a clearer way to compare rep performance over time before we launch."
+            }
+          },
+          "topic": "Amy's Feedback",
+          "contextualText": "Amy liked the overall direction of the Commercial Scorecard rollout but wants managers to have a clearer way to compare rep performance over time before we launch.",
+          "taskId": "96705ac7-116d-4aea-9732-efe92e09296c"
+        },
+        {
+          "originalText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version.",
+          "projectId": "5c264779-dafd-4db2-82a5-6476158ed80f",
+          "projectName": "Commercial Scorecard v2",
+          "intent": "task_action",
+          "action": {
+            "type": "create_task",
+            "confidence": 0.9,
+            "reason": "The segment expresses distinct concrete work that needs to be performed, specifically adding a rep-level trend view and validating calculations, which is not represented by existing tasks.",
+            "payload": {
+              "title": "Add rep-level trend view and validate QTD calculations",
+              "description": "Add a rep-level trend view and validate the quarter-to-date calculations before presenting the final version."
+            }
+          },
+          "topic": "Rep-Level Trend View",
+          "contextualText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version of the Commercial Scorecard."
+        },
+        {
+          "destination": "new_project_candidate",
+          "originalText": "Eric mentioned the inventory app being built for the Southwest region is making good progress, but we still need to align with the Florida team so we don't end up with two different solutions solving the same problem.",
+          "projectId": null,
+          "projectName": "Inventory App Alignment",
+          "confidence": 0.75,
+          "reason": "The segment discusses a specific effort regarding the inventory app that requires coordination between regions, indicating a distinct project.",
+          "topic": "Eric's Update on Inventory App",
+          "contextualText": "Eric mentioned that the inventory app being built for the Southwest region is making good progress, but we still need to align with the Florida team so we don't end up with two different solutions solving the same problem."
+        },
+        {
+          "destination": "unassigned",
+          "originalText": "I decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive.",
+          "projectId": null,
+          "projectName": null,
+          "confidence": 0.65,
+          "reason": "The segment does not indicate a distinct, durable execution effort that warrants a new Project.",
+          "topic": "Fallback to Snowflake",
+          "contextualText": "I decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive."
+        },
+        {
+          "destination": "new_project_candidate",
+          "originalText": "Maybe we should eventually create a reusable framework for internal SupplyOne applications so every new app follows the same authentication, security, and deployment patterns.",
+          "projectId": null,
+          "projectName": "Reusable Framework Development",
+          "confidence": 0.75,
+          "reason": "The segment outlines a distinct initiative to create a reusable framework, indicating a durable execution effort.",
+          "topic": "Reusable Framework for Applications",
+          "contextualText": "We should eventually create a reusable framework for internal SupplyOne applications so every new app follows the same authentication, security, and deployment patterns."
+        }
+      ]
+    }
+  }
+}

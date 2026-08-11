@@ -1,0 +1,113 @@
+{
+  "segmentCount": 6,
+  "segments": [
+    {
+      "topic": "Meeting with Amy",
+      "sourceText": "Met with Amy today about the Commercial Scorecard rollout.",
+      "contextualText": "I met with Amy today about the Commercial Scorecard rollout.",
+      "embedding": {
+        "dimensions": 1536,
+        "preview": [
+          -0.0013341903686523438,
+          -0.011077880859375,
+          0.009613037109375,
+          -0.037139892578125,
+          -0.01224517822265625,
+          0.025665283203125,
+          0.005603790283203125,
+          -0.0347900390625
+        ]
+      }
+    },
+    {
+      "topic": "Amy's Feedback",
+      "sourceText": "She liked the overall direction but wants managers to have a clearer way to compare rep performance over time before we launch.",
+      "contextualText": "Amy liked the overall direction of the Commercial Scorecard rollout but wants managers to have a clearer way to compare rep performance over time before we launch.",
+      "embedding": {
+        "dimensions": 1536,
+        "preview": [
+          0.0221710205078125,
+          0.0015745162963867188,
+          0.0123443603515625,
+          0.0008974075317382812,
+          0.017120361328125,
+          0.0286407470703125,
+          0.028228759765625,
+          -0.06524658203125
+        ]
+      }
+    },
+    {
+      "topic": "Rep-Level Trend View",
+      "sourceText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version.",
+      "contextualText": "I need to add a rep-level trend view and validate the quarter-to-date calculations one more time before presenting the final version of the Commercial Scorecard.",
+      "embedding": {
+        "dimensions": 1536,
+        "preview": [
+          0.0249481201171875,
+          0.035125732421875,
+          0.05181884765625,
+          -0.0382080078125,
+          -0.019134521484375,
+          0.0175018310546875,
+          0.00408172607421875,
+          -0.03369140625
+        ]
+      }
+    },
+    {
+      "topic": "Eric's Update",
+      "sourceText": "Eric mentioned the inventory app being built for the Southwest region is making good progress, but we still need to align with the Florida team so we don't end up with two different solutions solving the same problem.",
+      "contextualText": "Eric mentioned that the inventory app being built for the Southwest region is making good progress, but we still need to align with the Florida team so we don't end up with two different solutions solving the same problem.",
+      "embedding": {
+        "dimensions": 1536,
+        "preview": [
+          -0.021270751953125,
+          0.0162200927734375,
+          0.03936767578125,
+          0.039703369140625,
+          -0.0176849365234375,
+          0.021026611328125,
+          0.0736083984375,
+          0.0011510848999023438
+        ]
+      }
+    },
+    {
+      "topic": "Querying Snowflake",
+      "sourceText": "I decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive.",
+      "contextualText": "I decided that querying Snowflake directly should remain our preferred fallback whenever the Power BI semantic models become too restrictive.",
+      "embedding": {
+        "dimensions": 1536,
+        "preview": [
+          -0.00516510009765625,
+          0.0103759765625,
+          0.03656005859375,
+          -0.0181427001953125,
+          0.0261993408203125,
+          -0.0049896240234375,
+          -0.0345458984375,
+          0.0204925537109375
+        ]
+      }
+    },
+    {
+      "topic": "Reusable Framework Proposal",
+      "sourceText": "Maybe we should eventually create a reusable framework for internal SupplyOne applications so every new app follows the same authentication, security, and deployment patterns.",
+      "contextualText": "I think we should eventually create a reusable framework for internal SupplyOne applications so every new app follows the same authentication, security, and deployment patterns.",
+      "embedding": {
+        "dimensions": 1536,
+        "preview": [
+          -0.037261962890625,
+          -0.0178070068359375,
+          0.060638427734375,
+          0.03692626953125,
+          0.04888916015625,
+          -0.01103973388671875,
+          0.0143585205078125,
+          0.031402587890625
+        ]
+      }
+    }
+  ]
+}

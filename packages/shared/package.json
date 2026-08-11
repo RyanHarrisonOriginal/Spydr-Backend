@@ -1,0 +1,39 @@
+{
+  "name": "@spydr/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./spydr-query.constants": {
+      "types": "./dist/spydr-query.constants.d.ts",
+      "import": "./dist/spydr-query.constants.js"
+    },
+    "./retrieval-types": {
+      "types": "./dist/retrieval/project-retrieval.types.d.ts",
+      "import": "./dist/retrieval/project-retrieval.types.js"
+    },
+    "./queue": {
+      "types": "./dist/queue/embedding-queue.d.ts",
+      "import": "./dist/queue/embedding-queue.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "@spydr/db": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.10"
+  }
+}
