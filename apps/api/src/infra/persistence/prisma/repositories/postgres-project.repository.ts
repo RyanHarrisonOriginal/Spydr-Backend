@@ -785,22 +785,27 @@ export class PostgresProjectRepository implements IProjectRepository {
     targetNodeId: string,
     reason: string
   ) {
-    await tx.spydrNodeRelationship.deleteMany({
+    // Unique key is (source, target, type) — not userId. Upsert so a link
+    // created under a different user does not trip P2002.
+    await tx.spydrNodeRelationship.upsert({
       where: {
-        orgId: project.orgId,
-        userId: project.userId,
-        sourceNodeId: project.id,
-        targetNodeId,
-        relationshipType: "related_to",
+        sourceNodeId_targetNodeId_relationshipType: {
+          sourceNodeId: project.id,
+          targetNodeId,
+          relationshipType: "related_to",
+        },
       },
-    });
-    await tx.spydrNodeRelationship.create({
-      data: {
+      create: {
         orgId: project.orgId,
         userId: project.userId,
         sourceNodeId: project.id,
         targetNodeId,
         relationshipType: "related_to",
+        reason,
+      },
+      update: {
+        orgId: project.orgId,
+        userId: project.userId,
         reason,
       },
     });
