@@ -59,6 +59,7 @@ function objectHref(type: ActiveNoteApplyObjectType, id: string): string {
 
 function payloadTitle(payload: ActiveNoteApplyPayload): string {
   if (payload.title?.trim()) return payload.title.trim();
+  if (payload.subject?.trim()) return payload.subject.trim();
   if (payload.name?.trim()) return payload.name.trim();
   if (payload.targetLabel?.trim()) return payload.targetLabel.trim();
   if (payload.kind === "no_action") return "No action";
@@ -371,6 +372,7 @@ export class ApplyActiveNoteCommandHandler
 
     const title =
       payload.title?.trim() ||
+      payload.subject?.trim() ||
       payload.content?.trim().split(/\r?\n/)[0]?.trim().slice(0, 80) ||
       "Active note";
     const body =

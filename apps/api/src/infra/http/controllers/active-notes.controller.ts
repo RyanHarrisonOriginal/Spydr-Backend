@@ -78,7 +78,7 @@ export class ActiveNotesController {
         })
       );
 
-      res.json(JSON.stringify(result, null, 2));
+      res.json(result);
     } catch (error) {
       if (error instanceof ActiveNoteApplyError) {
         res.status(error.statusCode).json({ message: error.message });

@@ -124,6 +124,7 @@ export type ActiveNoteApplyPayloadKind =
 export interface ActiveNoteApplyPayload {
   kind: ActiveNoteApplyPayloadKind;
   title?: string;
+  subject?: string;
   description?: string;
   content?: string;
   rationale?: string;

@@ -151,7 +151,11 @@ export function assertApplyPayloadMatchesKind(
       }
       return;
     case "note":
-      if (!payload.title?.trim() && !payload.content?.trim()) {
+      if (
+        !payload.title?.trim() &&
+        !payload.subject?.trim() &&
+        !payload.content?.trim()
+      ) {
         throw new ActiveNoteApplyError(
           "Note title or content is required",
           400

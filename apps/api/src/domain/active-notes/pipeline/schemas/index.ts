@@ -28,6 +28,7 @@ const applyPayloadSchema = z
       "no_action",
     ]),
     title: z.string().optional(),
+    subject: z.string().optional(),
     description: z.string().optional(),
     content: z.string().optional(),
     rationale: z.string().optional(),

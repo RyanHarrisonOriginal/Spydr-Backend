@@ -4,6 +4,7 @@ import {
   mapSegmentActionPlanToApplyOperation,
 } from "../../action-planning/helpers/map-segment-action-plan-to-apply-operation.js";
 import type { SegmentActionPlan } from "../../action-planning/types/index.js";
+import { activeNoteApplyRequestSchema } from "../../pipeline/schemas/index.js";
 import { ActiveNoteApplyError } from "../../types/shared.js";
 
 const BASE_PLAN: Pick<
@@ -236,6 +237,105 @@ describe("mapSegmentActionPlanToApplyOperation", () => {
       },
     });
   });
+
+  it("produces apply request payloads that match the HTTP schema", () => {
+    const plans: SegmentActionPlan[] = [
+      {
+        ...BASE_PLAN,
+        intent: "progress_update",
+        action: {
+          type: "attach_note_to_task",
+          confidence: 0.9,
+          reason: "Progress on sign-off task.",
+          targetTaskId: "task-1",
+          targetTaskTitle: "Present scorecard to Amy",
+          payload: {
+            subject: "Amy meeting",
+            content: "Met with Amy today.",
+          },
+        },
+      },
+      {
+        ...BASE_PLAN,
+        intent: "task_action",
+        action: {
+          type: "create_task",
+          confidence: 0.9,
+          reason: "New work is required.",
+          payload: {
+            title: "Add trend view",
+            description: "Validate QTD calculations.",
+          },
+        },
+      },
+      {
+        ...BASE_PLAN,
+        intent: "decision",
+        action: {
+          type: "create_decision",
+          confidence: 0.8,
+          reason: "Committed choice.",
+          payload: {
+            title: "Use Snowflake fallback",
+            rationale: "Power BI models are too restrictive.",
+          },
+        },
+      },
+      {
+        ...BASE_PLAN,
+        intent: "idea",
+        action: {
+          type: "create_idea",
+          confidence: 0.7,
+          reason: "Future direction.",
+          payload: {
+            title: "Shared app framework",
+            description: "Standardize auth and deployment.",
+          },
+        },
+      },
+      {
+        ...BASE_PLAN,
+        intent: "task_action",
+        action: {
+          type: "use_existing_task",
+          confidence: 0.85,
+          reason: "Work already tracked.",
+          targetTaskId: "task-9",
+          targetTaskTitle: "Validate metrics",
+        },
+      },
+      {
+        destination: "new_project_candidate",
+        originalText: "Maybe we should create a reusable framework.",
+        contextualText:
+          "We should eventually create a reusable framework for internal apps.",
+        topic: "Reusable framework",
+        projectId: null,
+        projectName: "Reusable Framework Development",
+        confidence: 0.75,
+        reason: "Distinct durable execution effort.",
+      },
+    ];
+
+    const operations = plans.map((plan, index) =>
+      mapSegmentActionPlanToApplyOperation(plan, `op-${index}`)
+    );
+
+    expect(
+      activeNoteApplyRequestSchema.parse({
+        activeNoteId: "note-1",
+        content: "Active note",
+        operations,
+      })
+    ).toMatchObject({ operations });
+
+    for (const operation of operations) {
+      expect(() =>
+        assertApplyPayloadMatchesKind(operation.payload)
+      ).not.toThrow();
+    }
+  });
 });
 
 describe("assertApplyPayloadMatchesKind", () => {
@@ -253,6 +353,14 @@ describe("assertApplyPayloadMatchesKind", () => {
         kind: "note",
         title: "Subject",
         content: "Body",
+      })
+    ).not.toThrow();
+
+    expect(() =>
+      assertApplyPayloadMatchesKind({
+        kind: "note",
+        subject: "Meeting update with Amy",
+        content: "Met with Amy today.",
       })
     ).not.toThrow();
   });
