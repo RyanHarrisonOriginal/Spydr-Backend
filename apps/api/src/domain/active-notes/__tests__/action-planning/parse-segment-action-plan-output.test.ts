@@ -104,6 +104,77 @@ describe("parseSegmentActionPlanOutput", () => {
     });
   });
 
+  it("keeps long generated titles exactly as returned", () => {
+    const title =
+      "Add a rep-level trend view and validate the quarter-to-date calculations before presenting";
+
+    expect(
+      parseSegmentActionPlanOutput(
+        {
+          originalText: ROUTED_SEGMENT.originalText,
+          projectId: "project-1",
+          projectName: "Commercial Scorecard v2",
+          intent: "task_action",
+          action: {
+            type: "create_task",
+            confidence: 0.9,
+            reason: "The segment establishes remaining work.",
+            payload: {
+              title,
+              description:
+                "Add a rep-level trend view and validate QTD calculations.",
+            },
+          },
+        },
+        ROUTED_SEGMENT,
+        PROJECT_CONTEXT
+      )
+    ).toMatchObject({
+      intent: "task_action",
+      action: {
+        type: "create_task",
+        payload: {
+          title,
+        },
+      },
+    });
+  });
+
+  it("keeps long note subjects exactly as returned", () => {
+    const subject =
+      "Meeting update with Amy about the Commercial Scorecard rollout direction";
+
+    expect(
+      parseSegmentActionPlanOutput(
+        {
+          originalText: ROUTED_SEGMENT.originalText,
+          projectId: "project-1",
+          projectName: "Commercial Scorecard v2",
+          intent: "progress_update",
+          action: {
+            type: "create_note",
+            confidence: 0.88,
+            reason: "Preserve the meeting outcome.",
+            payload: {
+              subject,
+              content: ROUTED_SEGMENT.originalText,
+            },
+          },
+        },
+        ROUTED_SEGMENT,
+        PROJECT_CONTEXT
+      )
+    ).toMatchObject({
+      action: {
+        type: "create_note",
+        payload: {
+          subject,
+          content: ROUTED_SEGMENT.originalText,
+        },
+      },
+    });
+  });
+
   it("normalizes targetTaskTitle from project context when the task id is valid", () => {
     expect(
       parseSegmentActionPlanOutput(

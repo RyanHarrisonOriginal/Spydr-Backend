@@ -1,5 +1,5 @@
 export const ACTIVE_NOTE_ACTION_PLANNER_PROMPT_VERSION =
-  "active-note-action-planner-v5";
+  "active-note-action-planner-v7";
 
 export const ACTIVE_NOTE_ACTION_PLANNER_SYSTEM_PROMPT = `
 ## Intent classification

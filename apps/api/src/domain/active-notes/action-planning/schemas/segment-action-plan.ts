@@ -1,8 +1,5 @@
 import { z } from "zod";
 
-export const ACTIVE_NOTE_MAX_GENERATED_LABEL_LENGTH = 120;
-export const ACTIVE_NOTE_MAX_GENERATED_LABEL_WORDS = 8;
-
 const segmentIntentSchema = z.enum([
   "progress_update",
   "task_action",
@@ -23,85 +20,32 @@ const plannedActionTypeSchema = z.enum([
 
 const confidenceSchema = z.number().min(0).max(1);
 const reasonSchema = z.string().trim().min(1);
+const requiredTextSchema = z.string().trim().min(1);
 
-function countWords(value: string): number {
-  return value.trim().split(/\s+/).filter(Boolean).length;
-}
-
-function validateGeneratedLabel(
-  value: string,
-  fieldName: string,
-  ctx: z.RefinementCtx,
-  path: (string | number)[]
-): void {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    ctx.addIssue({
-      code: "custom",
-      message: `${fieldName} is required`,
-      path,
-    });
-    return;
-  }
-
-  if (trimmed.length > ACTIVE_NOTE_MAX_GENERATED_LABEL_LENGTH) {
-    ctx.addIssue({
-      code: "custom",
-      message: `${fieldName} is too long`,
-      path,
-    });
-  }
-
-  const words = countWords(trimmed);
-  if (words > ACTIVE_NOTE_MAX_GENERATED_LABEL_WORDS) {
-    ctx.addIssue({
-      code: "custom",
-      message: `${fieldName} should normally be 2–6 words`,
-      path,
-    });
-  }
-}
-
-const createTaskPayloadSchema = z
-  .object({
-    title: z.string(),
-    description: z.string().nullable().optional(),
-  })
-  .superRefine((value, ctx) => {
-    validateGeneratedLabel(value.title, "Task title", ctx, ["title"]);
-  });
+const createTaskPayloadSchema = z.object({
+  title: requiredTextSchema,
+  description: z.string().nullable().optional(),
+});
 
 const createNotePayloadSchema = z.object({
-  subject: z.string(),
+  subject: requiredTextSchema,
   content: z.string().trim().min(1),
 });
 
-const attachNotePayloadSchema = z
-  .object({
-    subject: z.string(),
-    content: z.string().trim().min(1),
-  })
-  .superRefine((value, ctx) => {
-    validateGeneratedLabel(value.subject, "Note subject", ctx, ["subject"]);
-  });
+const attachNotePayloadSchema = z.object({
+  subject: requiredTextSchema,
+  content: z.string().trim().min(1),
+});
 
-const createDecisionPayloadSchema = z
-  .object({
-    title: z.string(),
-    rationale: z.string().nullable().optional(),
-  })
-  .superRefine((value, ctx) => {
-    validateGeneratedLabel(value.title, "Decision title", ctx, ["title"]);
-  });
+const createDecisionPayloadSchema = z.object({
+  title: requiredTextSchema,
+  rationale: z.string().nullable().optional(),
+});
 
-const createIdeaPayloadSchema = z
-  .object({
-    title: z.string(),
-    description: z.string().nullable().optional(),
-  })
-  .superRefine((value, ctx) => {
-    validateGeneratedLabel(value.title, "Idea title", ctx, ["title"]);
-  });
+const createIdeaPayloadSchema = z.object({
+  title: requiredTextSchema,
+  description: z.string().nullable().optional(),
+});
 
 const segmentActionPlanActionSchema = z
   .object({
@@ -142,13 +86,7 @@ const segmentActionPlanActionSchema = z
           });
           return;
         }
-        const notePayload = createNotePayloadSchema.parse(value.payload);
-        validateGeneratedLabel(
-          notePayload.subject,
-          "Note subject",
-          ctx,
-          ["payload", "subject"]
-        );
+        createNotePayloadSchema.parse(value.payload);
         return;
       }
       case "attach_note_to_task":
