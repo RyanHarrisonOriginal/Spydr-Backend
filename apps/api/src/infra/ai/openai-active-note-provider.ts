@@ -83,8 +83,7 @@ export class OpenAIActiveNoteProvider extends ActiveNoteAIProviderBase {
     this.client = client;
     this.model =
       options.model ??
-      process.env.OPENAI_ACTIVE_NOTE_MODEL ??
-      "gpt-5-mini";
+      (process.env.OPENAI_ACTIVE_NOTE_MODEL?.trim() || "gpt-5-mini");
   }
 
   async segment(input: ActiveNoteAIInput): Promise<ActiveNoteSegmentationResult> {
@@ -196,7 +195,9 @@ export class OpenAIActiveNoteProvider extends ActiveNoteAIProviderBase {
   }): Promise<unknown> {
     const completion = await this.client.chat.completions.create({
       model: this.model,
-      temperature: 0.2,
+      ...(modelSupportsCustomTemperature(this.model)
+        ? { temperature: 0.2 }
+        : {}),
       response_format: {
         type: "json_schema",
         json_schema: options.jsonSchema,
@@ -242,6 +243,12 @@ export class OpenAIActiveNoteProvider extends ActiveNoteAIProviderBase {
       );
     }
   }
+}
+
+/** GPT-5 and o-series reasoning models only accept the default temperature (1). */
+function modelSupportsCustomTemperature(model: string): boolean {
+  const id = model.toLowerCase();
+  return !id.startsWith("gpt-5") && !/^o[1-9]/.test(id);
 }
 
 function normalizeActionPlannerResponse(raw: unknown): unknown {

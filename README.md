@@ -60,7 +60,7 @@ Copy `.env.example` to `.env`. Do not commit `.env`.
 | `CLERK_PUBLISHABLE_KEY` | Yes | Same publishable key as the frontend. |
 | `CLERK_SECRET_KEY` | Yes | Clerk secret key for token verification. |
 | `OPENAI_API_KEY` | For Active Notes analyze | Server-side OpenAI key used by `POST /api/active-notes/analyze`. |
-| `OPENAI_ACTIVE_NOTE_MODEL` | No | Model override (default `gpt-4o-mini`). |
+| `OPENAI_ACTIVE_NOTE_MODEL` | No | Model override (default `gpt-5-mini`). |
 | `PORT` | No | HTTP port (default **3001**). |
 
 ### Active Notes (increment 1)

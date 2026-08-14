@@ -18,8 +18,7 @@
  *   pipeline.json
  *
  * Env: OPENAI_API_KEY, DATABASE_URL (required for real semantic search)
- * Optional: ACTIVE_NOTE_TEST_ORG_ID, ACTIVE_NOTE_TEST_USER_ID
- * Note: if using gpt-5-mini, set OPENAI_ACTIVE_NOTE_MODEL=gpt-4o-mini (gpt-5-mini rejects temperature=0.2)
+ * Optional: ACTIVE_NOTE_TEST_ORG_ID, ACTIVE_NOTE_TEST_USER_ID, OPENAI_ACTIVE_NOTE_MODEL
  */
 import "@spydr/config";
 
