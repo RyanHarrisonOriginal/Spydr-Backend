@@ -15,7 +15,9 @@ export async function tryEnqueueProjectEmbedding(
   enqueue: ProjectEmbeddingEnqueueFn = defaultEnqueueProjectEmbedding
 ): Promise<void> {
   try {
+    console.log("[embedding] enqueue start", { projectId });
     await enqueue(projectId);
+    console.log("[embedding] enqueue ok", { projectId });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown enqueue error";
     console.error(

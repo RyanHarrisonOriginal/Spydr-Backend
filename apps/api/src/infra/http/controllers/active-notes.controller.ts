@@ -55,17 +55,31 @@ export class ActiveNotesController {
   };
 
   apply = async (req: Request, res: Response): Promise<void> => {
+    const startedAt = Date.now();
     try {
       const ctx = getOrgContext(req, res);
       if (!ctx) return;
 
       const parsed = activeNoteApplyRequestSchema.safeParse(req.body);
       if (!parsed.success) {
-        res.status(400).json({
-          message: formatActiveNoteRequestError(parsed.error),
+        const message = formatActiveNoteRequestError(parsed.error);
+        console.warn("[active-note.apply] invalid request", {
+          message,
+          issues: parsed.error.issues.map((issue) => ({
+            path: issue.path.join("."),
+            message: issue.message,
+          })),
         });
+        res.status(400).json({ message });
         return;
       }
+
+      console.log("[active-note.apply] http.start", {
+        orgId: ctx.orgId,
+        operationCount: parsed.data.operations.length,
+        selectedCount: parsed.data.operations.filter((op) => op.selected)
+          .length,
+      });
 
       const result = await this.commandBus.execute<
         ApplyActiveNoteCommand,
@@ -79,14 +93,28 @@ export class ActiveNotesController {
         })
       );
 
+      console.log("[active-note.apply] http.ok", {
+        applied: result.applied.length,
+        failed: result.failed.length,
+        partial: result.partial,
+        ms: Date.now() - startedAt,
+      });
       res.json(result);
     } catch (error) {
       if (error instanceof ActiveNoteApplyError) {
+        console.warn("[active-note.apply] http.reject", {
+          status: error.statusCode,
+          message: error.message,
+          ms: Date.now() - startedAt,
+        });
         res.status(error.statusCode).json({ message: error.message });
         return;
       }
 
-      console.error(error);
+      console.error("[active-note.apply] http.error", {
+        ms: Date.now() - startedAt,
+        error,
+      });
       res.status(500).json({ message: "Failed to apply active note proposals" });
     }
   };

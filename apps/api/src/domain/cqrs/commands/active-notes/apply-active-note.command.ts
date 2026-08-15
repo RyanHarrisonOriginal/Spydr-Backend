@@ -166,8 +166,28 @@ export class ApplyActiveNoteCommandHandler
       return aProject - bProject;
     });
 
+    console.log("[active-note.apply] start", {
+      activeNoteId: command.input.activeNoteId ?? null,
+      projectId: command.input.projectId ?? null,
+      selected: ordered.map((operation) => ({
+        operationId: operation.operationId,
+        objectType: operation.objectType ?? null,
+        kind: operation.payload.kind,
+        selectedProjectId: operation.selectedProjectId ?? null,
+        projectRef: operation.projectRef ?? null,
+        hasAttachment: Boolean(operation.attachment?.id),
+        duplicateResolution: operation.duplicateResolution ?? null,
+      })),
+    });
+
     for (const operation of ordered) {
+      const startedAt = Date.now();
       try {
+        console.log("[active-note.apply] operation.start", {
+          operationId: operation.operationId,
+          objectType: operation.objectType ?? null,
+          kind: operation.payload.kind,
+        });
         const result = await this.applyOne(
           command,
           operation,
@@ -182,16 +202,38 @@ export class ApplyActiveNoteCommandHandler
             createdProjectByRef.set(operation.operationId, result.id);
           }
         }
+        console.log("[active-note.apply] operation.ok", {
+          operationId: operation.operationId,
+          applied: result
+            ? { id: result.id, type: result.type, action: result.action }
+            : null,
+          ms: Date.now() - startedAt,
+        });
       } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to apply proposal";
+        console.error("[active-note.apply] operation.fail", {
+          operationId: operation.operationId,
+          objectType: operation.objectType ?? null,
+          kind: operation.payload.kind,
+          message,
+          ms: Date.now() - startedAt,
+          error,
+        });
         failed.push({
           operationId: operation.operationId,
-          message:
-            error instanceof Error
-              ? error.message
-              : "Failed to apply proposal",
+          message,
         });
       }
     }
+
+    console.log("[active-note.apply] done", {
+      applied: applied.length,
+      failed: failed.length,
+      partial: applied.length > 0 && failed.length > 0,
+    });
 
     const status =
       applied.length === 0

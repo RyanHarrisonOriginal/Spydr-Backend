@@ -46,7 +46,9 @@ describe("EmbeddingAwareCommandBus", () => {
       bus.execute(new CreateProjectCommand("user-1", "org-1", { title: "Launch" }))
     ).resolves.toEqual({ id: "project-1" });
 
-    expect(consoleError).toHaveBeenCalled();
+    await vi.waitFor(() => {
+      expect(consoleError).toHaveBeenCalled();
+    });
     consoleError.mockRestore();
   });
 

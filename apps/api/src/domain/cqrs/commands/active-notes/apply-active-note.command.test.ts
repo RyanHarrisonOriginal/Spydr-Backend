@@ -67,6 +67,8 @@ describe("ApplyActiveNoteCommandHandler", () => {
   beforeEach(() => {
     commandBus = createMockCommandBus();
     handler = new ApplyActiveNoteCommandHandler(commandBus);
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   describe("filtering operations", () => {

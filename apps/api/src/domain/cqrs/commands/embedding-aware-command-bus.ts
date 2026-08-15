@@ -59,7 +59,9 @@ export class EmbeddingAwareCommandBus implements ICommandBus {
       });
 
       if (projectIds.length > 0) {
-        await tryEnqueueProjectEmbeddings(
+        // Do not block the HTTP mutation on Redis/BullMQ. A hung queue
+        // connection was stalling Active Note apply after the first write.
+        void tryEnqueueProjectEmbeddings(
           projectIds,
           this.options.enqueue
         );
