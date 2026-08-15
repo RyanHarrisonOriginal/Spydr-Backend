@@ -123,6 +123,17 @@ export class ApplyActiveNoteCommandHandler
       );
     }
 
+    const actionableOperations = selected.filter(
+      (operation) => operation.payload.kind !== "no_action"
+    );
+
+    if (actionableOperations.length === 0) {
+      throw new ActiveNoteApplyError(
+        "No actionable operations to apply. All selected operations are marked as 'no action'.",
+        400
+      );
+    }
+
     const applied: AppliedActiveNoteObject[] = [];
     const failed: ActiveNoteApplyResult["failed"] = [];
     const now = new Date().toISOString();
@@ -165,7 +176,11 @@ export class ApplyActiveNoteCommandHandler
     }
 
     const status =
-      applied.length === 0 && failed.length > 0 ? "failed" : "completed";
+      applied.length === 0
+        ? failed.length > 0
+          ? "failed"
+          : "completed"
+        : "completed";
 
     return {
       activeNote: {
