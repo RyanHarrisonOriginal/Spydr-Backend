@@ -136,7 +136,7 @@ export interface ActiveNoteApplyPayload {
   subtype?: string | null;
   sourceObjectId?: string | null;
   sourceLabel?: string;
-  targetObjectId?: string;
+  targetObjectId?: string | null;
   targetLabel?: string;
   targetObjectType?: ActiveNoteApplyObjectType;
   relationshipType?: string;

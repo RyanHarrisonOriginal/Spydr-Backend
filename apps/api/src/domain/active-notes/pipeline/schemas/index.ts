@@ -14,6 +14,17 @@ export const activeNoteAIOutputSchema = z.object({
   actionPlans: z.array(z.any()).min(0),
 });
 
+/** Frontend often sends "" for unset IDs; coerce those to null instead of 400. */
+const optionalNullableId = z
+  .string()
+  .nullable()
+  .optional()
+  .transform((value) => {
+    if (value == null) return null;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  });
+
 const applyPayloadSchema = z
   .object({
     kind: z.enum([
@@ -36,11 +47,11 @@ const applyPayloadSchema = z
     priority: z.string().optional(),
     dueDate: z.string().nullable().optional(),
     status: z.string().optional(),
-    projectId: z.string().nullable().optional(),
+    projectId: optionalNullableId,
     subtype: z.string().nullable().optional(),
-    sourceObjectId: z.string().nullable().optional(),
+    sourceObjectId: optionalNullableId,
     sourceLabel: z.string().optional(),
-    targetObjectId: z.string().optional(),
+    targetObjectId: optionalNullableId,
     targetLabel: z.string().optional(),
     targetObjectType: z
       .enum([
@@ -60,9 +71,9 @@ const applyPayloadSchema = z
   .passthrough();
 
 export const activeNoteApplyRequestSchema = z.object({
-  activeNoteId: z.string().trim().min(1).optional(),
+  activeNoteId: optionalNullableId,
   content: z.string().max(8000).optional(),
-  projectId: z.string().trim().min(1).nullable().optional(),
+  projectId: optionalNullableId,
   operations: z
     .array(
       z.object({
@@ -82,18 +93,18 @@ export const activeNoteApplyRequestSchema = z.object({
           .nullable()
           .optional(),
         payload: applyPayloadSchema,
-        selectedProjectId: z.string().trim().min(1).nullable().optional(),
-        projectRef: z.string().trim().min(1).nullable().optional(),
+        selectedProjectId: optionalNullableId,
+        projectRef: optionalNullableId,
         duplicateResolution: z
           .enum(["attach_existing", "create_new", "ignore"])
           .nullable()
           .optional(),
-        targetObjectId: z.string().trim().min(1).nullable().optional(),
+        targetObjectId: optionalNullableId,
         attachment: z
           .object({
             type: z.enum(["project", "task"]),
-            id: z.string().nullable().optional(),
-            ref: z.string().nullable().optional(),
+            id: optionalNullableId,
+            ref: optionalNullableId,
           })
           .nullable()
           .optional(),
@@ -101,3 +112,10 @@ export const activeNoteApplyRequestSchema = z.object({
     )
     .min(1, "operations are required"),
 });
+
+export function formatActiveNoteRequestError(error: z.ZodError): string {
+  const issue = error.issues[0];
+  if (!issue) return "Invalid request";
+  const path = issue.path.filter((part) => part !== undefined).join(".");
+  return path ? `${path}: ${issue.message}` : issue.message;
+}

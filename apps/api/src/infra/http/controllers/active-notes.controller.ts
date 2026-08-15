@@ -5,6 +5,7 @@ import {
   ActiveNoteApplyError,
   activeNoteAnalyzeRequestSchema,
   activeNoteApplyRequestSchema,
+  formatActiveNoteRequestError,
   type ActiveNoteAIOutput,
   type ActiveNoteApplyResult,
 } from "../../../domain/active-notes/index.js";
@@ -27,7 +28,7 @@ export class ActiveNotesController {
       const parsed = activeNoteAnalyzeRequestSchema.safeParse(req.body);
       if (!parsed.success) {
         res.status(400).json({
-          message: parsed.error.issues[0]?.message ?? "Invalid request",
+          message: formatActiveNoteRequestError(parsed.error),
         });
         return;
       }
@@ -61,7 +62,7 @@ export class ActiveNotesController {
       const parsed = activeNoteApplyRequestSchema.safeParse(req.body);
       if (!parsed.success) {
         res.status(400).json({
-          message: parsed.error.issues[0]?.message ?? "Invalid request",
+          message: formatActiveNoteRequestError(parsed.error),
         });
         return;
       }
@@ -71,7 +72,7 @@ export class ActiveNotesController {
         ActiveNoteApplyResult
       >(
         new ApplyActiveNoteCommand(ctx.userId, ctx.orgId, {
-          activeNoteId: parsed.data.activeNoteId,
+          activeNoteId: parsed.data.activeNoteId ?? undefined,
           content: parsed.data.content,
           projectId: parsed.data.projectId ?? null,
           operations: parsed.data.operations,

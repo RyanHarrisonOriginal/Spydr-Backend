@@ -219,18 +219,22 @@ describe("ApplyActiveNoteCommandHandler", () => {
   });
 
   describe("handling attach_existing operations", () => {
-    it("returns synthetic updated result for attach_existing", async () => {
+    it("creates a note on the existing task instead of a no-op update", async () => {
       const command = new ApplyActiveNoteCommand("user-1", "org-1", {
         operations: [
           {
             operationId: "op-1",
             selected: true,
             objectType: "task",
+            selectedProjectId: "project-123",
             duplicateResolution: "attach_existing",
             targetObjectId: "existing-task-123",
+            attachment: { type: "task", id: "existing-task-123" },
             payload: {
               kind: "task",
               title: "Existing Task",
+              description: "Progress from the active note.",
+              projectId: "project-123",
             },
           },
         ],
@@ -240,11 +244,10 @@ describe("ApplyActiveNoteCommandHandler", () => {
 
       expect(result.applied).toHaveLength(1);
       expect(result.applied[0]).toMatchObject({
-        id: "existing-task-123",
-        type: "task",
-        title: "Existing Task",
-        action: "updated",
+        type: "note",
+        action: "linked",
       });
+      expect(commandBus.execute).toHaveBeenCalled();
     });
 
     it("fails attach_existing when targetObjectId is missing", async () => {
@@ -255,7 +258,6 @@ describe("ApplyActiveNoteCommandHandler", () => {
             selected: true,
             objectType: "task",
             duplicateResolution: "attach_existing",
-            // Missing targetObjectId
             payload: {
               kind: "task",
               title: "Existing Task",
@@ -268,7 +270,7 @@ describe("ApplyActiveNoteCommandHandler", () => {
 
       expect(result.applied).toHaveLength(0);
       expect(result.failed).toHaveLength(1);
-      expect(result.failed[0].message).toContain("target");
+      expect(result.failed[0].message).toMatch(/target|project is required/i);
     });
   });
 

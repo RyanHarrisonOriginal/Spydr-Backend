@@ -92,6 +92,24 @@ function resolveProjectId(
   return fallbackProjectId?.trim() || null;
 }
 
+function resolveAttachToTaskId(
+  operation: ActiveNoteApplyRequest["operations"][number]
+): string | null {
+  const attachmentId =
+    operation.attachment?.type === "task"
+      ? operation.attachment.id?.trim() || null
+      : null;
+  if (attachmentId) return attachmentId;
+
+  const targetId = operation.targetObjectId?.trim() || null;
+  if (!targetId) return null;
+
+  if (operation.duplicateResolution !== "attach_existing") return null;
+
+  const type = resolveObjectType(operation.payload, operation.objectType);
+  return type === "task" ? targetId : null;
+}
+
 export class ApplyActiveNoteCommand implements ICommand<ActiveNoteApplyResult> {
   static readonly commandType = "active-notes.apply";
   readonly commandType = ApplyActiveNoteCommand.commandType;
@@ -212,7 +230,37 @@ export class ApplyActiveNoteCommandHandler
       return null;
     }
 
-    if (operation.duplicateResolution === "attach_existing") {
+    const attachToTaskId = resolveAttachToTaskId(operation);
+    if (
+      operation.duplicateResolution === "attach_existing" ||
+      attachToTaskId
+    ) {
+      if (attachToTaskId) {
+        return this.createNote(
+          command,
+          {
+            ...operation,
+            attachment: { type: "task", id: attachToTaskId },
+          },
+          {
+            ...payload,
+            kind: "note",
+            title:
+              payload.subject?.trim() ||
+              (payload.kind === "note" ? payload.title?.trim() : undefined) ||
+              payload.title?.trim() ||
+              "Active note",
+            content:
+              payload.content?.trim() ||
+              payload.description?.trim() ||
+              command.input.content?.trim() ||
+              payload.title?.trim() ||
+              "",
+          },
+          createdProjectByRef
+        );
+      }
+
       const targetId = operation.targetObjectId?.trim();
       const type = resolveObjectType(payload, operation.objectType);
       if (!targetId || !type) {
@@ -233,10 +281,6 @@ export class ApplyActiveNoteCommandHandler
       throw new Error("Linking suggestions are not available yet");
     }
 
-    if (payload.kind === "goal") {
-      throw new Error("Goals are not supported yet");
-    }
-
     const type = resolveObjectType(payload, operation.objectType);
     if (!type) {
       throw new Error("Unsupported proposal type");
@@ -250,6 +294,7 @@ export class ApplyActiveNoteCommandHandler
       case "task":
         return this.createTask(command, operation, payload, createdProjectByRef);
       case "note":
+      case "goal":
         return this.createNote(command, operation, payload, createdProjectByRef);
       case "decision":
         return this.createDecision(
@@ -417,7 +462,23 @@ export class ApplyActiveNoteCommandHandler
           linkToTaskId,
         }
       )
-    );
+    ).catch(async (error) => {
+      if (
+        linkToTaskId &&
+        error instanceof Error &&
+        error.message === "Task not found in project"
+      ) {
+        return this.commandBus.execute<AddNoteToProjectCommand, NoteNode | null>(
+          new AddNoteToProjectCommand(
+            command.userId,
+            command.orgId,
+            projectId,
+            { title, body }
+          )
+        );
+      }
+      throw error;
+    });
 
     if (!note) {
       throw new Error("Project not found");

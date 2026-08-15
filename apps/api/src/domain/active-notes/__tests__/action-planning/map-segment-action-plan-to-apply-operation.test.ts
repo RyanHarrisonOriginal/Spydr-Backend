@@ -155,7 +155,7 @@ describe("mapSegmentActionPlanToApplyOperation", () => {
     });
   });
 
-  it("maps use_existing_task to attach_existing on the target task", () => {
+  it("maps use_existing_task as a note attached to the existing task", () => {
     expect(
       mapSegmentActionPlanToApplyOperation(
         {
@@ -172,12 +172,17 @@ describe("mapSegmentActionPlanToApplyOperation", () => {
         "op-6"
       )
     ).toMatchObject({
-      objectType: "task",
+      objectType: "note",
       targetObjectId: "task-9",
-      duplicateResolution: "attach_existing",
       payload: {
-        kind: "task",
+        kind: "note",
         title: "Validate metrics",
+        content: "Met with Amy today.",
+        projectId: "project-1",
+      },
+      attachment: {
+        type: "task",
+        id: "task-9",
       },
     });
   });

@@ -122,14 +122,18 @@ export function mapSegmentActionPlanToApplyOperation(
       return {
         operationId,
         selected,
-        objectType: "task",
+        objectType: "note",
         selectedProjectId: projectId,
         targetObjectId: action.targetTaskId,
-        duplicateResolution: "attach_existing",
         payload: {
-          kind: "task",
+          kind: "note",
           projectId,
           title: action.targetTaskTitle,
+          content: plan.contextualText ?? plan.originalText,
+        },
+        attachment: {
+          type: "task",
+          id: action.targetTaskId,
         },
       };
     default: {
