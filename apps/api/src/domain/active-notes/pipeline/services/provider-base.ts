@@ -22,6 +22,7 @@ import { buildNewProjectCandidateActionPlan } from "../../action-planning/helper
 import { buildUnassignedActionPlan } from "../../action-planning/helpers/build-unassigned-action-plan.js";
 import { attachSegmentLineageToActionPlan } from "../../action-planning/helpers/attach-segment-lineage-to-action-plan.js";
 import { withTaskIdForAttachNoteAction } from "../../action-planning/helpers/with-task-id-for-attach-note-action.js";
+import { stripPipelinePayload } from "../helpers/strip-pipeline-payload.js";
 import type {
   ActiveNoteAIInput,
   ActiveNoteAIOutput,
@@ -83,11 +84,50 @@ export abstract class ActiveNoteAIProviderBase implements ActiveNoteAIProvider {
       orgId: input.orgId,
       userId: input.userId,
     };
-    const segmented = await this.segment(input);
-    const embedded = await this.embedSegments(segmented);
-    const withContext = await this.getProjectContext(embedded, context);
-    const withAssignment = await this.inferProjectAssignment(withContext);
-    return this.inferAction(withAssignment);
+    const recorder = input.recorder;
+    let currentStep = "segment";
+
+    try {
+      const segmented = await this.segment(input);
+      await recorder?.recordStep("segment", {
+        segments: segmented.segments,
+      });
+
+      currentStep = "embed";
+      const embedded = await this.embedSegments(segmented);
+
+      currentStep = "project_context";
+      const withContext = await this.getProjectContext(embedded, context);
+      await recorder?.recordStep(
+        "project_context",
+        stripPipelinePayload(withContext)
+      );
+
+      currentStep = "project_assignment";
+      const withAssignment = await this.inferProjectAssignment(withContext);
+      await recorder?.recordStep(
+        "project_assignment",
+        stripPipelinePayload(withAssignment)
+      );
+
+      currentStep = "action_plan";
+      const output = await this.inferAction(withAssignment);
+      await recorder?.recordStep("action_plan", stripPipelinePayload(output));
+
+      return output;
+    } catch (error) {
+      const failure =
+        error instanceof Error ? error : new Error(String(error));
+      try {
+        await recorder?.recordFailure(currentStep, failure);
+      } catch (persistError) {
+        console.error("[active-note.session] failed to persist step failure", {
+          step: currentStep,
+          persistError,
+        });
+      }
+      throw error;
+    }
   }
 
   abstract segment(

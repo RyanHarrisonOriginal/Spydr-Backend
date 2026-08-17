@@ -1,6 +1,9 @@
 import type { SegmentWithActionPlan, SegmentActionPlan, ActiveNoteActionPlanResult } from "../action-planning/types/index.js";
 import { assertSegmentContextualTextMatches } from "../action-planning/helpers/attach-segment-lineage-to-action-plan.js";
-import type { ActiveNoteEmbeddedSegmentationResult } from "../pipeline/types/index.js";
+import type {
+  ActiveNoteEmbeddedSegmentationResult,
+  ActiveNotePipelineRecorder,
+} from "../pipeline/types/index.js";
 import type {
   ActiveNoteProjectAssignmentResult,
   ActiveNoteProjectContextResult,
@@ -58,6 +61,7 @@ export interface ActiveNoteAIInput {
   content: string;
   orgId: string;
   userId: string;
+  recorder?: ActiveNotePipelineRecorder;
 }
 
 export interface ActiveNoteAIProvider {

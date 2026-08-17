@@ -14,6 +14,7 @@ import type {
   ITaskRepository,
   IWorkspaceDashboardRepository,
   INodeTypeTransformRepository,
+  IActiveNoteSessionRepository,
 } from "../../domain/interfaces/index.js";
 import { PostgresOrganizationRepository } from "./prisma/repositories/postgres-organization.repository.js";
 import { PostgresPersonRepository } from "./prisma/repositories/postgres-person.repository.js";
@@ -28,6 +29,7 @@ import { PostgresProjectRepository } from "./prisma/repositories/postgres-projec
 import { PostgresResourceRepository } from "./prisma/repositories/postgres-resource.repository.js";
 import { PostgresTaskRepository } from "./prisma/repositories/postgres-task.repository.js";
 import { PostgresNodeTypeTransformRepository } from "./prisma/repositories/postgres-node-type-transform.repository.js";
+import { PostgresActiveNoteSessionRepository } from "./prisma/repositories/postgres-active-note-session.repository.js";
 import { PostgresWorkspaceDashboardRepository } from "./prisma/repositories/postgres-workspace-dashboard.repository.js";
 
 export interface IPersistenceRepositories {
@@ -45,6 +47,7 @@ export interface IPersistenceRepositories {
   tasks: ITaskRepository;
   nodeTypeTransforms: INodeTypeTransformRepository;
   workspaceDashboard: IWorkspaceDashboardRepository;
+  activeNoteSessions: IActiveNoteSessionRepository;
 }
 
 export function createPersistenceRepositories(
@@ -75,5 +78,6 @@ export function createPersistenceRepositories(
     tasks,
     nodeTypeTransforms: new PostgresNodeTypeTransformRepository(prisma),
     workspaceDashboard: new PostgresWorkspaceDashboardRepository(prisma),
+    activeNoteSessions: new PostgresActiveNoteSessionRepository(prisma),
   };
 }

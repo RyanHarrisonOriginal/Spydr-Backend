@@ -192,6 +192,65 @@ describe("ActiveNoteAIProviderBase", () => {
     expect(activeNoteAIOutputSchema.safeParse(result).success).toBe(true);
   });
 
+  it("records stripped pipeline step payloads when a recorder is provided", async () => {
+    const recorder = {
+      recordStep: vi.fn().mockResolvedValue(undefined),
+      recordFailure: vi.fn().mockResolvedValue(undefined),
+    };
+    const provider = new TestActiveNoteProvider(
+      vi.fn().mockResolvedValue([0.11, 0.22]),
+      {
+        searchProjectsByEmbedding: vi.fn().mockResolvedValue([]),
+      }
+    );
+
+    await provider.analyze({
+      content: "Plan the launch",
+      ...REQUEST_CONTEXT,
+      recorder,
+    });
+
+    expect(recorder.recordFailure).not.toHaveBeenCalled();
+    expect(recorder.recordStep.mock.calls.map((call) => call[0])).toEqual([
+      "segment",
+      "project_context",
+      "project_assignment",
+      "action_plan",
+    ]);
+    expect(JSON.stringify(recorder.recordStep.mock.calls)).not.toContain(
+      "embedding"
+    );
+  });
+
+  it("records the failed step when analysis throws", async () => {
+    const recorder = {
+      recordStep: vi.fn().mockResolvedValue(undefined),
+      recordFailure: vi.fn().mockResolvedValue(undefined),
+    };
+    const provider = new TestActiveNoteProvider(
+      vi.fn().mockRejectedValue(new Error("rate limit exceeded")),
+      {
+        searchProjectsByEmbedding: vi.fn().mockResolvedValue([]),
+      }
+    );
+
+    await expect(
+      provider.analyze({
+        content: "Plan the launch",
+        ...REQUEST_CONTEXT,
+        recorder,
+      })
+    ).rejects.toMatchObject({
+      name: "ActiveNoteAnalysisError",
+    });
+
+    expect(recorder.recordStep).toHaveBeenCalledWith("segment", expect.any(Object));
+    expect(recorder.recordFailure).toHaveBeenCalledWith(
+      "embed",
+      expect.objectContaining({ message: expect.any(String) })
+    );
+  });
+
   it("wraps embedding failures as ActiveNoteAnalysisError", async () => {
     const provider = new TestActiveNoteProvider(
       vi.fn().mockRejectedValue(new Error("rate limit exceeded"))

@@ -51,7 +51,10 @@ export function registerQueryHandlers(
 
   if (options.activeNoteAIProvider) {
     queryBus.register(
-      new AnalyzeActiveNoteQueryHandler(options.activeNoteAIProvider)
+      new AnalyzeActiveNoteQueryHandler(
+        options.activeNoteAIProvider,
+        repositories.activeNoteSessions
+      )
     );
   }
 }

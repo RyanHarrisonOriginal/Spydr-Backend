@@ -7,6 +7,7 @@ export * from "./segmentation/helpers/parse-segmentation-output.js";
 
 // Pipeline
 export * from "./pipeline/helpers/generate-segment-embeddings.js";
+export * from "./pipeline/helpers/strip-pipeline-payload.js";
 export * from "./pipeline/services/provider-base.js";
 
 // Project routing — prompts

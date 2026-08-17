@@ -99,6 +99,7 @@ model Organization {
   outlookTemplates SpydrOutlookTemplate[]
   personCollectionSorts SpydrPersonCollectionSort[]
   nodeTypeHistory       SpydrNodeTypeHistory[]
+  activeNoteSessions    SpydrActiveNoteSession[]
 
   @@map("organizations")
 }
@@ -405,4 +406,75 @@ model SpydrActiveNoteProjectRetrievalContext {
 
   @@index([organizationId], map: "idx_active_note_project_retrieval_context_org")
   @@map("spydr_active_note_project_retrieval_context")
+}
+
+enum SpydrActiveNoteSessionStatus {
+  draft
+  analyzing
+  review
+  applying
+  completed
+  failed
+
+  @@map("spydr_active_note_session_status")
+}
+
+enum SpydrActiveNoteStepName {
+  segment
+  project_context
+  project_assignment
+  action_plan
+
+  @@map("spydr_active_note_step_name")
+}
+
+enum SpydrActiveNoteStepStatus {
+  pending
+  succeeded
+  failed
+
+  @@map("spydr_active_note_step_status")
+}
+
+model SpydrActiveNoteSession {
+  id              String                        @id(map: "spydr_active_note_sessions_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId  String                        @map("organization_id") @db.Uuid
+  organization    Organization                  @relation(fields: [organizationId], references: [id], onDelete: Cascade, map: "spydr_active_note_sessions_organization_id_fkey")
+  userId          String                        @map("user_id")
+  projectId       String?                       @map("project_id") @db.Uuid
+  status          SpydrActiveNoteSessionStatus  @default(draft)
+  content         String
+  contentHash     String                        @map("content_hash")
+  schemaVersion   Int                           @default(1) @map("schema_version")
+  promptVersion   String?                       @map("prompt_version")
+  analyzeResponse Json?                         @map("analyze_response") @db.JsonB
+  reviewSnapshot  Json?                         @map("review_snapshot") @db.JsonB
+  stepPayloads    Json                          @default("{}") @map("step_payloads") @db.JsonB
+  errorMessage    String?                       @map("error_message")
+  failedStep      String?                       @map("failed_step")
+  createdAt       DateTime                      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime                      @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
+  completedAt     DateTime?                     @map("completed_at") @db.Timestamptz(6)
+  expiresAt       DateTime?                     @map("expires_at") @db.Timestamptz(6)
+  steps           SpydrActiveNoteSessionStep[]
+
+  @@index([organizationId, userId, updatedAt(sort: Desc)], map: "idx_active_note_sessions_org_user_updated")
+  @@index([organizationId, status], map: "idx_active_note_sessions_org_status")
+  @@map("spydr_active_note_sessions")
+}
+
+model SpydrActiveNoteSessionStep {
+  id            String                     @id(map: "spydr_active_note_session_steps_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId     String                     @map("session_id") @db.Uuid
+  session       SpydrActiveNoteSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade, map: "spydr_active_note_session_steps_session_id_fkey")
+  step          SpydrActiveNoteStepName
+  status        SpydrActiveNoteStepStatus  @default(pending)
+  attempt       Int                        @default(1)
+  payload       Json                       @default("{}") @db.JsonB
+  errorMessage  String?                    @map("error_message")
+  startedAt     DateTime                   @default(now()) @map("started_at") @db.Timestamptz(6)
+  completedAt   DateTime?                  @map("completed_at") @db.Timestamptz(6)
+
+  @@unique([sessionId, step], map: "spydr_active_note_session_steps_session_step_key")
+  @@map("spydr_active_note_session_steps")
 }
