@@ -1,6 +1,8 @@
-import { ActiveNoteAnalysisError } from "../../types/shared.js";
-import type { ActiveNoteSegment } from "../../segmentation/types/index.js";
-import type { SegmentActionPlan } from "../types/index.js";
+import {
+  ActiveNoteAnalysisError,
+  type ActiveNoteSegment,
+  type SegmentActionPlan,
+} from "./types/index.js";
 
 export function attachSegmentLineageToActionPlan(
   segment: Pick<ActiveNoteSegment, "sourceText" | "contextualText" | "topic">,

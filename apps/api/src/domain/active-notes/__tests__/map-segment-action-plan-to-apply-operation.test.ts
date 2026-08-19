@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   assertApplyPayloadMatchesKind,
   mapSegmentActionPlanToApplyOperation,
-} from "../../action-planning/helpers/map-segment-action-plan-to-apply-operation.js";
-import type { SegmentActionPlan } from "../../action-planning/types/index.js";
-import { activeNoteApplyRequestSchema } from "../../pipeline/schemas/index.js";
-import { ActiveNoteApplyError } from "../../types/shared.js";
+} from "../map-segment-action-plan-to-apply-operation.js";
+import {
+  ActiveNoteApplyError,
+  type SegmentActionPlan,
+} from "../types/index.js";
+import { activeNoteApplyRequestSchema } from "../../../infra/http/schemas/active-notes.js";
 
 const BASE_PLAN: Pick<
   SegmentActionPlan,

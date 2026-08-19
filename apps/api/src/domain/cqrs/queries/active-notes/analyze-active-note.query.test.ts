@@ -3,7 +3,7 @@ import {
   AnalyzeActiveNoteQuery,
   AnalyzeActiveNoteQueryHandler,
 } from "./analyze-active-note.query.js";
-import type { ActiveNoteAIProvider } from "../../../active-notes/index.js";
+import { AnalyzeActiveNoteService } from "../../../active-notes/analyze-active-note.service.js";
 import type { IActiveNoteSessionRepository } from "../../../interfaces/active-note-session-repository.js";
 
 const ANALYZE_OUTPUT = {
@@ -32,7 +32,7 @@ describe("AnalyzeActiveNoteQueryHandler", () => {
       completeApply: vi.fn().mockResolvedValue(undefined),
       listHistory: vi.fn().mockResolvedValue([]),
     };
-    const aiProvider = {
+    const analyzer = {
       analyze: vi.fn().mockImplementation(async (input) => {
         await input.recorder?.recordStep("segment", {
           segments: ANALYZE_OUTPUT.segments,
@@ -40,9 +40,13 @@ describe("AnalyzeActiveNoteQueryHandler", () => {
         await input.recorder?.recordStep("action_plan", ANALYZE_OUTPUT);
         return ANALYZE_OUTPUT;
       }),
-    } as unknown as ActiveNoteAIProvider;
+    } as unknown as AnalyzeActiveNoteService;
 
-    const handler = new AnalyzeActiveNoteQueryHandler(aiProvider, sessions);
+    const handler = new AnalyzeActiveNoteQueryHandler(
+      analyzer,
+      sessions,
+      "active-note-segmentation-v1"
+    );
     const result = await handler.execute(
       new AnalyzeActiveNoteQuery("user-1", "org-1", {
         content: "  Throw more teeps  ",
@@ -55,6 +59,7 @@ describe("AnalyzeActiveNoteQueryHandler", () => {
         organizationId: "org-1",
         userId: "user-1",
         content: "Throw more teeps",
+        promptVersion: "active-note-segmentation-v1",
       })
     );
     expect(sessions.recordStep).toHaveBeenCalledWith({
@@ -78,12 +83,12 @@ describe("AnalyzeActiveNoteQueryHandler", () => {
       completeApply: vi.fn(),
       listHistory: vi.fn(),
     };
-    const aiProvider = {
+    const analyzer = {
       analyze: vi.fn().mockResolvedValue(ANALYZE_OUTPUT),
-    } as unknown as ActiveNoteAIProvider;
+    } as unknown as AnalyzeActiveNoteService;
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const handler = new AnalyzeActiveNoteQueryHandler(aiProvider, sessions);
+    const handler = new AnalyzeActiveNoteQueryHandler(analyzer, sessions);
     const result = await handler.execute(
       new AnalyzeActiveNoteQuery("user-1", "org-1", {
         content: "Throw more teeps",

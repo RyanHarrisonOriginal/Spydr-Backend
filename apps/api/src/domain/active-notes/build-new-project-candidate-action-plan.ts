@@ -1,7 +1,7 @@
 import type {
   NewProjectCandidateActionPlan,
   NewProjectCandidateRoutedSegment,
-} from "../types/index.js";
+} from "./types/index.js";
 
 export function buildNewProjectCandidateActionPlan(
   assignment: NewProjectCandidateRoutedSegment

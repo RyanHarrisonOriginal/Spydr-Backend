@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildProjectResolverInput,
   inferSegmentProjectAssignmentFromFitEvaluations,
-  inferStubProjectMatchResolution,
-  parseProjectResolverOutput,
   projectResolutionToAssignment,
   type ProjectFitEvaluation,
   type SegmentWithProjectMatches,
-} from "../../index.js";
+} from "../index.js";
+import { buildProjectResolverInput } from "../../../infra/ai/active-notes/assignment/resolver/build-prompt-input.js";
+import { inferStubProjectMatchResolution } from "../../../infra/ai/active-notes/assignment/resolver/stub.js";
+import { parseProjectResolverOutput } from "../../../infra/ai/active-notes/assignment/resolver/parse.js";
 
 function createSegment(
   overrides: Partial<SegmentWithProjectMatches> = {}
@@ -177,7 +177,7 @@ describe("project resolver regression scenarios", () => {
     const assignment = await inferSegmentProjectAssignmentFromFitEvaluations(
       segment,
       {
-        evaluateProjectFit: async (_segment, candidate) => {
+        evaluateFit: async (_segment, candidate) => {
           if (candidate.projectId === "commercial-scorecard-v2") {
             return {
               projectId: candidate.projectId,
@@ -206,9 +206,9 @@ describe("project resolver regression scenarios", () => {
             reason: "Broad dashboard scope.",
           };
         },
-        resolveProjectMatch: async (_segment, qualifiedEvaluations) =>
+        resolveMatch: async (_segment, qualifiedEvaluations) =>
           inferStubProjectMatchResolution(qualifiedEvaluations),
-        classifyUnassignedDestination: async (currentSegment) => ({
+        classifyUnassigned: async (currentSegment) => ({
           originalText: currentSegment.sourceText,
           destination: "unassigned",
           projectId: null,

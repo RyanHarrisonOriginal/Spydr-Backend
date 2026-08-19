@@ -6,7 +6,7 @@ import type {
   AppliedActiveNoteObject,
 } from "../../../active-notes/index.js";
 import { ActiveNoteApplyError, assertApplyPayloadMatchesKind } from "../../../active-notes/index.js";
-import { buildReviewSnapshot } from "../../../active-notes/history/map-session-to-history-item.js";
+import { buildReviewSnapshot } from "../../../active-notes/history/build-review-snapshot.js";
 import type { IActiveNoteSessionRepository } from "../../../interfaces/active-note-session-repository.js";
 import type { SpydrPriority } from "../../../models/shared.js";
 import type { ICommand, ICommandHandler } from "../command.js";

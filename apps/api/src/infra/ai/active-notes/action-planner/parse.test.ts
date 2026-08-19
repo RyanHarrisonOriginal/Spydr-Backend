@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { parseSegmentActionPlanOutput } from "../../action-planning/helpers/parse-segment-action-plan-output.js";
-import type { ExistingProjectRoutedSegment } from "../../action-planning/types/index.js";
-import type { ProjectActionContext } from "../../action-planning/types/project-action-context.types.js";
+import { parseSegmentActionPlanOutput } from "./parse.js";
+import type {
+  ExistingProjectRoutedSegment,
+  ProjectActionContext,
+} from "../../../../domain/active-notes/types/index.js";
 
 const ROUTED_SEGMENT: ExistingProjectRoutedSegment = {
   originalText: "Met with Amy today about the Commercial Scorecard rollout.",

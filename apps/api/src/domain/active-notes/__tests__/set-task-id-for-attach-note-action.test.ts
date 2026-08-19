@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { withTaskIdForAttachNoteAction } from "../../action-planning/helpers/with-task-id-for-attach-note-action.js";
-import type { SegmentActionPlan } from "../../action-planning/types/index.js";
+import { setTaskIdForAttachNoteAction } from "../set-task-id-for-attach-note-action.js";
+import type { SegmentActionPlan } from "../types/index.js";
 
-describe("withTaskIdForAttachNoteAction", () => {
+describe("setTaskIdForAttachNoteAction", () => {
   it("adds taskId for attach_note_to_task actions", () => {
     const plan: SegmentActionPlan = {
       originalText: "Met with Amy today.",
@@ -22,7 +22,7 @@ describe("withTaskIdForAttachNoteAction", () => {
       },
     };
 
-    expect(withTaskIdForAttachNoteAction(plan)).toEqual({
+    expect(setTaskIdForAttachNoteAction(plan)).toEqual({
       ...plan,
       taskId: "task-1",
     });
@@ -44,6 +44,6 @@ describe("withTaskIdForAttachNoteAction", () => {
       },
     };
 
-    expect(withTaskIdForAttachNoteAction(plan)).toBe(plan);
+    expect(setTaskIdForAttachNoteAction(plan)).toBe(plan);
   });
 });

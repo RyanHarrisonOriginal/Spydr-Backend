@@ -1,7 +1,9 @@
-import type { SegmentActionPlan } from "../types/index.js";
-import { isExistingProjectSegmentActionPlan } from "../types/index.js";
+import {
+  isExistingProjectSegmentActionPlan,
+  type SegmentActionPlan,
+} from "./types/index.js";
 
-export function withTaskIdForAttachNoteAction(
+export function setTaskIdForAttachNoteAction(
   plan: SegmentActionPlan
 ): SegmentActionPlan {
   if (!isExistingProjectSegmentActionPlan(plan)) {

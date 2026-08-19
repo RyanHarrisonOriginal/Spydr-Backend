@@ -10,6 +10,16 @@ export type {
   ListActiveNoteHistoryInput,
   RecordActiveNoteAnalysisStepInput,
 } from "./active-note-session-repository.js";
+export type {
+  AnalyzeActiveNotePorts,
+  IActiveNoteSegmenter,
+  IEmbeddingPort,
+  IProjectActionContextPort,
+  IProjectAssignmentPort,
+  IProjectSearchPort,
+  ISegmentActionPlanner,
+} from "../active-notes/ports/index.js";
+export { ProjectActionContextError } from "../active-notes/ports/index.js";
 export type { IDecisionListItem, IDecisionRepository } from "./decision-repository.js";
 export type { IIdeaRepository } from "./idea-repository.js";
 export type { IInboxItemRepository } from "./inbox-item-repository.js";

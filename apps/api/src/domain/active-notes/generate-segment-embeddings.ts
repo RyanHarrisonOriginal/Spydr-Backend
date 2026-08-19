@@ -1,10 +1,11 @@
 import {
   ActiveNoteAnalysisError,
   type ActiveNoteSegment,
-} from "../../types/shared.js";
-import type { EmbeddedSegment } from "../types/index.js";
+  type EmbeddedSegment,
+} from "./types/index.js";
+import type { IEmbeddingPort } from "./ports/embedding.port.js";
 
-export type GenerateEmbeddingFn = (text: string) => Promise<number[]>;
+export type GenerateEmbeddingFn = IEmbeddingPort["embed"];
 
 function assertNonEmptyContextualText(contextualText: string, index: number): string {
   const trimmed = contextualText.trim();

@@ -1,4 +1,4 @@
-import type { ActiveNoteHistoryItem } from "../../../active-notes/types/shared.js";
+import type { ActiveNoteHistoryItem } from "../../../active-notes/types/index.js";
 import type { IActiveNoteSessionRepository } from "../../../interfaces/index.js";
 import type { IQuery, IQueryHandler } from "../query.js";
 

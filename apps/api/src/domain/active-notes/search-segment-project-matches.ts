@@ -1,18 +1,22 @@
-import type { EmbeddedSegment } from "../../pipeline/types/index.js";
-import type { SegmentWithProjectMatches } from "../types/index.js";
+import type {
+  EmbeddedSegment,
+  SegmentWithProjectMatches,
+} from "./types/index.js";
+import type { IProjectSearchPort } from "./ports/project-search.port.js";
 import {
   DEFAULT_PROJECT_SEARCH_LIMIT,
-  type ProjectRetrievalService,
-} from "../services/project-retrieval.service.js";
+  searchProjects,
+} from "./search-projects.js";
 
 export async function searchSegmentProjectMatches(
   segments: EmbeddedSegment[],
-  projectRetrievalService: ProjectRetrievalService,
+  projectSearch: IProjectSearchPort,
+  orgId: string,
   limit = DEFAULT_PROJECT_SEARCH_LIMIT
 ): Promise<SegmentWithProjectMatches[]> {
   const projectMatchesByIndex = await Promise.all(
     segments.map((segment) =>
-      projectRetrievalService.search(segment.embedding, limit)
+      searchProjects(projectSearch, orgId, segment.embedding, limit)
     )
   );
 

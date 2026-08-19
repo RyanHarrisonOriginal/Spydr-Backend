@@ -1,9 +1,9 @@
 import type {
   ActiveNoteAIOutput,
   ActiveNoteHistoryItem,
+  ActiveNotePipelineStepName,
   ActiveNoteReviewSnapshot,
-} from "../active-notes/types/shared.js";
-import type { ActiveNotePipelineStepName } from "../active-notes/pipeline/types/recorder.js";
+} from "../active-notes/types/index.js";
 
 export type { ActiveNotePipelineStepName };
 

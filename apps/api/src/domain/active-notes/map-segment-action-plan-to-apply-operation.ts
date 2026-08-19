@@ -1,14 +1,12 @@
-import { ActiveNoteApplyError } from "../../types/shared.js";
-import type {
-  ActiveNoteApplyOperationInput,
-  ActiveNoteApplyPayload,
-} from "../../types/shared.js";
-import type { SegmentActionPlan } from "../types/index.js";
 import {
+  ActiveNoteApplyError,
   isExistingProjectSegmentActionPlan,
   isNewProjectCandidateActionPlan,
   isUnassignedActionPlan,
-} from "../types/index.js";
+  type ActiveNoteApplyOperationInput,
+  type ActiveNoteApplyPayload,
+  type SegmentActionPlan,
+} from "./types/index.js";
 
 export function mapSegmentActionPlanToApplyOperation(
   plan: SegmentActionPlan,

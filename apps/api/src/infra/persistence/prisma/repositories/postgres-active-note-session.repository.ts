@@ -11,9 +11,9 @@ import type {
   ListActiveNoteHistoryInput,
   RecordActiveNoteAnalysisStepInput,
 } from "../../../../domain/interfaces/active-note-session-repository.js";
-import { stripPipelinePayload } from "../../../../domain/active-notes/pipeline/helpers/strip-pipeline-payload.js";
-import { mapSessionToHistoryItem } from "../../../../domain/active-notes/history/map-session-to-history-item.js";
-import type { ActiveNoteHistoryItem } from "../../../../domain/active-notes/types/shared.js";
+import { stripPipelinePayload } from "../helpers/strip-pipeline-payload.js";
+import { mapSessionToHistoryItem } from "../mappers/active-note-session.mapper.js";
+import type { ActiveNoteHistoryItem } from "../../../../domain/active-notes/types/index.js";
 
 const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 const SCHEMA_VERSION = 1;

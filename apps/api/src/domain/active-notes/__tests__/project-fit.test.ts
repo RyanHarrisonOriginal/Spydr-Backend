@@ -1,15 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildProjectFitInput,
-  buildProjectFitUserInput,
   inferSegmentProjectAssignmentFromFitEvaluations,
-  parseProjectFitEvaluationOutput,
   projectFitEvaluationToAssignment,
   resolveProjectAssignmentFromFitEvaluations,
   type ProjectAssignmentCandidate,
   type ProjectFitEvaluation,
   type SegmentWithProjectMatches,
-} from "../../index.js";
+} from "../index.js";
+import {
+  buildProjectFitInput,
+  buildProjectFitUserInput,
+} from "../../../infra/ai/active-notes/assignment/fit/build-prompt-input.js";
+import { parseProjectFitEvaluationOutput } from "../../../infra/ai/active-notes/assignment/fit/parse.js";
 
 function createSegment(
   overrides: Partial<SegmentWithProjectMatches> = {}
@@ -508,7 +510,7 @@ describe("inferSegmentProjectAssignmentFromFitEvaluations", () => {
     const assignment = await inferSegmentProjectAssignmentFromFitEvaluations(
       segment,
       {
-        evaluateProjectFit: async (_segment, candidate) => ({
+        evaluateFit: async (_segment, candidate) => ({
           projectId: candidate.projectId,
           projectName: candidate.projectName,
           verdict: "insufficient_evidence",
@@ -520,10 +522,10 @@ describe("inferSegmentProjectAssignmentFromFitEvaluations", () => {
           targetObjectTitle: null,
           reason: "No fit.",
         }),
-        resolveProjectMatch: async () => {
+        resolveMatch: async () => {
           throw new Error("should not resolve multiple matches");
         },
-        classifyUnassignedDestination: async (currentSegment) => ({
+        classifyUnassigned: async (currentSegment) => ({
           originalText: currentSegment.sourceText,
           destination: "unassigned",
           projectId: null,

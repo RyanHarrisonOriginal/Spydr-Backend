@@ -1,17 +1,16 @@
-import { SpydrNodeStatus, SpydrNodeType } from "@prisma/client";
 import { describe, expect, it } from "vitest";
-import { buildProjectActionContext } from "../../action-planning/helpers/build-project-action-context.js";
-import type { ProjectActionContextChildNode } from "@spydr/db";
+import { buildProjectActionContext } from "../build-project-action-context.js";
+import type { ProjectActionContextChildNode } from "../types/index.js";
 
 function createTask(
   overrides: Partial<ProjectActionContextChildNode> = {}
 ): ProjectActionContextChildNode {
   return {
     id: "task-1",
-    nodeType: SpydrNodeType.task,
+    nodeType: "task",
     title: "Present Commercial Scorecard v2 to Amy for final sign off",
     body: "",
-    status: SpydrNodeStatus.active,
+    status: "active",
     sortOrder: 0,
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-02T00:00:00.000Z"),
@@ -33,15 +32,15 @@ describe("buildProjectActionContext", () => {
         createTask({
           id: "task-2",
           title: "Validate quarter-to-date calculations",
-          status: SpydrNodeStatus.completed,
+          status: "completed",
           updatedAt: new Date("2026-01-03T00:00:00.000Z"),
         }),
         {
           id: "note-1",
-          nodeType: SpydrNodeType.note,
+          nodeType: "note",
           title: "Amy Meeting",
           body: "Met with Amy today.",
-          status: SpydrNodeStatus.active,
+          status: "active",
           sortOrder: 0,
           createdAt: new Date("2026-01-04T00:00:00.000Z"),
           updatedAt: new Date("2026-01-04T00:00:00.000Z"),
@@ -49,10 +48,10 @@ describe("buildProjectActionContext", () => {
         },
         {
           id: "decision-1",
-          nodeType: SpydrNodeType.decision,
+          nodeType: "decision",
           title: "Use Snowflake fallback",
           body: "",
-          status: SpydrNodeStatus.active,
+          status: "active",
           sortOrder: 0,
           createdAt: new Date("2026-01-05T00:00:00.000Z"),
           updatedAt: new Date("2026-01-05T00:00:00.000Z"),

@@ -3,8 +3,10 @@ import type {
   ProjectFitEvaluation,
   ProjectResolutionResult,
   SegmentWithProjectMatches,
-} from "../types/index.js";
-import { isProjectFitMatch } from "../helpers/parse-project-fit-output.js";
+} from "./types/index.js";
+export function isProjectFitMatch(evaluation: ProjectFitEvaluation): boolean {
+  return evaluation.verdict === "match";
+}
 
 export type ProjectAssignmentResolution =
   | { kind: "existing_project"; evaluation: ProjectFitEvaluation }

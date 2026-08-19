@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildProjectFitInput,
-  buildProjectFitUserInput,
   extractProjectNameFromRetrievalDocument,
-  inferStubProjectAssignments,
-  parseActiveNoteProjectAssignmentOutput,
   toProjectAssignmentCandidate,
   type SegmentWithProjectMatches,
-} from "../../index.js";
+} from "../index.js";
+import {
+  buildProjectFitInput,
+  buildProjectFitUserInput,
+} from "../../../infra/ai/active-notes/assignment/fit/build-prompt-input.js";
+import { inferStubProjectAssignments } from "../../../infra/ai/active-notes/assignment/stub-project-assignment.js";
+import { parseActiveNoteProjectAssignmentOutput } from "../../../infra/ai/active-notes/assignment/parse-assignment.js";
 
 function createSegment(
   overrides: Partial<SegmentWithProjectMatches> = {}

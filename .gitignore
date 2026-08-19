@@ -17,3 +17,6 @@ prisma/*.db-journal
 # Logs and misc
 *.log
 .DS_Store
+
+# Local debug dumps from apps/api/scripts/debug-active-note-analyze.ts
+apps/api/scripts/debug-output/

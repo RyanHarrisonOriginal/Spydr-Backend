@@ -1,7 +1,7 @@
 import type {
   UnassignedActionPlan,
   UnassignedRoutedSegment,
-} from "../types/index.js";
+} from "./types/index.js";
 
 export function buildUnassignedActionPlan(
   assignment: UnassignedRoutedSegment

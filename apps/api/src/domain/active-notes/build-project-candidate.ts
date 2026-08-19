@@ -1,7 +1,7 @@
 import type {
   ProjectAssignmentCandidate,
   ProjectSemanticMatch,
-} from "../types/index.js";
+} from "./types/index.js";
 
 export function extractProjectNameFromRetrievalDocument(
   retrievalDocument: string

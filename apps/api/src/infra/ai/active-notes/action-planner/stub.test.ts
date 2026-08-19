@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { inferStubSegmentActionPlan } from "../../action-planning/helpers/stub-segment-action-plan.js";
-import type { ExistingProjectRoutedSegment } from "../../action-planning/types/index.js";
-import type { ProjectActionContext } from "../../action-planning/types/project-action-context.types.js";
+import { inferStubSegmentActionPlan } from "./stub.js";
+import type {
+  ExistingProjectRoutedSegment,
+  ProjectActionContext,
+} from "../../../../domain/active-notes/types/index.js";
 
 describe("inferStubSegmentActionPlan", () => {
   it("prefers attach_note_to_task when the segment directly addresses an open task", () => {

@@ -1,4 +1,4 @@
-import type { ActiveNoteAIProvider } from "../../active-notes/index.js";
+import type { AnalyzeActiveNoteService } from "../../active-notes/index.js";
 import type { IPersistenceRepositories } from "../../../infra/persistence/index.js";
 import type { IQueryBus } from "./query-bus.js";
 import {
@@ -25,7 +25,8 @@ import { ListTasksQueryHandler, GetTaskQueryHandler } from "./tasks/index.js";
 import { GetWorkspaceDashboardQueryHandler } from "./dashboard/index.js";
 
 export interface IRegisterQueryHandlersOptions {
-  activeNoteAIProvider?: ActiveNoteAIProvider;
+  analyzeActiveNote?: AnalyzeActiveNoteService;
+  activeNotePromptVersion?: string | null;
 }
 
 export function registerQueryHandlers(
@@ -53,11 +54,12 @@ export function registerQueryHandlers(
     new ListActiveNotesQueryHandler(repositories.activeNoteSessions),
   ]);
 
-  if (options.activeNoteAIProvider) {
+  if (options.analyzeActiveNote) {
     queryBus.register(
       new AnalyzeActiveNoteQueryHandler(
-        options.activeNoteAIProvider,
-        repositories.activeNoteSessions
+        options.analyzeActiveNote,
+        repositories.activeNoteSessions,
+        options.activeNotePromptVersion
       )
     );
   }

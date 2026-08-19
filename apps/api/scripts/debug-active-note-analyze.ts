@@ -27,16 +27,20 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { prisma, disconnectPrisma } from "@spydr/db";
-import { createActiveNoteAIProvider } from "../src/infra/ai/openai-active-note-provider.js";
-import type {
-  ActiveNoteAIInput,
-  ActiveNoteAIOutput,
-  ActiveNoteEmbeddedSegmentationResult,
-  ActiveNoteProjectAssignmentResult,
-  ActiveNoteProjectContextResult,
-  ActiveNoteSegmentationResult,
-} from "../src/domain/active-notes/types/index.js";
-import { extractProjectNameFromRetrievalDocument } from "../src/domain/active-notes/project-routing/helpers/build-project-candidate-input.js";
+import { createActiveNotePorts } from "../src/infra/ai/active-notes/create-active-note-ports.js";
+import {
+  AnalyzeActiveNoteService,
+  generateSegmentEmbeddings,
+  inferSegmentProjectAssignmentsFromFitEvaluations,
+  searchSegmentProjectMatches,
+  extractProjectNameFromRetrievalDocument,
+  type ActiveNoteAIInput,
+  type ActiveNoteAIOutput,
+  type ActiveNoteEmbeddedSegmentationResult,
+  type ActiveNoteProjectAssignmentResult,
+  type ActiveNoteProjectContextResult,
+  type ActiveNoteSegmentationResult,
+} from "../src/domain/active-notes/index.js";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_OUTPUT_ROOT = path.join(SCRIPT_DIR, "debug-output");
@@ -204,7 +208,8 @@ async function main(): Promise<void> {
   }
 
   const context = await resolveOrgContext();
-  const provider = createActiveNoteAIProvider();
+  const ports = createActiveNotePorts();
+  const analyzer = new AnalyzeActiveNoteService(ports);
   const input: ActiveNoteAIInput = {
     content: ACTIVE_NOTE,
     orgId: context.orgId,
@@ -229,7 +234,7 @@ async function main(): Promise<void> {
     input,
   });
 
-  const segmented = await provider.segment(input);
+  const segmented = await ports.segmenter.segment(input.content);
   pipeline.steps.segmentation = formatSegmentationOutput(segmented);
   await writeStepFile(
     outputDir,
@@ -237,7 +242,11 @@ async function main(): Promise<void> {
     pipeline.steps.segmentation
   );
 
-  const embedded = await provider.embedSegments(segmented);
+  const embeddedSegments = await generateSegmentEmbeddings(
+    segmented.segments,
+    (text) => ports.embedding.embed(text)
+  );
+  const embedded: ActiveNoteEmbeddedSegmentationResult = { embeddedSegments };
   pipeline.steps.embeddings = formatEmbeddingsOutput(embedded);
   await writeStepFile(
     outputDir,
@@ -245,7 +254,13 @@ async function main(): Promise<void> {
     pipeline.steps.embeddings
   );
 
-  const withContext = await provider.getProjectContext(embedded, context);
+  const withContext: ActiveNoteProjectContextResult = {
+    embeddedSegments: await searchSegmentProjectMatches(
+      embeddedSegments,
+      ports.projectSearch,
+      input.orgId
+    ),
+  };
   pipeline.steps.projectContext = formatProjectContextOutput(withContext);
   await writeStepFile(
     outputDir,
@@ -253,7 +268,12 @@ async function main(): Promise<void> {
     pipeline.steps.projectContext
   );
 
-  const withAssignment = await provider.inferProjectAssignment(withContext);
+  const withAssignment: ActiveNoteProjectAssignmentResult = {
+    embeddedSegments: await inferSegmentProjectAssignmentsFromFitEvaluations(
+      withContext.embeddedSegments,
+      ports.projectAssignment
+    ),
+  };
   pipeline.steps.projectAssignment = formatProjectAssignmentOutput(withAssignment);
   await writeStepFile(
     outputDir,
@@ -261,7 +281,7 @@ async function main(): Promise<void> {
     pipeline.steps.projectAssignment
   );
 
-  const finalOutput = await provider.inferAction(withAssignment);
+  const finalOutput = await analyzer.planActions(withAssignment);
   pipeline.steps.actionPlanning = formatActionPlanningOutput(finalOutput);
   await writeStepFile(
     outputDir,

@@ -1,5 +1,3 @@
-import { isOpenTaskStatus } from "@spydr/shared";
-import type { ProjectActionContextChildNode } from "@spydr/db";
 import {
   MAX_OPEN_TASKS,
   MAX_RECENT_DECISIONS,
@@ -7,7 +5,8 @@ import {
   MAX_RECENT_NOTES,
   MAX_RECENT_TASKS,
   type ProjectActionContext,
-} from "../types/project-action-context.types.js";
+  type ProjectActionContextChildNode,
+} from "./types/index.js";
 
 function normalizeOptionalText(value: string | null | undefined): string | null {
   if (value == null) {
@@ -74,7 +73,7 @@ export function buildProjectActionContext(input: {
   const ideas = input.childNodes.filter((node) => node.nodeType === "idea");
 
   const openTasks = tasks
-    .filter((task) => isOpenTaskStatus(task.status))
+    .filter((task) => task.status !== "completed" && task.status !== "archived")
     .sort(compareOpenTasks)
     .slice(0, MAX_OPEN_TASKS)
     .map((task) => ({

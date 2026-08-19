@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   attachSegmentLineageToActionPlan,
   assertSegmentContextualTextMatches,
-} from "../../action-planning/helpers/attach-segment-lineage-to-action-plan.js";
-import { toActiveNoteAIOutput } from "../../types/shared.js";
-import type { SegmentActionPlan } from "../../action-planning/types/index.js";
+} from "../attach-segment-lineage-to-action-plan.js";
+import { buildActiveNoteOutput } from "../build-active-note-output.js";
+import type { SegmentActionPlan } from "../types/index.js";
 
 const SEGMENT = {
   topic: "Amy meeting",
@@ -49,9 +49,9 @@ describe("attachSegmentLineageToActionPlan", () => {
   });
 });
 
-describe("toActiveNoteAIOutput contextualText lineage", () => {
+describe("buildActiveNoteOutput contextualText lineage", () => {
   it("preserves segmentation topic and contextualText on segments and action plans", () => {
-    const output = toActiveNoteAIOutput({
+    const output = buildActiveNoteOutput({
       embeddedSegments: [
         {
           ...SEGMENT,

@@ -3,13 +3,15 @@ import { getOrgContext } from "../../../middleware/org-context.js";
 import {
   ActiveNoteAnalysisError,
   ActiveNoteApplyError,
-  activeNoteAnalyzeRequestSchema,
-  activeNoteApplyRequestSchema,
-  formatActiveNoteRequestError,
   type ActiveNoteAnalyzeResult,
   type ActiveNoteApplyResult,
   type ActiveNoteHistoryItem,
 } from "../../../domain/active-notes/index.js";
+import {
+  activeNoteAnalyzeRequestSchema,
+  activeNoteApplyRequestSchema,
+  formatActiveNoteRequestError,
+} from "../schemas/active-notes.js";
 import type { ICommandBus } from "../../../domain/cqrs/commands/index.js";
 import { ApplyActiveNoteCommand } from "../../../domain/cqrs/commands/index.js";
 import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";

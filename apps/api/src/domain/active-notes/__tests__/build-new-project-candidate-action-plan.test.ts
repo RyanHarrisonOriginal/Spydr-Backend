@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { attachSegmentLineageToActionPlan } from "../../action-planning/helpers/attach-segment-lineage-to-action-plan.js";
-import { buildNewProjectCandidateActionPlan } from "../../action-planning/helpers/build-new-project-candidate-action-plan.js";
-import { buildUnassignedActionPlan } from "../../action-planning/helpers/build-unassigned-action-plan.js";
-import { toActiveNoteAIOutput } from "../../types/shared.js";
+import { attachSegmentLineageToActionPlan } from "../attach-segment-lineage-to-action-plan.js";
+import { buildNewProjectCandidateActionPlan } from "../build-new-project-candidate-action-plan.js";
+import { buildUnassignedActionPlan } from "../build-unassigned-action-plan.js";
+import { buildActiveNoteOutput } from "../build-active-note-output.js";
 
 const SEGMENT = {
   topic: "Fallback to Snowflake",
@@ -41,7 +41,7 @@ describe("new project candidate action plans", () => {
       buildNewProjectCandidateActionPlan(ASSIGNMENT)
     );
 
-    const output = toActiveNoteAIOutput({
+    const output = buildActiveNoteOutput({
       embeddedSegments: [
         {
           ...SEGMENT,
@@ -91,7 +91,7 @@ describe("unassigned action plans", () => {
       buildUnassignedActionPlan(ASSIGNMENT)
     );
 
-    const output = toActiveNoteAIOutput({
+    const output = buildActiveNoteOutput({
       embeddedSegments: [
         {
           ...SEGMENT,
@@ -200,7 +200,7 @@ describe("action plan segment coverage", () => {
       },
     ];
 
-    const output = toActiveNoteAIOutput({ embeddedSegments: segments });
+    const output = buildActiveNoteOutput({ embeddedSegments: segments });
 
     expect(output.segments).toHaveLength(3);
     expect(output.actionPlans).toHaveLength(3);
@@ -208,7 +208,7 @@ describe("action plan segment coverage", () => {
 
   it("throws when a segment is missing an action plan", () => {
     expect(() =>
-      toActiveNoteAIOutput({
+      buildActiveNoteOutput({
         embeddedSegments: [
           {
             topic: "Missing plan",

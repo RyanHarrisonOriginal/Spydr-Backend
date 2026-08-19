@@ -17,8 +17,12 @@ import {
   type IPersistenceRepositories,
 } from "./infra/persistence/index.js";
 import { createHttpApp } from "./infra/http/index.js";
-import { LazyActiveNoteAIProvider } from "./infra/ai/index.js";
-import type { ActiveNoteAIProvider } from "./domain/active-notes/index.js";
+import { createActiveNotePorts } from "./infra/ai/index.js";
+import type { ActiveNotePortBundle } from "./infra/ai/index.js";
+import {
+  AnalyzeActiveNoteService,
+  type AnalyzeActiveNotePorts,
+} from "./domain/active-notes/index.js";
 
 export interface IBackendConfig {
   apiPrefix: string;
@@ -47,7 +51,8 @@ export interface IBackendOverrides {
   config?: Partial<IBackendConfig>;
   prisma?: PrismaClient;
   repositories?: IPersistenceRepositories;
-  activeNoteAIProvider?: ActiveNoteAIProvider;
+  analyzeActiveNotePorts?: AnalyzeActiveNotePorts;
+  activeNotePromptVersion?: string | null;
 }
 
 export function resolveBackendConfig(
@@ -72,10 +77,14 @@ export function createBackend(overrides: IBackendOverrides = {}): IBackend {
     repositories,
     prisma,
   };
-  const activeNoteAIProvider =
-    overrides.activeNoteAIProvider ?? new LazyActiveNoteAIProvider();
+  const activeNotePorts =
+    overrides.analyzeActiveNotePorts ?? createActiveNotePorts();
+  const analyzeActiveNote = new AnalyzeActiveNoteService(activeNotePorts);
   registerQueryHandlers(services.queryBus, services.repositories, {
-    activeNoteAIProvider,
+    analyzeActiveNote,
+    activeNotePromptVersion:
+      overrides.activeNotePromptVersion ??
+      promptVersionFromPorts(activeNotePorts),
   });
   registerCommandHandlers(services.commandBus, services.repositories);
 
@@ -112,4 +121,13 @@ export function createBackend(overrides: IBackendOverrides = {}): IBackend {
       await prisma.$disconnect();
     },
   };
+}
+
+function promptVersionFromPorts(
+  ports: AnalyzeActiveNotePorts | ActiveNotePortBundle
+): string | null {
+  if ("promptVersion" in ports && typeof ports.promptVersion === "string") {
+    return ports.promptVersion;
+  }
+  return null;
 }

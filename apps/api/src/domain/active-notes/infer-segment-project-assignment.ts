@@ -1,48 +1,27 @@
-import { toProjectAssignmentCandidate } from "../helpers/build-project-candidate-input.js";
+import { toProjectAssignmentCandidate } from "./build-project-candidate.js";
+import type { IProjectAssignmentPort } from "./ports/project-assignment.port.js";
 import type {
   ActiveNoteProjectAssignment,
-  ProjectAssignmentCandidate,
-  ProjectFitEvaluation,
-  ProjectResolutionResult,
   SegmentWithProjectMatches,
-} from "../types/index.js";
+} from "./types/index.js";
 import {
   projectFitEvaluationToAssignment,
   projectResolutionToAssignment,
   resolveProjectAssignmentFromFitEvaluations,
-  unassignedProjectAssignment,
 } from "./resolve-project-assignment.js";
-
-export type EvaluateProjectFitFn = (
-  segment: SegmentWithProjectMatches,
-  candidate: ProjectAssignmentCandidate
-) => Promise<ProjectFitEvaluation>;
-
-export type ResolveProjectMatchFn = (
-  segment: SegmentWithProjectMatches,
-  qualifiedEvaluations: ProjectFitEvaluation[]
-) => Promise<ProjectResolutionResult>;
-
-export type ClassifyUnassignedDestinationFn = (
-  segment: SegmentWithProjectMatches
-) => Promise<ActiveNoteProjectAssignment>;
 
 export async function inferSegmentProjectAssignmentFromFitEvaluations(
   segment: SegmentWithProjectMatches,
-  deps: {
-    evaluateProjectFit: EvaluateProjectFitFn;
-    resolveProjectMatch: ResolveProjectMatchFn;
-    classifyUnassignedDestination: ClassifyUnassignedDestinationFn;
-  }
+  assignment: IProjectAssignmentPort
 ): Promise<ActiveNoteProjectAssignment> {
   const candidates = segment.projectMatches.map(toProjectAssignmentCandidate);
 
   if (candidates.length === 0) {
-    return deps.classifyUnassignedDestination(segment);
+    return assignment.classifyUnassigned(segment);
   }
 
   const evaluations = await Promise.all(
-    candidates.map((candidate) => deps.evaluateProjectFit(segment, candidate))
+    candidates.map((candidate) => assignment.evaluateFit(segment, candidate))
   );
 
   const resolution = resolveProjectAssignmentFromFitEvaluations(evaluations);
@@ -52,23 +31,19 @@ export async function inferSegmentProjectAssignmentFromFitEvaluations(
   }
 
   if (resolution.kind === "multiple_matches") {
-    const projectResolution = await deps.resolveProjectMatch(
+    const projectResolution = await assignment.resolveMatch(
       segment,
       resolution.evaluations
     );
     return projectResolutionToAssignment(segment, projectResolution);
   }
 
-  return deps.classifyUnassignedDestination(segment);
+  return assignment.classifyUnassigned(segment);
 }
 
 export async function inferSegmentProjectAssignmentsFromFitEvaluations(
   segments: SegmentWithProjectMatches[],
-  deps: {
-    evaluateProjectFit: EvaluateProjectFitFn;
-    resolveProjectMatch: ResolveProjectMatchFn;
-    classifyUnassignedDestination: ClassifyUnassignedDestinationFn;
-  }
+  assignment: IProjectAssignmentPort
 ): Promise<
   Array<SegmentWithProjectMatches & { projectAssignment: ActiveNoteProjectAssignment }>
 > {
@@ -77,10 +52,8 @@ export async function inferSegmentProjectAssignmentsFromFitEvaluations(
       ...segment,
       projectAssignment: await inferSegmentProjectAssignmentFromFitEvaluations(
         segment,
-        deps
+        assignment
       ),
     }))
   );
 }
-
-export { unassignedProjectAssignment };

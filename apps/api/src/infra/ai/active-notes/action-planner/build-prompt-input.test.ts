@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildSegmentActionPlannerUserInput } from "../../action-planning/helpers/build-segment-action-plan-prompt-input.js";
-import type { ExistingProjectRoutedSegment } from "../../action-planning/types/index.js";
-import type { ProjectActionContext } from "../../action-planning/types/project-action-context.types.js";
+import { buildSegmentActionPlannerUserInput } from "./build-prompt-input.js";
+import type {
+  ExistingProjectRoutedSegment,
+  ProjectActionContext,
+} from "../../../../domain/active-notes/types/index.js";
 
 const ROUTED_SEGMENT: ExistingProjectRoutedSegment = {
   originalText: ", but we still need to align with the Florida team.",

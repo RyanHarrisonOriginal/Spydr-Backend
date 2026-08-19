@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { generateSegmentEmbeddings } from "../../pipeline/helpers/generate-segment-embeddings.js";
-import { ActiveNoteAnalysisError } from "../../types/shared.js";
+import { generateSegmentEmbeddings } from "../generate-segment-embeddings.js";
+import { ActiveNoteAnalysisError } from "../types/index.js";
 
 const segments = [
   {

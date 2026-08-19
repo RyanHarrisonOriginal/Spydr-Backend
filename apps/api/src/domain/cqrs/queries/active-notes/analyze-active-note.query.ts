@@ -1,8 +1,7 @@
 import {
   ActiveNoteAnalysisError,
-  ACTIVE_NOTE_PROMPT_VERSION,
+  AnalyzeActiveNoteService,
   type ActiveNoteAIOutput,
-  type ActiveNoteAIProvider,
   type ActiveNoteAnalyzeRequest,
   type ActiveNoteAnalyzeResult,
   type ActiveNotePipelineRecorder,
@@ -27,8 +26,9 @@ export class AnalyzeActiveNoteQueryHandler
   readonly queryType = AnalyzeActiveNoteQuery.queryType;
 
   constructor(
-    private readonly aiProvider: ActiveNoteAIProvider,
-    private readonly sessions?: IActiveNoteSessionRepository
+    private readonly analyzer: AnalyzeActiveNoteService,
+    private readonly sessions?: IActiveNoteSessionRepository,
+    private readonly promptVersion?: string | null
   ) {}
 
   async execute(query: AnalyzeActiveNoteQuery): Promise<ActiveNoteAnalyzeResult> {
@@ -37,7 +37,7 @@ export class AnalyzeActiveNoteQueryHandler
     const recorder = this.createRecorder(sessionId);
 
     try {
-      const result = await this.aiProvider.analyze({
+      const result = await this.analyzer.analyze({
         content,
         orgId: query.orgId,
         userId: query.userId,
@@ -68,7 +68,7 @@ export class AnalyzeActiveNoteQueryHandler
         organizationId: query.orgId,
         userId: query.userId,
         content,
-        promptVersion: ACTIVE_NOTE_PROMPT_VERSION,
+        promptVersion: this.promptVersion ?? null,
       });
       return session.id;
     } catch (error) {
