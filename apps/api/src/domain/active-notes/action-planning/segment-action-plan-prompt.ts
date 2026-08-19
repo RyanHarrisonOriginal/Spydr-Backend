@@ -1,5 +1,5 @@
 export const ACTIVE_NOTE_ACTION_PLANNER_PROMPT_VERSION =
-  "active-note-action-planner-v7";
+  "active-note-action-planner-v8";
 
 export const ACTIVE_NOTE_ACTION_PLANNER_SYSTEM_PROMPT = `
 ## Intent classification
@@ -198,6 +198,47 @@ Never turn a possibility into a Task unless the segment establishes that the wor
 Never turn a preference or consideration into a Decision unless commitment is expressed.
 
 Never use Idea or Project Context merely as fallback categories for unclear reasoning.
+
+## Suggestion titles
+
+Every created object's title must be fully qualified.
+
+This applies to:
+
+- create_task payload.title
+- create_note and attach_note_to_task payload.subject
+- create_decision payload.title
+- create_idea payload.title
+
+A fully qualified title can be understood by itself in a project list, without reading the original note, the surrounding segments, or any other suggestion.
+
+Use contextualText as the meaning of the segment. Name the actual subject, the work or object it refers to, and any distinguishing constraint that would otherwise be ambiguous — who, which system, which opponent, which region, which deliverable.
+
+The title must still be one concise line. Include the necessary referent. Do not paste the full contextualText. Do not add commentary, hedging, or a second sentence.
+
+Do not write generic labels such as:
+
+- Follow up
+- Meeting update
+- Next steps
+- Fix it
+- Alignment
+- Decision
+- Idea
+- Project update
+
+Do not prefix the title with the project name unless that name is part of the work itself and would otherwise be missing from the title.
+
+Examples:
+
+contextualText: "For the Southwest inventory app, we still need to align with the Florida team so we don't end up with two different solutions."
+title: "Align Southwest inventory app with the Florida team"
+
+contextualText: "Last night I sparred a larger opponent and had trouble landing a teep."
+title: "Practice teep setups against larger sparring partners"
+
+contextualText: "Met with Amy today about the Commercial Scorecard rollout."
+subject: "Amy meeting on Commercial Scorecard rollout"
 
 Return only valid JSON matching the required schema.
 `;

@@ -1,4 +1,8 @@
-import type { ActiveNoteAIOutput } from "../active-notes/types/shared.js";
+import type {
+  ActiveNoteAIOutput,
+  ActiveNoteHistoryItem,
+  ActiveNoteReviewSnapshot,
+} from "../active-notes/types/shared.js";
 import type { ActiveNotePipelineStepName } from "../active-notes/pipeline/types/recorder.js";
 
 export type { ActiveNotePipelineStepName };
@@ -43,6 +47,20 @@ export interface CompleteActiveNoteAnalysisInput {
   analyzeResponse: ActiveNoteAIOutput;
 }
 
+export interface CompleteActiveNoteApplyInput {
+  sessionId: string;
+  organizationId: string;
+  userId: string;
+  reviewSnapshot: ActiveNoteReviewSnapshot;
+  status: "completed" | "failed";
+}
+
+export interface ListActiveNoteHistoryInput {
+  organizationId: string;
+  userId: string;
+  limit?: number;
+}
+
 export interface IActiveNoteSessionRepository {
   beginAnalysis(
     input: BeginActiveNoteAnalysisInput
@@ -50,4 +68,6 @@ export interface IActiveNoteSessionRepository {
   recordStep(input: RecordActiveNoteAnalysisStepInput): Promise<void>;
   completeAnalysis(input: CompleteActiveNoteAnalysisInput): Promise<void>;
   failAnalysis(input: FailActiveNoteAnalysisInput): Promise<void>;
+  completeApply(input: CompleteActiveNoteApplyInput): Promise<void>;
+  listHistory(input: ListActiveNoteHistoryInput): Promise<ActiveNoteHistoryItem[]>;
 }

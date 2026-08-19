@@ -9,6 +9,7 @@ export function createActiveNotesRouter(
   controller = new ActiveNotesController(queryBus, commandBus)
 ): Router {
   const router = Router();
+  router.get("/", controller.list);
   router.post("/analyze", controller.analyze);
   router.post("/apply", controller.apply);
   return router;

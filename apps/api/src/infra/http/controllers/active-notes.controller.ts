@@ -6,19 +6,40 @@ import {
   activeNoteAnalyzeRequestSchema,
   activeNoteApplyRequestSchema,
   formatActiveNoteRequestError,
-  type ActiveNoteAIOutput,
+  type ActiveNoteAnalyzeResult,
   type ActiveNoteApplyResult,
+  type ActiveNoteHistoryItem,
 } from "../../../domain/active-notes/index.js";
 import type { ICommandBus } from "../../../domain/cqrs/commands/index.js";
 import { ApplyActiveNoteCommand } from "../../../domain/cqrs/commands/index.js";
 import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";
-import { AnalyzeActiveNoteQuery } from "../../../domain/cqrs/queries/active-notes/index.js";
+import {
+  AnalyzeActiveNoteQuery,
+  ListActiveNotesQuery,
+} from "../../../domain/cqrs/queries/active-notes/index.js";
 
 export class ActiveNotesController {
   constructor(
     private readonly queryBus: IQueryBus,
     private readonly commandBus: ICommandBus
   ) {}
+
+  list = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
+
+      const notes = await this.queryBus.execute<
+        ListActiveNotesQuery,
+        ActiveNoteHistoryItem[]
+      >(new ListActiveNotesQuery(ctx.userId, ctx.orgId));
+
+      res.json(notes);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to list active notes" });
+    }
+  };
 
   analyze = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -35,7 +56,7 @@ export class ActiveNotesController {
 
       const result = await this.queryBus.execute<
         AnalyzeActiveNoteQuery,
-        ActiveNoteAIOutput
+        ActiveNoteAnalyzeResult
       >(
         new AnalyzeActiveNoteQuery(ctx.userId, ctx.orgId, {
           content: parsed.data.content,

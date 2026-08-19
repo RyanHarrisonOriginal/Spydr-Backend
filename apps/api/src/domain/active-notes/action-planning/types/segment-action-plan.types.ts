@@ -162,4 +162,6 @@ export interface ActiveNoteActionPlanResult {
 export type PlanSegmentActionInput = {
   routedSegment: ExistingProjectRoutedSegment;
   projectContext: ProjectActionContext;
+  topic: string;
+  contextualText: string;
 };

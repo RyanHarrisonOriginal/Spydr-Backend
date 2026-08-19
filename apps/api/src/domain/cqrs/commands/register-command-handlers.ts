@@ -100,7 +100,12 @@ export function registerCommandHandlers(
   );
 
   // Registered after the bus is populated so apply can dispatch create commands.
-  commandBus.register(new ApplyActiveNoteCommandHandler(commandBus));
+  commandBus.register(
+    new ApplyActiveNoteCommandHandler(
+      commandBus,
+      repositories.activeNoteSessions
+    )
+  );
   commandBus.register(
     new TransformNodeTypeCommandHandler(repositories.nodeTypeTransforms)
   );

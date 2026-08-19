@@ -6,6 +6,8 @@ import type {
   AppliedActiveNoteObject,
 } from "../../../active-notes/index.js";
 import { ActiveNoteApplyError, assertApplyPayloadMatchesKind } from "../../../active-notes/index.js";
+import { buildReviewSnapshot } from "../../../active-notes/history/map-session-to-history-item.js";
+import type { IActiveNoteSessionRepository } from "../../../interfaces/active-note-session-repository.js";
 import type { SpydrPriority } from "../../../models/shared.js";
 import type { ICommand, ICommandHandler } from "../command.js";
 import type { ICommandBus } from "../command-bus.js";
@@ -126,7 +128,10 @@ export class ApplyActiveNoteCommandHandler
 {
   readonly commandType = ApplyActiveNoteCommand.commandType;
 
-  constructor(private readonly commandBus: ICommandBus) {}
+  constructor(
+    private readonly commandBus: ICommandBus,
+    private readonly sessions?: IActiveNoteSessionRepository
+  ) {}
 
   async execute(command: ApplyActiveNoteCommand): Promise<ActiveNoteApplyResult> {
     const selected = command.input.operations.filter(
@@ -242,9 +247,37 @@ export class ApplyActiveNoteCommandHandler
           : "completed"
         : "completed";
 
+    const sessionId = command.input.activeNoteId?.trim() || "";
+    const reviewSnapshot = buildReviewSnapshot({
+      operations: command.input.operations.map((operation) => ({
+        operationId: operation.operationId,
+        title: payloadTitle(operation.payload),
+        objectType: resolveObjectType(operation.payload, operation.objectType),
+        selected: operation.selected,
+        ignored: operation.duplicateResolution === "ignore",
+      })),
+      applied,
+      failed,
+      appliedAt: now,
+    });
+
+    if (sessionId && this.sessions) {
+      try {
+        await this.sessions.completeApply({
+          sessionId,
+          organizationId: command.orgId,
+          userId: command.userId,
+          reviewSnapshot,
+          status,
+        });
+      } catch (error) {
+        console.error("[active-note.apply] session persist failed", error);
+      }
+    }
+
     return {
       activeNote: {
-        id: command.input.activeNoteId?.trim() || crypto.randomUUID(),
+        id: sessionId || crypto.randomUUID(),
         content: command.input.content ?? "",
         projectId: command.input.projectId ?? null,
         status,

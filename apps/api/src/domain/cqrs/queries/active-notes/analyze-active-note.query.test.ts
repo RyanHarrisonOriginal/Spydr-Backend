@@ -29,6 +29,8 @@ describe("AnalyzeActiveNoteQueryHandler", () => {
       recordStep: vi.fn().mockResolvedValue(undefined),
       completeAnalysis: vi.fn().mockResolvedValue(undefined),
       failAnalysis: vi.fn().mockResolvedValue(undefined),
+      completeApply: vi.fn().mockResolvedValue(undefined),
+      listHistory: vi.fn().mockResolvedValue([]),
     };
     const aiProvider = {
       analyze: vi.fn().mockImplementation(async (input) => {
@@ -47,7 +49,7 @@ describe("AnalyzeActiveNoteQueryHandler", () => {
       })
     );
 
-    expect(result).toEqual(ANALYZE_OUTPUT);
+    expect(result).toEqual({ ...ANALYZE_OUTPUT, sessionId: "session-1" });
     expect(sessions.beginAnalysis).toHaveBeenCalledWith(
       expect.objectContaining({
         organizationId: "org-1",
@@ -73,6 +75,8 @@ describe("AnalyzeActiveNoteQueryHandler", () => {
       recordStep: vi.fn(),
       completeAnalysis: vi.fn(),
       failAnalysis: vi.fn(),
+      completeApply: vi.fn(),
+      listHistory: vi.fn(),
     };
     const aiProvider = {
       analyze: vi.fn().mockResolvedValue(ANALYZE_OUTPUT),
@@ -86,7 +90,7 @@ describe("AnalyzeActiveNoteQueryHandler", () => {
       })
     );
 
-    expect(result).toEqual(ANALYZE_OUTPUT);
+    expect(result).toEqual({ ...ANALYZE_OUTPUT, sessionId: null });
     expect(sessions.recordStep).not.toHaveBeenCalled();
     expect(sessions.completeAnalysis).not.toHaveBeenCalled();
     errorSpy.mockRestore();

@@ -258,6 +258,8 @@ export abstract class ActiveNoteAIProviderBase implements ActiveNoteAIProvider {
         await this.planSegmentAction({
           routedSegment: assignment,
           projectContext,
+          topic: segment.topic,
+          contextualText: segment.contextualText,
         })
       )
     );

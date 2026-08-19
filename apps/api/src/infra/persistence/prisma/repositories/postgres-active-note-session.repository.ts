@@ -5,21 +5,20 @@ import type {
   ActiveNoteAnalysisSession,
   BeginActiveNoteAnalysisInput,
   CompleteActiveNoteAnalysisInput,
+  CompleteActiveNoteApplyInput,
   FailActiveNoteAnalysisInput,
   IActiveNoteSessionRepository,
+  ListActiveNoteHistoryInput,
   RecordActiveNoteAnalysisStepInput,
 } from "../../../../domain/interfaces/active-note-session-repository.js";
 import { stripPipelinePayload } from "../../../../domain/active-notes/pipeline/helpers/strip-pipeline-payload.js";
-
-const IN_FLIGHT_STATUSES = [
-  "draft",
-  "analyzing",
-  "review",
-  "applying",
-] as const;
+import { mapSessionToHistoryItem } from "../../../../domain/active-notes/history/map-session-to-history-item.js";
+import type { ActiveNoteHistoryItem } from "../../../../domain/active-notes/types/shared.js";
 
 const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 const SCHEMA_VERSION = 1;
+const HISTORY_LIMIT = 50;
+const HISTORY_STATUSES = ["review", "applying", "completed", "failed"] as const;
 
 function toJson(value: unknown): Prisma.InputJsonValue {
   return stripPipelinePayload(value) as Prisma.InputJsonValue;
@@ -38,38 +37,24 @@ export class PostgresActiveNoteSessionRepository
     input: BeginActiveNoteAnalysisInput
   ): Promise<ActiveNoteAnalysisSession> {
     const now = new Date();
-    const data: Prisma.SpydrActiveNoteSessionUncheckedCreateInput = {
-      organizationId: input.organizationId,
-      userId: input.userId,
-      projectId: input.projectId ?? null,
-      status: "analyzing",
-      content: input.content,
-      contentHash: createRetrievalContentHash(input.content),
-      schemaVersion: SCHEMA_VERSION,
-      promptVersion: input.promptVersion ?? null,
-      analyzeResponse: Prisma.DbNull,
-      reviewSnapshot: Prisma.DbNull,
-      stepPayloads: {},
-      errorMessage: null,
-      failedStep: null,
-      completedAt: null,
-      expiresAt: sessionExpiresAt(now),
-    };
-
-    const existing = await this.findInFlight(
-      input.organizationId,
-      input.userId
-    );
-
-    const session = existing
-      ? await this.db.spydrActiveNoteSession.update({
-          where: { id: existing.id },
-          data,
-        })
-      : await this.createInFlightSession(data);
-
-    await this.db.spydrActiveNoteSessionStep.deleteMany({
-      where: { sessionId: session.id },
+    const session = await this.db.spydrActiveNoteSession.create({
+      data: {
+        organizationId: input.organizationId,
+        userId: input.userId,
+        projectId: input.projectId ?? null,
+        status: "analyzing",
+        content: input.content,
+        contentHash: createRetrievalContentHash(input.content),
+        schemaVersion: SCHEMA_VERSION,
+        promptVersion: input.promptVersion ?? null,
+        analyzeResponse: Prisma.DbNull,
+        reviewSnapshot: Prisma.DbNull,
+        stepPayloads: {},
+        errorMessage: null,
+        failedStep: null,
+        completedAt: null,
+        expiresAt: sessionExpiresAt(now),
+      },
     });
 
     return {
@@ -165,45 +150,50 @@ export class PostgresActiveNoteSessionRepository
     });
   }
 
-  private findInFlight(organizationId: string, userId: string) {
-    return this.db.spydrActiveNoteSession.findFirst({
+  async completeApply(input: CompleteActiveNoteApplyInput): Promise<void> {
+    const now = new Date();
+    await this.db.spydrActiveNoteSession.updateMany({
       where: {
-        organizationId,
-        userId,
-        status: { in: [...IN_FLIGHT_STATUSES] },
+        id: input.sessionId,
+        organizationId: input.organizationId,
+        userId: input.userId,
       },
-      select: { id: true },
+      data: {
+        status: input.status,
+        reviewSnapshot: toJson(input.reviewSnapshot),
+        completedAt: now,
+        errorMessage: null,
+        failedStep: null,
+      },
     });
   }
 
-  private async createInFlightSession(
-    data: Prisma.SpydrActiveNoteSessionUncheckedCreateInput
-  ) {
-    try {
-      return await this.db.spydrActiveNoteSession.create({ data });
-    } catch (error) {
-      if (
-        !(
-          error instanceof Prisma.PrismaClientKnownRequestError &&
-          error.code === "P2002"
-        )
-      ) {
-        throw error;
-      }
+  async listHistory(
+    input: ListActiveNoteHistoryInput
+  ): Promise<ActiveNoteHistoryItem[]> {
+    const sessions = await this.db.spydrActiveNoteSession.findMany({
+      where: {
+        organizationId: input.organizationId,
+        userId: input.userId,
+        status: { in: [...HISTORY_STATUSES] },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: input.limit ?? HISTORY_LIMIT,
+      select: {
+        id: true,
+        content: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        completedAt: true,
+        analyzeResponse: true,
+        reviewSnapshot: true,
+      },
+    });
 
-      const existing = await this.findInFlight(
-        data.organizationId,
-        data.userId
-      );
-      if (!existing) {
-        throw error;
-      }
-
-      return this.db.spydrActiveNoteSession.update({
-        where: { id: existing.id },
-        data,
-      });
-    }
+    return sessions
+      .map(mapSessionToHistoryItem)
+      .filter((item): item is ActiveNoteHistoryItem => item != null);
   }
 }
 

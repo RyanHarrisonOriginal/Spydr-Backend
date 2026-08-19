@@ -4,12 +4,13 @@ import {
   type ActiveNoteAIOutput,
   type ActiveNoteAIProvider,
   type ActiveNoteAnalyzeRequest,
+  type ActiveNoteAnalyzeResult,
   type ActiveNotePipelineRecorder,
 } from "../../../active-notes/index.js";
 import type { IActiveNoteSessionRepository } from "../../../interfaces/active-note-session-repository.js";
 import type { IQuery, IQueryHandler } from "../query.js";
 
-export class AnalyzeActiveNoteQuery implements IQuery<ActiveNoteAIOutput> {
+export class AnalyzeActiveNoteQuery implements IQuery<ActiveNoteAnalyzeResult> {
   static readonly queryType = "active-notes.analyze";
   readonly queryType = AnalyzeActiveNoteQuery.queryType;
 
@@ -21,7 +22,7 @@ export class AnalyzeActiveNoteQuery implements IQuery<ActiveNoteAIOutput> {
 }
 
 export class AnalyzeActiveNoteQueryHandler
-  implements IQueryHandler<AnalyzeActiveNoteQuery, ActiveNoteAIOutput>
+  implements IQueryHandler<AnalyzeActiveNoteQuery, ActiveNoteAnalyzeResult>
 {
   readonly queryType = AnalyzeActiveNoteQuery.queryType;
 
@@ -30,7 +31,7 @@ export class AnalyzeActiveNoteQueryHandler
     private readonly sessions?: IActiveNoteSessionRepository
   ) {}
 
-  async execute(query: AnalyzeActiveNoteQuery): Promise<ActiveNoteAIOutput> {
+  async execute(query: AnalyzeActiveNoteQuery): Promise<ActiveNoteAnalyzeResult> {
     const content = query.input.content.trim();
     const sessionId = await this.beginSession(query, content);
     const recorder = this.createRecorder(sessionId);
@@ -43,7 +44,7 @@ export class AnalyzeActiveNoteQueryHandler
         recorder,
       });
       await this.completeSession(sessionId, result);
-      return result;
+      return { ...result, sessionId: sessionId ?? null };
     } catch (error) {
       if (error instanceof ActiveNoteAnalysisError) {
         throw error;

@@ -17,6 +17,10 @@ export interface ActiveNoteAIOutput {
   actionPlans: SegmentActionPlan[];
 }
 
+export interface ActiveNoteAnalyzeResult extends ActiveNoteAIOutput {
+  sessionId: string | null;
+}
+
 export function toActiveNoteAIOutput(
   result: ActiveNoteActionPlanResult
 ): ActiveNoteAIOutput {
@@ -193,6 +197,45 @@ export interface ActiveNoteApplyResult {
     message: string;
   }>;
   partial: boolean;
+}
+
+export type ActiveNoteHistoryDecision =
+  | "accepted"
+  | "rejected"
+  | "failed"
+  | "pending";
+
+export interface ActiveNoteHistorySuggestion {
+  id: string;
+  title: string;
+  objectType: string | null;
+  decision: ActiveNoteHistoryDecision;
+}
+
+export interface ActiveNoteHistoryItem {
+  id: string;
+  content: string;
+  status: "review" | "applying" | "completed" | "failed";
+  createdAt: string;
+  updatedAt: string;
+  completedAt: string | null;
+  suggestions: ActiveNoteHistorySuggestion[];
+}
+
+export interface ActiveNoteReviewSnapshot {
+  operations: Array<{
+    operationId: string;
+    title: string;
+    objectType: string | null;
+    selected: boolean;
+    outcome: Exclude<ActiveNoteHistoryDecision, "pending">;
+  }>;
+  applied: AppliedActiveNoteObject[];
+  failed: Array<{
+    operationId: string;
+    message: string;
+  }>;
+  appliedAt: string;
 }
 
 export type {

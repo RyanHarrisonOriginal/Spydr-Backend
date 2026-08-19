@@ -1,11 +1,13 @@
-export type { IActiveNoteSessionRepository } from "./active-note-session-repository.js";
 export type {
+  IActiveNoteSessionRepository,
   ActiveNoteAnalysisSession,
   ActiveNotePipelineStepName,
   ActiveNoteSessionStatus,
   BeginActiveNoteAnalysisInput,
   CompleteActiveNoteAnalysisInput,
+  CompleteActiveNoteApplyInput,
   FailActiveNoteAnalysisInput,
+  ListActiveNoteHistoryInput,
   RecordActiveNoteAnalysisStepInput,
 } from "./active-note-session-repository.js";
 export type { IDecisionListItem, IDecisionRepository } from "./decision-repository.js";

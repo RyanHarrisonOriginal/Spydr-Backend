@@ -12,6 +12,8 @@ export function buildSegmentActionPlannerUserInput(
   return JSON.stringify({
     segment: {
       originalText: input.routedSegment.originalText,
+      contextualText: input.contextualText,
+      topic: input.topic,
       projectId: input.routedSegment.projectId,
       projectName: input.routedSegment.projectName,
     },
