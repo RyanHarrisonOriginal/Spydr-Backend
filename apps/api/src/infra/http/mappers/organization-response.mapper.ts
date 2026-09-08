@@ -1,4 +1,4 @@
-import type { Organization } from "../../../domain/models/organizations/index.js";
+import type { Organization } from "../../../domains/organizations/models/index.js";
 
 export class OrganizationResponseMapper {
   toRepresentation(org: Organization) {

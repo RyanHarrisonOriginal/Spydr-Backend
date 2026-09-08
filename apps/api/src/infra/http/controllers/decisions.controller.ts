@@ -1,10 +1,10 @@
 import type { Request, Response } from "express";
 import { getOrgContext } from "../../../middleware/org-context.js";
-import type { ICommandBus } from "../../../domain/cqrs/commands/index.js";
-import { DeleteDecisionCommand } from "../../../domain/cqrs/commands/decisions/index.js";
-import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";
-import { ListDecisionsQuery } from "../../../domain/cqrs/queries/index.js";
-import type { IDecisionListItem } from "../../../domain/interfaces/decision-repository.js";
+import type { ICommandBus } from "../../../domains/shared/application/index.js";
+import { DeleteDecisionCommand } from "../../../domains/decisions/commands/index.js";
+import type { IQueryBus } from "../../../domains/shared/application/index.js";
+import { ListDecisionsQuery } from "../../../domains/shared/application/index.js";
+import type { IDecisionListItem } from "../../../domains/decisions/views.js";
 import { DecisionResponseMapper } from "../mappers/decision-response.mapper.js";
 
 export class DecisionsController {

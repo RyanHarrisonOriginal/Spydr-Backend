@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
-import { PersonDetails, PersonNode } from "../../../../domain/models/people/index.js";
-import type { IPersonDetailsProps } from "../../../../domain/models/people/index.js";
-import type { IDomainMapper } from "../../../../domain/mappers/index.js";
+import { PersonDetails, PersonNode } from "../../../../domains/people/models/index.js";
+import type { IPersonDetailsProps } from "../../../../domains/people/models/index.js";
+import type { IDomainMapper } from "../../../../domains/shared/mappers/mapper.js";
 import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
 
 export type PrismaPersonWithDetails = Prisma.SpydrNodeGetPayload<{

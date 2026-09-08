@@ -2,15 +2,49 @@ import type { PrismaClient } from "@prisma/client";
 import type {
   ICreateOrganizationInput,
   IOrganizationRepository,
-} from "../../../../domain/interfaces/organization-repository.js";
+} from "../../../../domains/organizations/repository.js";
 import {
   Organization,
   type OrganizationMemberRole,
-} from "../../../../domain/models/organizations/index.js";
-import { slugifyOrganizationName } from "../../../../domain/utils/slugify.js";
+} from "../../../../domains/organizations/models/index.js";
+import { slugifyOrganizationName } from "../../../../domains/shared/utils/slugify.js";
 
 export class PostgresOrganizationRepository implements IOrganizationRepository {
   constructor(private readonly db: PrismaClient) {}
+
+  async get(criteria: {
+    id: string;
+    userId?: string;
+  }): Promise<Organization | null> {
+    if (criteria.userId) {
+      return this.findByIdForUser(criteria.id, criteria.userId);
+    }
+
+    const row = await this.db.organization.findUnique({
+      where: { id: criteria.id },
+    });
+    return row ? this.toDomain(row, "member") : null;
+  }
+
+  async save(
+    entity: Organization | ICreateOrganizationInput,
+    options?: { strategy?: string; context?: { userId: string } }
+  ): Promise<Organization> {
+    const strategy = options?.strategy ?? "standard";
+    if (strategy === "createForUser") {
+      const userId = options?.context?.userId;
+      if (!userId) {
+        throw new Error("createForUser strategy requires userId context");
+      }
+      return this.createForUser(userId, entity as ICreateOrganizationInput);
+    }
+
+    throw new Error(`Unsupported organization save strategy: ${strategy}`);
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.db.organization.delete({ where: { id } });
+  }
 
   async listForUser(userId: string): Promise<Organization[]> {
     const rows = await this.db.organizationMember.findMany({
@@ -50,7 +84,7 @@ export class PostgresOrganizationRepository implements IOrganizationRepository {
     return row ? (row.role as OrganizationMemberRole) : null;
   }
 
-  async createForUser(
+  private async createForUser(
     userId: string,
     input: ICreateOrganizationInput
   ): Promise<Organization> {

@@ -1,5 +1,5 @@
-import type { ProjectAreaNode } from "../../../domain/models/project-areas/index.js";
-import type { IRepresentationMapper } from "../../../domain/mappers/index.js";
+import type { ProjectAreaNode } from "../../../domains/project-areas/models/index.js";
+import type { IRepresentationMapper } from "../../../domains/shared/mappers/mapper.js";
 
 export interface IProjectAreaDetailsResponse {
   color: string;

@@ -7,7 +7,7 @@ import type {
   IWorkspaceDashboardPersonRoleCounts,
   IWorkspaceDashboardRepository,
   IWorkspaceDashboardStatusCounts,
-} from "../../../../domain/interfaces/workspace-dashboard-repository.js";
+} from "../../../../domains/dashboard/views.js";
 
 const UNASSIGNED_KEY = "__unassigned__";
 const UNASSIGNED_AREA_COLOR = "0 0% 45%";

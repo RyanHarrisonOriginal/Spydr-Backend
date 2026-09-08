@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { getOrgContext } from "../../../middleware/org-context.js";
-import type { ICommandBus } from "../../../domain/cqrs/commands/index.js";
+import type { ICommandBus } from "../../../domains/shared/application/index.js";
 import {
   AddDecisionToProjectCommand,
   AddIdeaToProjectCommand,
@@ -21,18 +21,18 @@ import {
   type IUpdateProjectInput,
   type ProjectChildKind,
   UpdateProjectCommand,
-} from "../../../domain/cqrs/commands/index.js";
-import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";
+} from "../../../domains/shared/application/index.js";
+import type { IQueryBus } from "../../../domains/shared/application/index.js";
 import {
   GetProjectQuery,
   ListDeletedProjectsQuery,
   ListProjectsQuery,
-} from "../../../domain/cqrs/queries/index.js";
-import type { ProjectNode } from "../../../domain/models/projects/index.js";
-import type { DecisionNode } from "../../../domain/models/decisions/index.js";
-import type { IdeaNode } from "../../../domain/models/ideas/index.js";
-import type { NoteNode } from "../../../domain/models/notes/index.js";
-import type { TaskNode } from "../../../domain/models/tasks/index.js";
+} from "../../../domains/shared/application/index.js";
+import type { ProjectNode } from "../../../domains/projects/models/index.js";
+import type { DecisionNode } from "../../../domains/decisions/models/index.js";
+import type { IdeaNode } from "../../../domains/ideas/models/index.js";
+import type { NoteNode } from "../../../domains/notes/models/index.js";
+import type { TaskNode } from "../../../domains/tasks/models/index.js";
 import { IdeaResponseMapper } from "../mappers/idea-response.mapper.js";
 import { DecisionResponseMapper } from "../mappers/decision-response.mapper.js";
 import { NoteResponseMapper } from "../mappers/note-response.mapper.js";

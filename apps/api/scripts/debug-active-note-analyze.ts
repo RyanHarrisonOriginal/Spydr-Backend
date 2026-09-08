@@ -27,9 +27,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { prisma, disconnectPrisma } from "@spydr/db";
-import { createActiveNotePorts } from "../src/infra/ai/active-notes/create-active-note-ports.js";
 import {
   AnalyzeActiveNoteService,
+  createActiveNotePorts,
   generateSegmentEmbeddings,
   inferSegmentProjectAssignmentsFromFitEvaluations,
   searchSegmentProjectMatches,
@@ -40,7 +40,7 @@ import {
   type ActiveNoteProjectAssignmentResult,
   type ActiveNoteProjectContextResult,
   type ActiveNoteSegmentationResult,
-} from "../src/domain/active-notes/index.js";
+} from "@spydr/active-notes";
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_OUTPUT_ROOT = path.join(SCRIPT_DIR, "debug-output");

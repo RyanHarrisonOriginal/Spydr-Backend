@@ -1,5 +1,5 @@
 import { Router } from "express";
-import type { ICommandBus } from "../../../domain/cqrs/commands/index.js";
+import type { ICommandBus } from "../../../domains/shared/application/index.js";
 import { EntitiesController } from "../controllers/entities.controller.js";
 
 export function createEntitiesRouter(

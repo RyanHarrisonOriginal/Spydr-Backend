@@ -3,9 +3,9 @@ import cors from "cors";
 import { clerkMiddleware } from "@clerk/express";
 import { requireAuthApi } from "../../middleware/auth.js";
 import { createRequireOrgContext } from "../../middleware/org-context.js";
-import type { IOrganizationRepository } from "../../domain/interfaces/organization-repository.js";
-import type { ICommandBus } from "../../domain/cqrs/commands/index.js";
-import type { IQueryBus } from "../../domain/cqrs/queries/index.js";
+import type { IOrganizationViews } from "../../domains/organizations/views.js";
+import type { ICommandBus } from "../../domains/shared/application/index.js";
+import type { IQueryBus } from "../../domains/shared/application/index.js";
 import { createDecisionsRouter } from "./routes/decisions.router.js";
 import { createIdeasRouter } from "./routes/ideas.router.js";
 import { createNotesRouter } from "./routes/notes.router.js";
@@ -24,12 +24,12 @@ export interface IHttpAppOptions {
   apiPrefix?: string;
   commandBus: ICommandBus;
   queryBus: IQueryBus;
-  organizations: IOrganizationRepository;
+  organizationViews: IOrganizationViews;
 }
 
 export function createHttpApp(options: IHttpAppOptions): Express {
   const apiPrefix = options.apiPrefix ?? "/api";
-  const requireOrgContext = createRequireOrgContext(options.organizations);
+  const requireOrgContext = createRequireOrgContext(options.organizationViews);
   const app = express();
 
   app.use(cors());

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";
+import type { IQueryBus } from "../../../domains/shared/application/index.js";
 import { DashboardController } from "../controllers/dashboard.controller.js";
 
 export function createDashboardRouter(

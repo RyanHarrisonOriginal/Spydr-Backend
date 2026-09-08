@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "postinstall": "npm run prisma:generate",
-    "build": "npm run build -w @spydr/config -w @spydr/ai && npm run build -w @spydr/db && npm run build -w @spydr/shared && npm run build -w @spydr/api -w @spydr/worker",
+    "build": "npm run build -w @spydr/config -w @spydr/ai && npm run build -w @spydr/db && npm run build -w @spydr/shared && npm run build -w @spydr/active-notes && npm run build -w @spydr/api -w @spydr/worker",
     "dev:api": "npm run dev -w @spydr/api",
     "dev:worker": "npm run dev -w @spydr/worker",
     "start": "npm run start:api",

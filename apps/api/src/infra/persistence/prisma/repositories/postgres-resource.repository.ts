@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
-import type { IResourceRepository } from "../../../../domain/interfaces/index.js";
-import type { ResourceNode } from "../../../../domain/models/resources/index.js";
+import type { IResourceRepository } from "../../../../domains/index.js";
+import type { ResourceNode } from "../../../../domains/resources/models/index.js";
 import { PrismaResourceMapper } from "../mappers/prisma-resource.mapper.js";
 
 export class PostgresResourceRepository implements IResourceRepository {
@@ -16,6 +16,13 @@ export class PostgresResourceRepository implements IResourceRepository {
     });
 
     return row && row.nodeType === "resource" ? this.mapper.toDomain(row) : null;
+  }
+
+  async get(criteria: { id: string; orgId?: string; includeDeleted?: boolean }) {
+    if (criteria.orgId) {
+      return this.findByIdForOrg(criteria.id, criteria.orgId);
+    }
+    return this.findById(criteria.id);
   }
 
   async findByIdForOrg(id: string, orgId: string): Promise<ResourceNode | null> {

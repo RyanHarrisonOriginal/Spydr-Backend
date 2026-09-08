@@ -1,5 +1,5 @@
-import type { ResourceNode } from "../../../domain/models/resources/index.js";
-import type { IRepresentationMapper } from "../../../domain/mappers/index.js";
+import type { ResourceNode } from "../../../domains/resources/models/index.js";
+import type { IRepresentationMapper } from "../../../domains/shared/mappers/mapper.js";
 import { nodeLifecycleResponse } from "./node-lifecycle-response.js";
 
 export interface IResourceResponse {

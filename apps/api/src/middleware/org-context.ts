@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { getAuth } from "@clerk/express";
-import type { IOrganizationRepository } from "../domain/interfaces/organization-repository.js";
+import type { IOrganizationViews } from "../domains/organizations/views.js";
 
 export const ORG_ID_HEADER = "x-org-id";
 
@@ -11,7 +11,7 @@ export function getOrgIdHeader(req: Request): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-export function createRequireOrgContext(organizations: IOrganizationRepository) {
+export function createRequireOrgContext(organizations: IOrganizationViews) {
   return async (req: Request, res: Response, next: () => void): Promise<void> => {
     const userId = getAuth(req).userId;
     if (!userId) {

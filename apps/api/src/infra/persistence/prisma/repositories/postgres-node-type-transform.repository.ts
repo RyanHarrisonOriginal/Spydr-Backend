@@ -1,5 +1,5 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
-import type { INodeTypeTransformRepository } from "../../../../domain/interfaces/node-type-transform-repository.js";
+import type { INodeTypeTransformRepository } from "../../../../domains/node-type-transform/repository.js";
 import {
   assertTransformAllowed,
   defaultProjectDetailsFromSource,
@@ -11,7 +11,7 @@ import {
   type INodeTypeTransformRequest,
   type INodeTypeTransformResult,
   type TransformableNodeType,
-} from "../../../../domain/node-type-transform/index.js";
+} from "../../../../domains/node-type-transform/index.js";
 import { findProjectIdForChildNode } from "../find-project-for-child-node.js";
 
 const PROJECT_CHILD_NODE_TYPES = [
@@ -124,6 +124,7 @@ export class PostgresNodeTypeTransformRepository
     const taskDetails = {
       ...defaultTaskDetailsFromSource({
         now,
+        status: row.status,
         projectDetails: row.projectDetails,
       }),
       tags: projectAreaTag ? this.appendTag([], projectAreaTag) : [],
@@ -401,7 +402,10 @@ export class PostgresNodeTypeTransformRepository
 
     await this.assertProjectExists(request.orgId, projectId);
 
-    const taskDetails = defaultTaskDetailsFromSource({ now });
+    const taskDetails = defaultTaskDetailsFromSource({
+      now,
+      status: row.status,
+    });
 
     await this.db.$transaction(async (tx) => {
       await this.recordHistory(
@@ -518,7 +522,10 @@ export class PostgresNodeTypeTransformRepository
 
     await this.assertProjectExists(request.orgId, projectId);
 
-    const taskDetails = defaultTaskDetailsFromSource({ now });
+    const taskDetails = defaultTaskDetailsFromSource({
+      now,
+      status: row.status,
+    });
 
     await this.db.$transaction(async (tx) => {
       await this.recordHistory(

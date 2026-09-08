@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
-import { DecisionDetails, DecisionNode } from "../../../../domain/models/decisions/index.js";
-import type { IDecisionDetailsProps } from "../../../../domain/models/decisions/index.js";
-import type { IDomainMapper } from "../../../../domain/mappers/index.js";
+import { DecisionDetails, DecisionNode } from "../../../../domains/decisions/models/index.js";
+import type { IDecisionDetailsProps } from "../../../../domains/decisions/models/index.js";
+import type { IDomainMapper } from "../../../../domains/shared/mappers/mapper.js";
 import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
 
 export type PrismaDecisionWithDetails = Prisma.SpydrNodeGetPayload<{

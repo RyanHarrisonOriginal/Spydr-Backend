@@ -1,0 +1,25 @@
+import type { IProjectViews } from "../views.js";
+import type { ProjectNode } from "../models/index.js";
+import type { IQuery, IQueryHandler } from "../../shared/application/query.js";
+
+export class ListProjectsQuery implements IQuery<ProjectNode[]> {
+  static readonly queryType = "projects.list";
+  readonly queryType = ListProjectsQuery.queryType;
+
+  constructor(
+    readonly userId: string,
+    readonly orgId: string
+  ) {}
+}
+
+export class ListProjectsQueryHandler
+  implements IQueryHandler<ListProjectsQuery, ProjectNode[]>
+{
+  readonly queryType = ListProjectsQuery.queryType;
+
+  constructor(private readonly projects: IProjectViews) {}
+
+  execute(query: ListProjectsQuery): Promise<ProjectNode[]> {
+    return this.projects.listByOrg(query.orgId);
+  }
+}

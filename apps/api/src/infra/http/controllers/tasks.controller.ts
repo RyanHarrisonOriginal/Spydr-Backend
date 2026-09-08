@@ -1,14 +1,15 @@
 import type { Request, Response } from "express";
 import { getOrgContext } from "../../../middleware/org-context.js";
-import type { ICommandBus } from "../../../domain/cqrs/commands/index.js";
+import type { ICommandBus } from "../../../domains/shared/application/index.js";
 import {
   UpdateTaskCommand,
+  CompleteTaskCommand,
   DeleteTaskCommand,
   type IUpdateTaskInput,
-} from "../../../domain/cqrs/commands/tasks/index.js";
-import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";
-import { GetTaskQuery, ListTasksQuery } from "../../../domain/cqrs/queries/index.js";
-import type { ITaskListItem } from "../../../domain/interfaces/task-repository.js";
+} from "../../../domains/tasks/commands/index.js";
+import type { IQueryBus } from "../../../domains/shared/application/index.js";
+import { GetTaskQuery, ListTasksQuery } from "../../../domains/shared/application/index.js";
+import type { ITaskListItem } from "../../../domains/tasks/views.js";
 import { TaskResponseMapper } from "../mappers/task-response.mapper.js";
 
 export class TasksController {
@@ -86,6 +87,28 @@ export class TasksController {
 
       console.error(error);
       res.status(500).json({ message: "Failed to update task" });
+    }
+  };
+
+  complete = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
+
+      const item = await this.commandBus.execute<
+        CompleteTaskCommand,
+        ITaskListItem | null
+      >(new CompleteTaskCommand(ctx.userId, ctx.orgId, req.params.id));
+
+      if (!item) {
+        res.status(404).json({ message: "Task not found" });
+        return;
+      }
+
+      res.json(this.mapper.toListRepresentation(item));
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to complete task" });
     }
   };
 

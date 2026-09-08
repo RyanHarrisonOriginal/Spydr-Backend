@@ -1,16 +1,16 @@
 import type { Request, Response } from "express";
 import { getOrgContext } from "../../../middleware/org-context.js";
-import type { ICommandBus } from "../../../domain/cqrs/commands/index.js";
+import type { ICommandBus } from "../../../domains/shared/application/index.js";
 import {
   CreateProjectAreaCommand,
   DeleteProjectAreaCommand,
   UpdateProjectAreaCommand,
   type ICreateProjectAreaInput,
   type IUpdateProjectAreaInput,
-} from "../../../domain/cqrs/commands/project-areas/index.js";
-import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";
-import { ListProjectAreasQuery } from "../../../domain/cqrs/queries/project-areas/index.js";
-import type { ProjectAreaNode } from "../../../domain/models/project-areas/index.js";
+} from "../../../domains/project-areas/commands/index.js";
+import type { IQueryBus } from "../../../domains/shared/application/index.js";
+import { ListProjectAreasQuery } from "../../../domains/project-areas/queries/index.js";
+import type { ProjectAreaNode } from "../../../domains/project-areas/models/index.js";
 import { ProjectAreaResponseMapper } from "../mappers/project-area-response.mapper.js";
 
 export class ProjectAreasController {

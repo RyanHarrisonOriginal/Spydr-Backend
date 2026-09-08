@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Request, Response } from "express";
 import { ActiveNotesController } from "./active-notes.controller.js";
-import type { ICommandBus } from "../../../domain/cqrs/commands/index.js";
-import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";
+import type { ICommandBus } from "../../../domains/shared/application/index.js";
+import type { IQueryBus } from "../../../domains/shared/application/index.js";
 
 function mockResponse() {
   const res = {
@@ -15,12 +15,40 @@ function mockResponse() {
   };
 }
 
-function mockRequest(body: unknown): Request {
+function mockRequest(body: unknown, params: Record<string, string> = {}): Request {
   return {
     body,
+    params,
     orgContext: { userId: "user-1", orgId: "org-1", role: "owner" },
   } as unknown as Request;
 }
+
+describe("ActiveNotesController.analyze", () => {
+  it("returns 202 when analysis is queued", async () => {
+    const accepted = { sessionId: "session-1", status: "analyzing" };
+    const commandBus: ICommandBus = {
+      execute: vi.fn(),
+      register: vi.fn(),
+      registerMany: vi.fn(),
+    };
+    const queryBus: IQueryBus = {
+      execute: vi.fn().mockResolvedValue(accepted),
+      register: vi.fn(),
+      registerMany: vi.fn(),
+    };
+    const controller = new ActiveNotesController(queryBus, commandBus);
+    const res = mockResponse();
+
+    await controller.analyze(
+      mockRequest({ content: "Throw more teeps" }),
+      res
+    );
+
+    expect(queryBus.execute).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(202);
+    expect(res.json).toHaveBeenCalledWith(accepted);
+  });
+});
 
 describe("ActiveNotesController.apply", () => {
   it("dispatches ApplyActiveNoteCommand for a frontend-shaped body", async () => {

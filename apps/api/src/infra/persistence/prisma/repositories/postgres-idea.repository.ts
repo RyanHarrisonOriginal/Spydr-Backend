@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
-import type { IIdeaRepository } from "../../../../domain/interfaces/index.js";
-import type { IdeaNode } from "../../../../domain/models/ideas/index.js";
+import type { IIdeaRepository } from "../../../../domains/index.js";
+import type { IdeaNode } from "../../../../domains/ideas/models/index.js";
 import { PrismaIdeaMapper } from "../mappers/prisma-idea.mapper.js";
 
 export class PostgresIdeaRepository implements IIdeaRepository {
@@ -16,6 +16,13 @@ export class PostgresIdeaRepository implements IIdeaRepository {
     });
 
     return row && row.nodeType === "idea" ? this.mapper.toDomain(row) : null;
+  }
+
+  async get(criteria: { id: string; orgId?: string; includeDeleted?: boolean }) {
+    if (criteria.orgId) {
+      return this.findByIdForOrg(criteria.id, criteria.orgId);
+    }
+    return this.findById(criteria.id);
   }
 
   async findByIdForOrg(id: string, orgId: string): Promise<IdeaNode | null> {

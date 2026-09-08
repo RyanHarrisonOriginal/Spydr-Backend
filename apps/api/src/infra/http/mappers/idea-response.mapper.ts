@@ -1,5 +1,5 @@
-import type { IdeaNode } from "../../../domain/models/ideas/index.js";
-import type { IRepresentationMapper } from "../../../domain/mappers/index.js";
+import type { IdeaNode } from "../../../domains/ideas/models/index.js";
+import type { IRepresentationMapper } from "../../../domains/shared/mappers/mapper.js";
 import type { IIdeaResponse } from "./project-response.mapper.js";
 import { nodeLifecycleResponse } from "./node-lifecycle-response.js";
 

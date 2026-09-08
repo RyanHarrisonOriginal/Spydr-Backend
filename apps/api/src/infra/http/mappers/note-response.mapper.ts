@@ -1,6 +1,6 @@
-import type { INoteListItem } from "../../../domain/interfaces/note-repository.js";
-import type { NoteNode } from "../../../domain/models/notes/index.js";
-import type { IRepresentationMapper } from "../../../domain/mappers/index.js";
+import type { INoteListItem } from "../../../domains/notes/views.js";
+import type { NoteNode } from "../../../domains/notes/models/index.js";
+import type { IRepresentationMapper } from "../../../domains/shared/mappers/mapper.js";
 import { nodeLifecycleResponse } from "./node-lifecycle-response.js";
 
 export interface INoteProjectResponse {

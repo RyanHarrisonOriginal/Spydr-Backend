@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
-import { NoteNode } from "../../../../domain/models/notes/index.js";
-import type { IDomainMapper } from "../../../../domain/mappers/index.js";
+import { NoteNode } from "../../../../domains/notes/models/index.js";
+import type { IDomainMapper } from "../../../../domains/shared/mappers/mapper.js";
 import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
 
 export type PrismaNote = Prisma.SpydrNodeGetPayload<Record<string, never>>;

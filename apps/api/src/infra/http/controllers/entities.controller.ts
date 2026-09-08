@@ -1,11 +1,8 @@
 import type { Request, Response } from "express";
 import { getOrgContext } from "../../../middleware/org-context.js";
-import type { ICommandBus } from "../../../domain/cqrs/commands/index.js";
-import {
-  TransformNodeTypeCommand,
-  type ITransformNodeTypeInput,
-} from "../../../domain/cqrs/commands/nodes/index.js";
-import type { INodeTypeTransformResult } from "../../../domain/node-type-transform/index.js";
+import type { ICommandBus } from "../../../domains/shared/application/index.js";
+import { TransformNodeTypeCommand, type ITransformNodeTypeInput } from "../../../domains/node-type-transform/commands/index.js";
+import type { INodeTypeTransformResult } from "../../../domains/node-type-transform/index.js";
 
 export class EntitiesController {
   constructor(private readonly commandBus: ICommandBus) {}

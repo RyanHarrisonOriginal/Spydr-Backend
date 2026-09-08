@@ -2,9 +2,9 @@ import type { PrismaClient } from "@prisma/client";
 import type {
   IDecisionListItem,
   IDecisionRepository,
-} from "../../../../domain/interfaces/index.js";
-import type { ITaskProjectRef } from "../../../../domain/interfaces/task-repository.js";
-import type { DecisionNode } from "../../../../domain/models/decisions/index.js";
+} from "../../../../domains/index.js";
+import type { ITaskProjectRef } from "../../../../domains/tasks/views.js";
+import type { DecisionNode } from "../../../../domains/decisions/models/index.js";
 import { PrismaDecisionMapper } from "../mappers/prisma-decision.mapper.js";
 
 export class PostgresDecisionRepository implements IDecisionRepository {
@@ -20,6 +20,13 @@ export class PostgresDecisionRepository implements IDecisionRepository {
     });
 
     return row && row.nodeType === "decision" ? this.mapper.toDomain(row) : null;
+  }
+
+  async get(criteria: { id: string; orgId?: string; includeDeleted?: boolean }) {
+    if (criteria.orgId) {
+      return this.findByIdForOrg(criteria.id, criteria.orgId);
+    }
+    return this.findById(criteria.id);
   }
 
   async findByIdForOrg(id: string, orgId: string): Promise<DecisionNode | null> {

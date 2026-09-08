@@ -1,6 +1,6 @@
-import type { ITaskListItem } from "../../../domain/interfaces/task-repository.js";
-import type { TaskNode } from "../../../domain/models/tasks/index.js";
-import type { IRepresentationMapper } from "../../../domain/mappers/index.js";
+import type { ITaskListItem } from "../../../domains/tasks/views.js";
+import type { TaskNode } from "../../../domains/tasks/models/index.js";
+import type { IRepresentationMapper } from "../../../domains/shared/mappers/mapper.js";
 import { nodeLifecycleResponse } from "./node-lifecycle-response.js";
 import {
   PersonResponseMapper,

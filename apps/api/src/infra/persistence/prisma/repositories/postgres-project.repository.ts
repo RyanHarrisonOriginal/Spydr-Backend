@@ -1,18 +1,14 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
-import type { IProjectRepository, IUpdateProjectChildInput, ProjectChildKind } from "../../../../domain/interfaces/project-repository.js";
-import { DecisionMapper } from "../../../../domain/mappers/decisions/decision.mapper.js";
-import { IdeaMapper } from "../../../../domain/mappers/ideas/idea.mapper.js";
-import { NoteMapper } from "../../../../domain/mappers/notes/note.mapper.js";
-import { TaskMapper } from "../../../../domain/mappers/tasks/index.js";
-import type { DecisionNode } from "../../../../domain/models/decisions/index.js";
-import type { IdeaNode } from "../../../../domain/models/ideas/index.js";
-import type { NoteNode } from "../../../../domain/models/notes/index.js";
-import type { ResourceNode } from "../../../../domain/models/resources/index.js";
-import type { TaskStatus } from "../../../../domain/models/shared.js";
-import type { TaskNode } from "../../../../domain/models/tasks/index.js";
-import { ProjectNode } from "../../../../domain/models/projects/index.js";
-import { emptyProjectPersonas } from "../../../../domain/models/projects/personas.js";
-import type { PersonNode } from "../../../../domain/models/people/index.js";
+import type { IProjectRepository, IUpdateProjectChildInput, ProjectChildKind } from "../../../../domains/projects/repository.js";
+import type { DecisionNode } from "../../../../domains/decisions/models/index.js";
+import type { IdeaNode } from "../../../../domains/ideas/models/index.js";
+import type { NoteNode } from "../../../../domains/notes/models/index.js";
+import type { ResourceNode } from "../../../../domains/resources/models/index.js";
+import type { TaskStatus } from "../../../../domains/shared/models/shared.js";
+import type { TaskNode } from "../../../../domains/tasks/models/index.js";
+import { ProjectNode } from "../../../../domains/projects/models/index.js";
+import { emptyProjectPersonas } from "../../../../domains/projects/models/personas.js";
+import type { PersonNode } from "../../../../domains/people/models/index.js";
 import { PrismaPersonMapper } from "../mappers/prisma-person.mapper.js";
 import { PrismaProjectMapper } from "../mappers/prisma-project.mapper.js";
 import { PrismaDecisionMapper } from "../mappers/prisma-decision.mapper.js";
@@ -33,10 +29,6 @@ export class PostgresProjectRepository implements IProjectRepository {
     private readonly ideaMapper = new PrismaIdeaMapper()
   ) {}
 
-  private readonly taskDomainMapper = new TaskMapper();
-  private readonly noteDomainMapper = new NoteMapper();
-  private readonly decisionDomainMapper = new DecisionMapper();
-  private readonly ideaDomainMapper = new IdeaMapper();
   async findById(id: string): Promise<ProjectNode | null> {
     const row = await this.db.spydrNode.findUnique({
       where: { id },
@@ -44,6 +36,13 @@ export class PostgresProjectRepository implements IProjectRepository {
     });
 
     return row && row.nodeType === "project" ? this.mapper.toDomain(row) : null;
+  }
+
+  async get(criteria: { id: string; orgId?: string; includeDeleted?: boolean }) {
+    if (criteria.orgId) {
+      return this.findByIdForOrg(criteria.id, criteria.orgId);
+    }
+    return this.findById(criteria.id);
   }
 
   async findByIdForOrg(id: string, orgId: string): Promise<ProjectNode | null> {
@@ -218,7 +217,79 @@ export class PostgresProjectRepository implements IProjectRepository {
     return restored ? this.mapper.toDomain(restored) : null;
   }
 
-  async save(entity: ProjectNode): Promise<ProjectNode> {
+  async save(
+    entity: ProjectNode,
+    options?: {
+      strategy?: string;
+      context?: {
+        areaNodeId?: string | null;
+        orgId?: string;
+        projectId?: string;
+        childId?: string;
+        kind?: ProjectChildKind;
+        input?: IUpdateProjectChildInput;
+      };
+    }
+  ): Promise<ProjectNode> {
+    const strategy = options?.strategy ?? "standard";
+    const ctx = options?.context;
+
+    if (strategy === "metadata") {
+      return this.updateProject(entity);
+    }
+
+    if (strategy === "withAreaAssignment") {
+      await this.updateProject(entity);
+      await this.setAreaAssignment(
+        entity.id,
+        entity.orgId,
+        ctx?.areaNodeId ?? null
+      );
+      const saved = await this.findByIdForOrg(entity.id, entity.orgId);
+      if (!saved) throw new Error("Failed to save project with area");
+      return saved;
+    }
+
+    if (strategy === "restore") {
+      const restored = await this.restoreProject(entity.orgId, entity.id);
+      if (!restored) throw new Error("Failed to restore project");
+      return restored;
+    }
+
+    if (strategy === "updateChild") {
+      const result = await this.updateRelatedNode(
+        ctx?.orgId ?? entity.orgId,
+        ctx?.projectId ?? entity.id,
+        ctx?.childId!,
+        ctx?.kind!,
+        ctx?.input ?? {}
+      );
+      if (!result) throw new Error("Failed to update project child");
+      return result;
+    }
+
+    if (strategy === "softDeleteChild") {
+      const result = await this.softDeleteRelatedNode(
+        ctx?.orgId ?? entity.orgId,
+        ctx?.projectId ?? entity.id,
+        ctx?.childId!,
+        ctx?.kind!
+      );
+      if (!result) throw new Error("Failed to delete project child");
+      return result;
+    }
+
+    if (strategy === "restoreChild") {
+      const result = await this.restoreRelatedNode(
+        ctx?.orgId ?? entity.orgId,
+        ctx?.projectId ?? entity.id,
+        ctx?.childId!,
+        ctx?.kind!
+      );
+      if (!result) throw new Error("Failed to restore project child");
+      return result;
+    }
+
     const nodeData = this.mapper.toPersistence(entity);
     const { id, ...nodeUpdateData } = nodeData;
 
@@ -392,31 +463,45 @@ export class PostgresProjectRepository implements IProjectRepository {
           throw new Error("Person not found");
         }
       }
-      const updated = this.taskDomainMapper.updateToModel(existing, {
-        title: input.title,
-        body: input.body,
-        status: input.status as TaskStatus | undefined,
-        priority: input.priority as TaskNode["priority"] | undefined,
-        dueDate: input.dueDate,
-        estimatedMinutes: input.estimatedMinutes,
-        assigneePersonNodeId: input.assigneePersonNodeId,
-      }, now);
-      await this.persistTask(this.db, { id: projectId, orgId, userId: existing.userId } as ProjectNode, updated);
+      existing.applyUpdate(
+        {
+          title: input.title,
+          body: input.body,
+          status: input.status as TaskStatus | undefined,
+          priority: input.priority as TaskNode["priority"] | undefined,
+          dueDate:
+            input.dueDate !== undefined
+              ? parseOptionalDate(input.dueDate, "Invalid task date")
+              : undefined,
+          estimatedMinutes: input.estimatedMinutes,
+          assigneePersonNodeId: input.assigneePersonNodeId,
+        },
+        now
+      );
+      await this.persistTask(this.db, { id: projectId, orgId, userId: existing.userId } as ProjectNode, existing);
     } else if (kind === "note") {
       const existing = await this.loadNote(childId, orgId);
       if (!existing || existing.isDeleted) return null;
-      const updated = this.noteDomainMapper.updateToModel(existing, input, now);
-      await this.persistNote(this.db, { id: projectId, orgId, userId: existing.userId } as ProjectNode, updated);
+      existing.applyUpdate({ title: input.title, body: input.body }, now);
+      await this.persistNote(this.db, { id: projectId, orgId, userId: existing.userId } as ProjectNode, existing);
     } else if (kind === "decision") {
       const existing = await this.loadDecision(childId, orgId);
       if (!existing || existing.isDeleted) return null;
-      const updated = this.decisionDomainMapper.updateToModel(existing, input, now);
-      await this.persistDecision(this.db, { id: projectId, orgId, userId: existing.userId } as ProjectNode, updated);
+      existing.applyUpdate(
+        {
+          title: input.title,
+          body: input.body,
+          rationale: input.rationale,
+          impact: input.impact,
+        },
+        now
+      );
+      await this.persistDecision(this.db, { id: projectId, orgId, userId: existing.userId } as ProjectNode, existing);
     } else if (kind === "idea") {
       const existing = await this.loadIdea(childId, orgId);
       if (!existing || existing.isDeleted) return null;
-      const updated = this.ideaDomainMapper.updateToModel(existing, input, now);
-      await this.persistIdea(this.db, { id: projectId, orgId, userId: existing.userId } as ProjectNode, updated);
+      existing.applyUpdate({ title: input.title, body: input.body }, now);
+      await this.persistIdea(this.db, { id: projectId, orgId, userId: existing.userId } as ProjectNode, existing);
     } else if (kind === "resource") {
       const existing = await this.loadResource(childId, orgId);
       if (!existing || existing.isDeleted) return null;
@@ -810,4 +895,18 @@ export class PostgresProjectRepository implements IProjectRepository {
       },
     });
   }
+}
+
+function parseOptionalDate(
+  value: string | null | undefined,
+  invalidMessage: string
+): Date | null {
+  if (!value) return null;
+
+  const date = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(invalidMessage);
+  }
+
+  return date;
 }

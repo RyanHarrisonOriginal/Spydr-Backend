@@ -1,14 +1,14 @@
 import type { Request, Response } from "express";
 import { getOrgContext } from "../../../middleware/org-context.js";
-import type { ICommandBus } from "../../../domain/cqrs/commands/index.js";
+import type { ICommandBus } from "../../../domains/shared/application/index.js";
 import {
   UpdateNoteCommand,
   DeleteNoteCommand,
   type IUpdateNoteInput,
-} from "../../../domain/cqrs/commands/index.js";
-import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";
-import { GetNoteQuery, ListNotesQuery } from "../../../domain/cqrs/queries/index.js";
-import type { INoteListItem } from "../../../domain/interfaces/note-repository.js";
+} from "../../../domains/shared/application/index.js";
+import type { IQueryBus } from "../../../domains/shared/application/index.js";
+import { GetNoteQuery, ListNotesQuery } from "../../../domains/shared/application/index.js";
+import type { INoteListItem } from "../../../domains/notes/views.js";
 import { NoteResponseMapper } from "../mappers/note-response.mapper.js";
 
 export class NotesController {

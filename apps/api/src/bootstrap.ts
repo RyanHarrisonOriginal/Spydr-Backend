@@ -2,27 +2,23 @@ import type { Server } from "node:http";
 import type { Express } from "express";
 import type { PrismaClient } from "@prisma/client";
 import { prisma as defaultPrisma } from "@spydr/db";
+import { ACTIVE_NOTE_PROMPT_VERSION } from "@spydr/active-notes";
 import {
   EmbeddingAwareCommandBus,
   registerCommandHandlers,
   type ICommandBus,
-} from "./domain/cqrs/commands/index.js";
+} from "./domains/shared/application/index.js";
 import {
   QueryBus,
   registerQueryHandlers,
   type IQueryBus,
-} from "./domain/cqrs/queries/index.js";
+} from "./domains/shared/application/index.js";
 import {
   createPersistenceRepositories,
   type IPersistenceRepositories,
 } from "./infra/persistence/index.js";
 import { createHttpApp } from "./infra/http/index.js";
-import { createActiveNotePorts } from "./infra/ai/index.js";
-import type { ActiveNotePortBundle } from "./infra/ai/index.js";
-import {
-  AnalyzeActiveNoteService,
-  type AnalyzeActiveNotePorts,
-} from "./domain/active-notes/index.js";
+import { enqueueActiveNoteAnalyze as defaultEnqueueActiveNoteAnalyze } from "./infra/jobs/active-note-analyze.producer.js";
 
 export interface IBackendConfig {
   apiPrefix: string;
@@ -51,7 +47,7 @@ export interface IBackendOverrides {
   config?: Partial<IBackendConfig>;
   prisma?: PrismaClient;
   repositories?: IPersistenceRepositories;
-  analyzeActiveNotePorts?: AnalyzeActiveNotePorts;
+  enqueueActiveNoteAnalyze?: (sessionId: string) => Promise<void>;
   activeNotePromptVersion?: string | null;
 }
 
@@ -77,14 +73,11 @@ export function createBackend(overrides: IBackendOverrides = {}): IBackend {
     repositories,
     prisma,
   };
-  const activeNotePorts =
-    overrides.analyzeActiveNotePorts ?? createActiveNotePorts();
-  const analyzeActiveNote = new AnalyzeActiveNoteService(activeNotePorts);
   registerQueryHandlers(services.queryBus, services.repositories, {
-    analyzeActiveNote,
+    enqueueActiveNoteAnalyze:
+      overrides.enqueueActiveNoteAnalyze ?? defaultEnqueueActiveNoteAnalyze,
     activeNotePromptVersion:
-      overrides.activeNotePromptVersion ??
-      promptVersionFromPorts(activeNotePorts),
+      overrides.activeNotePromptVersion ?? ACTIVE_NOTE_PROMPT_VERSION,
   });
   registerCommandHandlers(services.commandBus, services.repositories);
 
@@ -94,7 +87,7 @@ export function createBackend(overrides: IBackendOverrides = {}): IBackend {
       apiPrefix: config.apiPrefix,
       commandBus: services.commandBus,
       queryBus: services.queryBus,
-      organizations: services.repositories.organizations,
+      organizationViews: services.repositories.organizationViews,
     });
   let server: Server | undefined;
 
@@ -121,13 +114,4 @@ export function createBackend(overrides: IBackendOverrides = {}): IBackend {
       await prisma.$disconnect();
     },
   };
-}
-
-function promptVersionFromPorts(
-  ports: AnalyzeActiveNotePorts | ActiveNotePortBundle
-): string | null {
-  if ("promptVersion" in ports && typeof ports.promptVersion === "string") {
-    return ports.promptVersion;
-  }
-  return null;
 }

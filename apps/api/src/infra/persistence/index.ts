@@ -11,4 +11,4 @@ export { PostgresNoteRepository } from "./prisma/repositories/postgres-note.repo
 export { PostgresProjectRepository } from "./prisma/repositories/postgres-project.repository.js";
 export { PostgresResourceRepository } from "./prisma/repositories/postgres-resource.repository.js";
 export { PrismaSpydrNodeRepository } from "./prisma/repositories/prisma-spydr-node.repository.js";
-export { PostgresTaskRepository } from "./prisma/repositories/postgres-task.repository.js";
+export { PostgresTaskRepository } from "./tasks/postgres-task.repository.js";

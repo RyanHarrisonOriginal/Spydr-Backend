@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
 import { getOrgContext } from "../../../middleware/org-context.js";
-import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";
-import { ListResourcesQuery } from "../../../domain/cqrs/queries/index.js";
-import type { ResourceNode } from "../../../domain/models/resources/index.js";
+import type { IQueryBus } from "../../../domains/shared/application/index.js";
+import { ListResourcesQuery } from "../../../domains/shared/application/index.js";
+import type { ResourceNode } from "../../../domains/resources/models/index.js";
 import { ResourceResponseMapper } from "../mappers/resource-response.mapper.js";
 
 export class ResourcesController {

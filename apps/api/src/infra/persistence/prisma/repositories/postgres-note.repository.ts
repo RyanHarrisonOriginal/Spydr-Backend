@@ -2,11 +2,11 @@ import type { PrismaClient } from "@prisma/client";
 import type {
   INoteListItem,
   INoteRepository,
-} from "../../../../domain/interfaces/index.js";
-import type { ITaskProjectRef } from "../../../../domain/interfaces/task-repository.js";
-import { NoteMapper } from "../../../../domain/mappers/notes/note.mapper.js";
-import type { INoteUpdateModelInput } from "../../../../domain/mappers/notes/note.mapper.js";
-import type { NoteNode } from "../../../../domain/models/notes/index.js";
+} from "../../../../domains/index.js";
+import type { ITaskProjectRef } from "../../../../domains/tasks/views.js";
+import { NoteMapper } from "../../../../domains/notes/mappers/note.mapper.js";
+import type { INoteUpdateModelInput } from "../../../../domains/notes/mappers/note.mapper.js";
+import type { NoteNode } from "../../../../domains/notes/models/index.js";
 import { PrismaNoteMapper } from "../mappers/prisma-note.mapper.js";
 
 export class PostgresNoteRepository implements INoteRepository {
@@ -19,6 +19,13 @@ export class PostgresNoteRepository implements INoteRepository {
   async findById(id: string): Promise<NoteNode | null> {
     const row = await this.db.spydrNode.findUnique({ where: { id } });
     return row && row.nodeType === "note" ? this.mapper.toDomain(row) : null;
+  }
+
+  async get(criteria: { id: string; orgId?: string; includeDeleted?: boolean }) {
+    if (criteria.orgId) {
+      return this.findByIdForOrg(criteria.id, criteria.orgId);
+    }
+    return this.findById(criteria.id);
   }
 
   async findByIdForOrg(id: string, orgId: string): Promise<NoteNode | null> {

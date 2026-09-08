@@ -3,8 +3,8 @@ import {
   DomainNode,
   type SpydrNodeStatus,
   type SpydrNodeType,
-} from "../../../../domain/models/index.js";
-import type { IDomainMapper } from "../../../../domain/mappers/index.js";
+} from "../../../../domains/shared/models/shared.js";
+import type { IDomainMapper } from "../../../../domains/shared/mappers/mapper.js";
 import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
 
 export class PrismaSpydrNodeMapper

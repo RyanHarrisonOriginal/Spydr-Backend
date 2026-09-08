@@ -2,9 +2,9 @@ import type { Prisma } from "@prisma/client";
 import {
   ProjectAreaDetails,
   ProjectAreaNode,
-} from "../../../../domain/models/project-areas/index.js";
-import type { IProjectAreaDetailsProps } from "../../../../domain/models/project-areas/index.js";
-import type { IDomainMapper } from "../../../../domain/mappers/index.js";
+} from "../../../../domains/project-areas/models/index.js";
+import type { IProjectAreaDetailsProps } from "../../../../domains/project-areas/models/index.js";
+import type { IDomainMapper } from "../../../../domains/shared/mappers/mapper.js";
 import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
 
 export type PrismaProjectAreaWithDetails = Prisma.SpydrNodeGetPayload<{

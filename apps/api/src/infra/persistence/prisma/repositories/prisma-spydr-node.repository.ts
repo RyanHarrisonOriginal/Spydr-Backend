@@ -1,9 +1,9 @@
 import type { Prisma, PrismaClient, SpydrNodeType } from "@prisma/client";
-import type { DomainNode } from "../../../../domain/models/index.js";
+import type { DomainNode } from "../../../../domains/shared/models/shared.js";
 import type {
   ISpydrNodeListCriteria,
   ISpydrNodeRepository,
-} from "../../../../domain/interfaces/index.js";
+} from "../../../../domains/index.js";
 import { PrismaSpydrNodeMapper } from "../mappers/prisma-spydr-node.mapper.js";
 
 export class PrismaSpydrNodeRepository implements ISpydrNodeRepository {
@@ -15,6 +15,13 @@ export class PrismaSpydrNodeRepository implements ISpydrNodeRepository {
   async findById(id: string): Promise<DomainNode | null> {
     const row = await this.db.spydrNode.findUnique({ where: { id } });
     return row ? this.mapper.toDomain(row) : null;
+  }
+
+  async get(criteria: { id: string; orgId?: string; includeDeleted?: boolean }) {
+    if (criteria.orgId) {
+      return this.findByIdForOrg(criteria.id, criteria.orgId);
+    }
+    return this.findById(criteria.id);
   }
 
   async findByIdForOrg(id: string, orgId: string): Promise<DomainNode | null> {
@@ -38,7 +45,27 @@ export class PrismaSpydrNodeRepository implements ISpydrNodeRepository {
     return rows.map((row) => this.mapper.toDomain(row));
   }
 
-  async save(entity: DomainNode): Promise<DomainNode> {
+  async save(
+    entity: DomainNode,
+    options?: {
+      strategy?: string;
+      context?: {
+        orgId?: string;
+        nodeType?: SpydrNodeType;
+        orderedIds?: readonly string[];
+      };
+    }
+  ): Promise<DomainNode> {
+    const strategy = options?.strategy ?? "standard";
+    if (strategy === "reorder") {
+      const ctx = options?.context;
+      if (!ctx?.orgId || !ctx.nodeType || !ctx.orderedIds) {
+        throw new Error("reorder strategy requires orgId, nodeType, orderedIds");
+      }
+      await this.reorderForOrg(ctx.orgId, ctx.nodeType, ctx.orderedIds);
+      return entity;
+    }
+
     const data = this.mapper.toPersistence(entity);
     const { id, ...updateData } = data;
     const saved = await this.db.spydrNode.upsert({

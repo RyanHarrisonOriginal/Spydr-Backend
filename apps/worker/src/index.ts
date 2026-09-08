@@ -1,16 +1,21 @@
 import "@spydr/config";
 
-import { PROJECT_EMBEDDING_QUEUE_NAME } from "@spydr/shared";
+import {
+  ACTIVE_NOTE_ANALYZE_QUEUE_NAME,
+  PROJECT_EMBEDDING_QUEUE_NAME,
+} from "@spydr/shared";
 import { registerGracefulShutdown } from "./lib/shutdown.js";
 import { createEmbeddingWorker } from "./workers/embedding.worker.js";
+import { createActiveNoteAnalyzeWorker } from "./workers/active-note-analyze.worker.js";
 
 async function main(): Promise<void> {
-  const worker = createEmbeddingWorker();
+  const embeddingWorker = createEmbeddingWorker();
+  const analyzeWorker = createActiveNoteAnalyzeWorker();
 
-  registerGracefulShutdown({ workers: [worker] });
+  registerGracefulShutdown({ workers: [embeddingWorker, analyzeWorker] });
 
   console.info(
-    `[worker] Spydr AI background worker started (queue=${PROJECT_EMBEDDING_QUEUE_NAME})`
+    `[worker] Spydr AI background worker started (queues=${PROJECT_EMBEDDING_QUEUE_NAME}, ${ACTIVE_NOTE_ANALYZE_QUEUE_NAME})`
   );
 }
 

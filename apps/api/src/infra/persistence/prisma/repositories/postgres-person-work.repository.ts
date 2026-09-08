@@ -1,18 +1,18 @@
-import type { IProjectRepository } from "../../../../domain/interfaces/project-repository.js";
-import type { IPersonCollectionSortRepository } from "../../../../domain/interfaces/person-collection-sort-repository.js";
-import type { IPersonRepository } from "../../../../domain/interfaces/person-repository.js";
+import type { IPersonCollectionSortRepository } from "../../../../domains/people/collection-sort-repository.js";
+import type { IPersonRepository } from "../../../../domains/people/repository.js";
 import type {
   IPersonWork,
   IPersonWorkProjectEntry,
   IPersonWorkRepository,
   IPersonWorkTaskEntry,
-} from "../../../../domain/interfaces/person-work-repository.js";
-import type { ITaskListItem, ITaskRepository } from "../../../../domain/interfaces/task-repository.js";
-import type { ProjectNode } from "../../../../domain/models/projects/index.js";
+} from "../../../../domains/people/work-views.js";
+import type { IProjectViews } from "../../../../domains/projects/views.js";
+import type { ITaskListItem, ITaskViews } from "../../../../domains/tasks/views.js";
+import type { ProjectNode } from "../../../../domains/projects/models/index.js";
 import {
   getPersonProjectRoles,
   projectInvolvesPerson,
-} from "../../../../domain/utils/person-project-roles.js";
+} from "../../../../domains/shared/utils/person-project-roles.js";
 
 function isOpenTaskStatus(status: string): boolean {
   return status !== "completed" && status !== "archived";
@@ -40,18 +40,18 @@ function comparePersonListOrder(
 export class PostgresPersonWorkRepository implements IPersonWorkRepository {
   constructor(
     private readonly people: IPersonRepository,
-    private readonly projects: IProjectRepository,
-    private readonly tasks: ITaskRepository,
+    private readonly projectViews: IProjectViews,
+    private readonly taskViews: ITaskViews,
     private readonly personCollectionSort: IPersonCollectionSortRepository
   ) {}
 
   async getWork(orgId: string, personNodeId: string): Promise<IPersonWork | null> {
-    const person = await this.people.findByIdForOrg(personNodeId, orgId);
+    const person = await this.people.get({ id: personNodeId, orgId });
     if (!person) return null;
 
     const [allProjects, allTaskItems] = await Promise.all([
-      this.projects.listByOrg(orgId),
-      this.tasks.listByOrgWithProjects(orgId),
+      this.projectViews.listByOrg(orgId),
+      this.taskViews.listByOrg(orgId),
     ]);
 
     const linkedTaskItems = allTaskItems.filter(

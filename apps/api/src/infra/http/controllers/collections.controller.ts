@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
 import { getOrgContext } from "../../../middleware/org-context.js";
-import type { ICommandBus } from "../../../domain/cqrs/commands/index.js";
-import { ReorderNodesCommand } from "../../../domain/cqrs/commands/nodes/index.js";
-import type { SpydrNodeType } from "../../../domain/models/index.js";
+import type { ICommandBus } from "../../../domains/shared/application/index.js";
+import { ReorderNodesCommand } from "../../../domains/nodes/commands/index.js";
+import type { SpydrNodeType } from "../../../domains/shared/models/shared.js";
 
 const COLLECTION_NODE_TYPES = new Set<SpydrNodeType>([
   "project",

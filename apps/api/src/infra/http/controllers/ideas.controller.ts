@@ -1,10 +1,10 @@
 import type { Request, Response } from "express";
 import { getOrgContext } from "../../../middleware/org-context.js";
-import type { ICommandBus } from "../../../domain/cqrs/commands/index.js";
-import { DeleteIdeaCommand } from "../../../domain/cqrs/commands/ideas/index.js";
-import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";
-import { ListIdeasQuery } from "../../../domain/cqrs/queries/index.js";
-import type { IdeaNode } from "../../../domain/models/ideas/index.js";
+import type { ICommandBus } from "../../../domains/shared/application/index.js";
+import { DeleteIdeaCommand } from "../../../domains/ideas/commands/index.js";
+import type { IQueryBus } from "../../../domains/shared/application/index.js";
+import { ListIdeasQuery } from "../../../domains/shared/application/index.js";
+import type { IdeaNode } from "../../../domains/ideas/models/index.js";
 import { IdeaResponseMapper } from "../mappers/idea-response.mapper.js";
 
 export class IdeasController {

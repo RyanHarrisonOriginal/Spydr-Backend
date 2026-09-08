@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
-import type { IPersonRepository } from "../../../../domain/interfaces/person-repository.js";
-import type { PersonNode } from "../../../../domain/models/people/index.js";
+import type { IPersonRepository } from "../../../../domains/people/repository.js";
+import type { PersonNode } from "../../../../domains/people/models/index.js";
 import { PrismaPersonMapper } from "../mappers/prisma-person.mapper.js";
 
 const personInclude = { personDetails: true } as const;
@@ -17,6 +17,13 @@ export class PostgresPersonRepository implements IPersonRepository {
       include: personInclude,
     });
     return row && row.nodeType === "person" ? this.mapper.toDomain(row) : null;
+  }
+
+  async get(criteria: { id: string; orgId?: string; includeDeleted?: boolean }) {
+    if (criteria.orgId) {
+      return this.findByIdForOrg(criteria.id, criteria.orgId);
+    }
+    return this.findById(criteria.id);
   }
 
   async findByIdForOrg(id: string, orgId: string): Promise<PersonNode | null> {
@@ -36,7 +43,17 @@ export class PostgresPersonRepository implements IPersonRepository {
     return rows.map((row) => this.mapper.toDomain(row));
   }
 
-  async save(entity: PersonNode): Promise<PersonNode> {
+  async save(
+    entity: PersonNode,
+    options?: { strategy?: string; context?: { orgId?: string } }
+  ): Promise<PersonNode> {
+    const strategy = options?.strategy ?? "standard";
+    if (strategy === "clearReferences") {
+      const orgId = options?.context?.orgId ?? entity.orgId;
+      await this.clearPersonReferences(orgId, entity.id);
+      return entity;
+    }
+
     const nodeData = this.mapper.toPersistence(entity);
     const { id, ...nodeUpdateData } = nodeData;
 

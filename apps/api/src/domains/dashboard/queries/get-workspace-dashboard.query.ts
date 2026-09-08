@@ -1,0 +1,25 @@
+import type { IWorkspaceDashboardRepository } from "../../dashboard/views.js";
+import type { IWorkspaceDashboard } from "../../dashboard/views.js";
+import type { IQuery, IQueryHandler } from "../../shared/application/query.js";
+
+export class GetWorkspaceDashboardQuery implements IQuery<IWorkspaceDashboard> {
+  static readonly queryType = "dashboard.workspace";
+  readonly queryType = GetWorkspaceDashboardQuery.queryType;
+
+  constructor(
+    readonly userId: string,
+    readonly orgId: string
+  ) {}
+}
+
+export class GetWorkspaceDashboardQueryHandler
+  implements IQueryHandler<GetWorkspaceDashboardQuery, IWorkspaceDashboard>
+{
+  readonly queryType = GetWorkspaceDashboardQuery.queryType;
+
+  constructor(private readonly dashboard: IWorkspaceDashboardRepository) {}
+
+  execute(query: GetWorkspaceDashboardQuery): Promise<IWorkspaceDashboard> {
+    return this.dashboard.getForOrg(query.orgId);
+  }
+}

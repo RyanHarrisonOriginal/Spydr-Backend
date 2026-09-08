@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
-import { TaskDetails, TaskNode } from "../../../../domain/models/tasks/index.js";
-import type { ITaskDetailsProps } from "../../../../domain/models/tasks/index.js";
-import type { IDomainMapper } from "../../../../domain/mappers/index.js";
+import { TaskDetails, TaskNode } from "../../../../domains/tasks/models/index.js";
+import type { ITaskDetailsProps } from "../../../../domains/tasks/models/index.js";
+import type { IDomainMapper } from "../../../../domains/shared/mappers/mapper.js";
 import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
 
 export type PrismaTaskWithDetails = Prisma.SpydrNodeGetPayload<{

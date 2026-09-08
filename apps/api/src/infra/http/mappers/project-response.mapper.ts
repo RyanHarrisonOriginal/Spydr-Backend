@@ -1,5 +1,5 @@
-import type { ProjectNode } from "../../../domain/models/projects/index.js";
-import type { IRepresentationMapper } from "../../../domain/mappers/index.js";
+import type { ProjectNode } from "../../../domains/projects/models/index.js";
+import type { IRepresentationMapper } from "../../../domains/shared/mappers/mapper.js";
 import {
   DecisionResponseMapper,
   type IDecisionResponse,

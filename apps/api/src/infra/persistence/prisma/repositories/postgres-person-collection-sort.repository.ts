@@ -2,7 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 import type {
   IPersonCollectionSortRepository,
   PersonCollectionNodeType,
-} from "../../../../domain/interfaces/person-collection-sort-repository.js";
+} from "../../../../domains/people/collection-sort-repository.js";
 
 export class PostgresPersonCollectionSortRepository
   implements IPersonCollectionSortRepository

@@ -1,0 +1,81 @@
+---
+description: Backend domain architecture — commands, queries, strict repos, save strategies, mappers
+globs: apps/api/src/**/*.ts
+alwaysApply: true
+---
+
+# Backend architecture
+
+Do **not** use DDD aggregates, ubiquitous-language ceremony, or a centralized CQRS folder. Domains own their commands and queries.
+
+## Layout
+
+```
+apps/api/src/domains/<domain>/
+  commands/          # write use-cases
+  models/            # domain entities — own all domain behavior as methods
+  mappers/           # create/input construction only (not update/complete rules)
+  repository.ts      # write port: get | save | delete ONLY
+  views.ts           # read port for projections (queries only)
+  index.ts
+apps/api/src/domains/shared/
+  application/       # command/query bus + registration
+  models/            # DomainNode, shared enums
+  utils/
+apps/api/src/infra/persistence/<domain>/
+  postgres-*.repository.ts
+  *-views.ts
+  save-strategies/   # only when standard save is insufficient
+  prisma-*.mapper.ts
+```
+
+## Domain models (hard)
+
+- All domain behavior for an aggregate lives on the domain object as a method (`complete`, `applyUpdate`, `softDelete`, `addTask`, setters, …).
+- Do **not** put status transitions, field patches, soft-delete/restore flags, or child-collection rules in command handlers or mappers.
+- Mappers construct create-time models (`toModel`); update/complete/delete rules belong on the model.
+
+## Repository rules (hard)
+
+Write repositories expose **only**:
+
+- `get(criteria)` — load one entity for commands
+- `save(entity, options?)` — persist; optional strategy key + context
+- `delete(id)` — soft or hard delete as domain defines
+
+**Forbidden on repositories:** `list*`, `update*`, `assign*`, `restore*`, `findBy*ForOrg` (use `get`), `saveFor*`, ad-hoc mutation helpers.
+
+## Save strategies
+
+- Default path: standard save strategy (upsert entity + details).
+- Add a strategy **iff** persist shape differs (e.g. create + project link, metadata-only, reorder batch).
+- Command handler chooses the strategy; repository dispatches to it.
+- Prefer mutating the domain model then `save` with standard strategy.
+
+```ts
+await tasks.save(task); // standard
+await tasks.save(task, { strategy: "withProjectLink", context: { projectId } });
+```
+
+## Commands
+
+- Orchestrate only: `repo.get` → map create input / use loaded entity → **call domain methods** → `repo.save` / `repo.delete`.
+- Validate related entities via other `get`s; do not inline aggregate mutation logic in the handler.
+- Return identifiers or minimal write results; prefer queries for rich views when practical.
+
+## Queries
+
+- Own all list/detail/projection reads through `views.ts` ports (not write repos).
+- Map persistence → view DTOs with mappers.
+- Never call `save` / `delete`.
+
+## Mappers
+
+- Domain mappers: create input → domain model (`toModel`). Do not encode update/complete/delete behavior.
+- Prisma mappers: persistence ↔ domain model.
+- Response/view mappers: domain/projection → HTTP JSON.
+- No mapping logic inside repositories beyond delegating to mappers/strategies.
+
+## Buses
+
+Thin `CommandBus` / `QueryBus` are dispatch only. Handlers live inside each domain folder. Do not reintroduce a `domain/cqrs/` tree.

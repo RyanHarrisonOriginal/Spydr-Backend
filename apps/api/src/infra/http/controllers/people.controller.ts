@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { getOrgContext } from "../../../middleware/org-context.js";
-import type { ICommandBus } from "../../../domain/cqrs/commands/index.js";
+import type { ICommandBus } from "../../../domains/shared/application/index.js";
 import {
   CreatePersonCommand,
   DeletePersonCommand,
@@ -8,15 +8,15 @@ import {
   UpdatePersonCommand,
   type ICreatePersonInput,
   type IUpdatePersonInput,
-} from "../../../domain/cqrs/commands/people/index.js";
-import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";
+} from "../../../domains/people/commands/index.js";
+import type { IQueryBus } from "../../../domains/shared/application/index.js";
 import {
   GetPersonQuery,
   GetPersonWorkQuery,
   ListPeopleQuery,
-} from "../../../domain/cqrs/queries/people/index.js";
-import type { IPersonWork } from "../../../domain/interfaces/person-work-repository.js";
-import type { PersonNode } from "../../../domain/models/people/index.js";
+} from "../../../domains/people/queries/index.js";
+import type { IPersonWork } from "../../../domains/people/work-views.js";
+import type { PersonNode } from "../../../domains/people/models/index.js";
 import { PersonResponseMapper } from "../mappers/person-response.mapper.js";
 import { PersonWorkResponseMapper } from "../mappers/person-work-response.mapper.js";
 

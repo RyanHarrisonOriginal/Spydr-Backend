@@ -3,22 +3,27 @@ import { getOrgContext } from "../../../middleware/org-context.js";
 import {
   ActiveNoteAnalysisError,
   ActiveNoteApplyError,
-  type ActiveNoteAnalyzeResult,
+  type ActiveNoteAnalyzeAccepted,
+  type ActiveNoteAnalysisSnapshot,
   type ActiveNoteApplyResult,
   type ActiveNoteHistoryItem,
-} from "../../../domain/active-notes/index.js";
+} from "@spydr/active-notes";
 import {
   activeNoteAnalyzeRequestSchema,
   activeNoteApplyRequestSchema,
   formatActiveNoteRequestError,
 } from "../schemas/active-notes.js";
-import type { ICommandBus } from "../../../domain/cqrs/commands/index.js";
-import { ApplyActiveNoteCommand } from "../../../domain/cqrs/commands/index.js";
-import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";
+import type { ICommandBus } from "../../../domains/shared/application/index.js";
+import { ApplyActiveNoteCommand } from "../../../domains/shared/application/index.js";
+import type { IQueryBus } from "../../../domains/shared/application/index.js";
 import {
   AnalyzeActiveNoteQuery,
+  GetActiveNoteAnalysisQuery,
   ListActiveNotesQuery,
-} from "../../../domain/cqrs/queries/active-notes/index.js";
+} from "../../../domains/active-notes/queries/index.js";
+
+const SESSION_ID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export class ActiveNotesController {
   constructor(
@@ -43,6 +48,34 @@ export class ActiveNotesController {
     }
   };
 
+  get = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
+
+      const sessionId = String(req.params.sessionId ?? "").trim();
+      if (!SESSION_ID_PATTERN.test(sessionId)) {
+        res.status(400).json({ message: "sessionId is invalid" });
+        return;
+      }
+
+      const result = await this.queryBus.execute<
+        GetActiveNoteAnalysisQuery,
+        ActiveNoteAnalysisSnapshot
+      >(new GetActiveNoteAnalysisQuery(ctx.userId, ctx.orgId, sessionId));
+
+      res.json(result);
+    } catch (error) {
+      if (error instanceof ActiveNoteAnalysisError) {
+        res.status(error.statusCode).json({ message: error.message });
+        return;
+      }
+
+      console.error(error);
+      res.status(500).json({ message: "Failed to load active note analysis" });
+    }
+  };
+
   analyze = async (req: Request, res: Response): Promise<void> => {
     try {
       const ctx = getOrgContext(req, res);
@@ -58,14 +91,14 @@ export class ActiveNotesController {
 
       const result = await this.queryBus.execute<
         AnalyzeActiveNoteQuery,
-        ActiveNoteAnalyzeResult
+        ActiveNoteAnalyzeAccepted
       >(
         new AnalyzeActiveNoteQuery(ctx.userId, ctx.orgId, {
           content: parsed.data.content,
         })
       );
 
-      res.json(result);
+      res.status(202).json(result);
     } catch (error) {
       if (error instanceof ActiveNoteAnalysisError) {
         res.status(error.statusCode).json({ message: error.message });

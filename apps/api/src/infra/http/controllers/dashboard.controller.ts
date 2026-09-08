@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
 import { getOrgContext } from "../../../middleware/org-context.js";
-import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";
-import { GetWorkspaceDashboardQuery } from "../../../domain/cqrs/queries/dashboard/index.js";
-import type { IWorkspaceDashboard } from "../../../domain/interfaces/workspace-dashboard-repository.js";
+import type { IQueryBus } from "../../../domains/shared/application/index.js";
+import { GetWorkspaceDashboardQuery } from "../../../domains/dashboard/queries/index.js";
+import type { IWorkspaceDashboard } from "../../../domains/dashboard/views.js";
 
 export class DashboardController {
   constructor(private readonly queryBus: IQueryBus) {}

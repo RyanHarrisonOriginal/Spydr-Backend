@@ -1,5 +1,5 @@
-import type { PersonNode } from "../../../domain/models/people/index.js";
-import type { IRepresentationMapper } from "../../../domain/mappers/index.js";
+import type { PersonNode } from "../../../domains/people/models/index.js";
+import type { IRepresentationMapper } from "../../../domains/shared/mappers/mapper.js";
 
 export interface IPersonDetailsResponse {
   fullName: string;

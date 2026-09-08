@@ -1,4 +1,4 @@
-import type { IDomainNodeProps } from "../../../../domain/models/shared.js";
+import type { IDomainNodeProps } from "../../../../domains/shared/models/shared.js";
 
 type NodePersistence = {
   isDeleted: boolean;

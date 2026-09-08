@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
-import { ResourceDetails, ResourceNode } from "../../../../domain/models/resources/index.js";
-import type { IResourceDetailsProps } from "../../../../domain/models/resources/index.js";
-import type { IDomainMapper } from "../../../../domain/mappers/index.js";
+import { ResourceDetails, ResourceNode } from "../../../../domains/resources/models/index.js";
+import type { IResourceDetailsProps } from "../../../../domains/resources/models/index.js";
+import type { IDomainMapper } from "../../../../domains/shared/mappers/mapper.js";
 import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
 
 export type PrismaResourceWithDetails = Prisma.SpydrNodeGetPayload<{

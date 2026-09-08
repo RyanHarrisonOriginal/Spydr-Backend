@@ -2,7 +2,7 @@ import type {
   IPersonWork,
   IPersonWorkProjectEntry,
   IPersonWorkTaskEntry,
-} from "../../../domain/interfaces/person-work-repository.js";
+} from "../../../domains/people/work-views.js";
 import {
   ProjectResponseMapper,
   type IProjectResponse,

@@ -1,6 +1,6 @@
 import { Router } from "express";
-import type { ICommandBus } from "../../../domain/cqrs/commands/index.js";
-import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";
+import type { ICommandBus } from "../../../domains/shared/application/index.js";
+import type { IQueryBus } from "../../../domains/shared/application/index.js";
 import { NotesController } from "../controllers/notes.controller.js";
 
 export function createNotesRouter(

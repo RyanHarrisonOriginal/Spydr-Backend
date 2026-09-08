@@ -1,12 +1,12 @@
 import type { Request, Response } from "express";
-import type { ICommandBus } from "../../../domain/cqrs/commands/index.js";
+import type { ICommandBus } from "../../../domains/shared/application/index.js";
 import {
   CreateOrganizationCommand,
   type ICreateOrganizationCommandInput,
-} from "../../../domain/cqrs/commands/organizations/index.js";
-import type { IQueryBus } from "../../../domain/cqrs/queries/index.js";
-import { ListOrganizationsQuery } from "../../../domain/cqrs/queries/organizations/index.js";
-import type { Organization } from "../../../domain/models/organizations/index.js";
+} from "../../../domains/organizations/commands/index.js";
+import type { IQueryBus } from "../../../domains/shared/application/index.js";
+import { ListOrganizationsQuery } from "../../../domains/organizations/queries/index.js";
+import type { Organization } from "../../../domains/organizations/models/index.js";
 import { getUserId } from "../../../middleware/org-context.js";
 import { OrganizationResponseMapper } from "../mappers/organization-response.mapper.js";
 

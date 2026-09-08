@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
-import { ProjectDetails, ProjectNode } from "../../../../domain/models/projects/index.js";
-import type { IProjectDetailsProps } from "../../../../domain/models/projects/index.js";
-import type { IDomainMapper } from "../../../../domain/mappers/index.js";
+import { ProjectDetails, ProjectNode } from "../../../../domains/projects/models/index.js";
+import type { IProjectDetailsProps } from "../../../../domains/projects/models/index.js";
+import type { IDomainMapper } from "../../../../domains/shared/mappers/mapper.js";
 import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
 
 export type PrismaProjectWithDetails = Prisma.SpydrNodeGetPayload<{

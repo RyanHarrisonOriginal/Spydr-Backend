@@ -1,6 +1,6 @@
-import type { IDecisionListItem } from "../../../domain/interfaces/decision-repository.js";
-import type { DecisionNode } from "../../../domain/models/decisions/index.js";
-import type { IRepresentationMapper } from "../../../domain/mappers/index.js";
+import type { IDecisionListItem } from "../../../domains/decisions/views.js";
+import type { DecisionNode } from "../../../domains/decisions/models/index.js";
+import type { IRepresentationMapper } from "../../../domains/shared/mappers/mapper.js";
 import { nodeLifecycleResponse } from "./node-lifecycle-response.js";
 
 export interface IDecisionProjectResponse {

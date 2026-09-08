@@ -1,5 +1,6 @@
 import { disconnectPrisma } from "@spydr/db";
 import { closeProjectEmbeddingQueue } from "../queues/embedding.queue.js";
+import { closeActiveNoteAnalyzeQueue } from "../queues/active-note-analyze.queue.js";
 import type { ShutdownResources } from "../types/shutdown.types.js";
 
 export function registerGracefulShutdown(resources: ShutdownResources): void {
@@ -21,6 +22,7 @@ export function registerGracefulShutdown(resources: ShutdownResources): void {
       );
 
       await closeProjectEmbeddingQueue();
+      await closeActiveNoteAnalyzeQueue();
 
       if (resources.onShutdown) {
         await resources.onShutdown();

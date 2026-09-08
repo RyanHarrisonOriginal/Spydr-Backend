@@ -28,6 +28,14 @@ export {
   type ProjectEmbeddingJobPayload,
 } from "./queue/embedding-queue.js";
 export {
+  ACTIVE_NOTE_ANALYZE_QUEUE_NAME,
+  ANALYZE_ACTIVE_NOTE_JOB_NAME,
+  ACTIVE_NOTE_ANALYZE_DEFAULT_JOB_OPTIONS,
+  ACTIVE_NOTE_ANALYZE_LOCK_DURATION_MS,
+  buildActiveNoteAnalyzeJobId,
+  type ActiveNoteAnalyzeJobPayload,
+} from "./queue/active-note-analyze-queue.js";
+export {
   PROJECT_CHILD_NODE_TYPES,
   RETRIEVAL_CHILD_NODE_TYPES,
   CLOSED_TASK_STATUSES,

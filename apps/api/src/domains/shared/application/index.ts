@@ -1,0 +1,37 @@
+export type { ICommand, ICommandHandler } from "./command.js";
+export { CommandHandlerNotFoundError } from "./command.js";
+export type { ICommandBus } from "./command-bus.js";
+export { CommandBus } from "./command-bus.js";
+export { EmbeddingAwareCommandBus, withoutProjectEmbeddingRefresh } from "./embedding-aware-command-bus.js";
+export type { EmbeddingAwareCommandBusOptions } from "./embedding-aware-command-bus.js";
+export type { IQuery, IQueryHandler } from "./query.js";
+export { QueryHandlerNotFoundError } from "./query.js";
+export type { IQueryBus } from "./query-bus.js";
+export { QueryBus } from "./query-bus.js";
+export { registerCommandHandlers } from "./register-command-handlers.js";
+export { registerQueryHandlers } from "./register-query-handlers.js";
+export type { IRegisterQueryHandlersOptions } from "./register-query-handlers.js";
+
+// Domain command/query re-exports for HTTP controllers
+export * from "../../tasks/commands/index.js";
+export * from "../../tasks/queries/index.js";
+export * from "../../notes/commands/index.js";
+export * from "../../notes/queries/index.js";
+export * from "../../ideas/commands/index.js";
+export * from "../../ideas/queries/index.js";
+export * from "../../decisions/commands/index.js";
+export * from "../../decisions/queries/index.js";
+export * from "../../people/commands/index.js";
+export * from "../../people/queries/index.js";
+export * from "../../projects/commands/index.js";
+export * from "../../projects/queries/index.js";
+export * from "../../project-areas/commands/index.js";
+export * from "../../project-areas/queries/index.js";
+export * from "../../organizations/commands/index.js";
+export * from "../../organizations/queries/index.js";
+export * from "../../resources/queries/index.js";
+export * from "../../dashboard/queries/index.js";
+export * from "../../active-notes/commands/index.js";
+export * from "../../active-notes/queries/index.js";
+export * from "../../nodes/commands/index.js";
+export * from "../../node-type-transform/commands/transform-node-type.command.js";

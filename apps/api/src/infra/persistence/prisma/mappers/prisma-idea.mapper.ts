@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
-import { IdeaDetails, IdeaNode } from "../../../../domain/models/ideas/index.js";
-import type { IIdeaDetailsProps } from "../../../../domain/models/ideas/index.js";
-import type { IDomainMapper } from "../../../../domain/mappers/index.js";
+import { IdeaDetails, IdeaNode } from "../../../../domains/ideas/models/index.js";
+import type { IIdeaDetailsProps } from "../../../../domains/ideas/models/index.js";
+import type { IDomainMapper } from "../../../../domains/shared/mappers/mapper.js";
 import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
 
 export type PrismaIdeaWithDetails = Prisma.SpydrNodeGetPayload<{
