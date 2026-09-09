@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { PostgresActiveNoteSessionRepository } from "./postgres-active-note-session.repository.js";
 
 function createDb() {
-  return {
+  const db = {
     spydrActiveNoteSession: {
       findFirst: vi.fn().mockResolvedValue(null),
       findMany: vi.fn().mockResolvedValue([]),
@@ -13,7 +13,12 @@ function createDb() {
         userId: "user-1",
         status: "analyzing",
       }),
-      update: vi.fn(),
+      update: vi.fn().mockResolvedValue({
+        id: "session-existing",
+        organizationId: "org-1",
+        userId: "user-1",
+        status: "analyzing",
+      }),
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       findUniqueOrThrow: vi.fn(),
     },
@@ -24,10 +29,16 @@ function createDb() {
     },
     $transaction: vi.fn(),
   };
+
+  db.$transaction.mockImplementation(async (fn: (tx: typeof db) => unknown) =>
+    fn(db)
+  );
+
+  return db;
 }
 
 describe("PostgresActiveNoteSessionRepository", () => {
-  it("creates a new analyzing session for each analysis", async () => {
+  it("creates a new analyzing session when none is in flight", async () => {
     const db = createDb();
     const repository = new PostgresActiveNoteSessionRepository(db as never);
 
@@ -39,6 +50,14 @@ describe("PostgresActiveNoteSessionRepository", () => {
     });
 
     expect(session.id).toBe("session-1");
+    expect(db.spydrActiveNoteSession.findFirst).toHaveBeenCalledWith({
+      where: {
+        organizationId: "org-1",
+        userId: "user-1",
+        status: { in: ["draft", "analyzing", "review", "applying"] },
+      },
+      select: { id: true },
+    });
     expect(db.spydrActiveNoteSession.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         organizationId: "org-1",
@@ -49,7 +68,41 @@ describe("PostgresActiveNoteSessionRepository", () => {
         stepPayloads: {},
       }),
     });
-    expect(db.spydrActiveNoteSession.findFirst).not.toHaveBeenCalled();
+  });
+
+  it("resets an existing in-flight session instead of creating another", async () => {
+    const db = createDb();
+    db.spydrActiveNoteSession.findFirst.mockResolvedValue({
+      id: "session-existing",
+    });
+    const repository = new PostgresActiveNoteSessionRepository(db as never);
+
+    const session = await repository.beginAnalysis({
+      organizationId: "org-1",
+      userId: "user-1",
+      content: "Re-analyze this note",
+      promptVersion: "active-note-segmentation-v1",
+    });
+
+    expect(session).toEqual({
+      id: "session-existing",
+      organizationId: "org-1",
+      userId: "user-1",
+      status: "analyzing",
+    });
+    expect(db.spydrActiveNoteSession.create).not.toHaveBeenCalled();
+    expect(db.spydrActiveNoteSessionStep.deleteMany).toHaveBeenCalledWith({
+      where: { sessionId: "session-existing" },
+    });
+    expect(db.spydrActiveNoteSession.update).toHaveBeenCalledWith({
+      where: { id: "session-existing" },
+      data: expect.objectContaining({
+        status: "analyzing",
+        content: "Re-analyze this note",
+        analyzeResponse: Prisma.DbNull,
+        stepPayloads: {},
+      }),
+    });
   });
 
   it("lists history for the current user", async () => {

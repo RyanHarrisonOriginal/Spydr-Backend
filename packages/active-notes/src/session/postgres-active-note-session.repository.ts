@@ -43,32 +43,106 @@ export class PostgresActiveNoteSessionRepository
     input: BeginActiveNoteAnalysisInput
   ): Promise<ActiveNoteAnalysisSession> {
     const now = new Date();
-    const session = await this.db.spydrActiveNoteSession.create({
-      data: {
+    const resetData = {
+      projectId: input.projectId ?? null,
+      status: "analyzing" as const,
+      content: input.content,
+      contentHash: createRetrievalContentHash(input.content),
+      schemaVersion: SCHEMA_VERSION,
+      promptVersion: input.promptVersion ?? null,
+      analyzeResponse: Prisma.DbNull,
+      reviewSnapshot: Prisma.DbNull,
+      stepPayloads: {},
+      errorMessage: null,
+      failedStep: null,
+      completedAt: null,
+      expiresAt: sessionExpiresAt(now),
+    };
+
+    // Partial unique index uq_active_note_sessions_inflight allows only one
+    // draft|analyzing|review|applying session per org+user. Re-analyze reuses it.
+    const existing = await this.db.spydrActiveNoteSession.findFirst({
+      where: {
         organizationId: input.organizationId,
         userId: input.userId,
-        projectId: input.projectId ?? null,
-        status: "analyzing",
-        content: input.content,
-        contentHash: createRetrievalContentHash(input.content),
-        schemaVersion: SCHEMA_VERSION,
-        promptVersion: input.promptVersion ?? null,
-        analyzeResponse: Prisma.DbNull,
-        reviewSnapshot: Prisma.DbNull,
-        stepPayloads: {},
-        errorMessage: null,
-        failedStep: null,
-        completedAt: null,
-        expiresAt: sessionExpiresAt(now),
+        status: { in: ["draft", "analyzing", "review", "applying"] },
       },
+      select: { id: true },
     });
 
-    return {
-      id: session.id,
-      organizationId: session.organizationId,
-      userId: session.userId,
-      status: session.status,
-    };
+    if (existing) {
+      await this.db.$transaction(async (tx) => {
+        await tx.spydrActiveNoteSessionStep.deleteMany({
+          where: { sessionId: existing.id },
+        });
+        await tx.spydrActiveNoteSession.update({
+          where: { id: existing.id },
+          data: resetData,
+        });
+      });
+
+      return {
+        id: existing.id,
+        organizationId: input.organizationId,
+        userId: input.userId,
+        status: "analyzing",
+      };
+    }
+
+    try {
+      const session = await this.db.spydrActiveNoteSession.create({
+        data: {
+          organizationId: input.organizationId,
+          userId: input.userId,
+          ...resetData,
+        },
+      });
+
+      return {
+        id: session.id,
+        organizationId: session.organizationId,
+        userId: session.userId,
+        status: session.status,
+      };
+    } catch (error) {
+      if (
+        !(error instanceof Prisma.PrismaClientKnownRequestError) ||
+        error.code !== "P2002"
+      ) {
+        throw error;
+      }
+
+      // Concurrent begin raced the partial unique index — take over the in-flight row.
+      const raced = await this.db.spydrActiveNoteSession.findFirst({
+        where: {
+          organizationId: input.organizationId,
+          userId: input.userId,
+          status: { in: ["draft", "analyzing", "review", "applying"] },
+        },
+        select: { id: true },
+      });
+
+      if (!raced) {
+        throw error;
+      }
+
+      await this.db.$transaction(async (tx) => {
+        await tx.spydrActiveNoteSessionStep.deleteMany({
+          where: { sessionId: raced.id },
+        });
+        await tx.spydrActiveNoteSession.update({
+          where: { id: raced.id },
+          data: resetData,
+        });
+      });
+
+      return {
+        id: raced.id,
+        organizationId: input.organizationId,
+        userId: input.userId,
+        status: "analyzing",
+      };
+    }
   }
 
   async getById(sessionId: string): Promise<ActiveNoteAnalysisRecord | null> {
