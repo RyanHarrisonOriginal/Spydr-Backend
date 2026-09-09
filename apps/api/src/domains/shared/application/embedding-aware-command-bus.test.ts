@@ -36,7 +36,7 @@ describe("EmbeddingAwareCommandBus", () => {
   });
 
   it("does not fail the mutation when enqueue throws", async () => {
-    const enqueue = vi.fn().mockRejectedValue(new Error("Redis unavailable"));
+    const enqueue = vi.fn().mockRejectedValue(new Error("pg-boss unavailable"));
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     const bus = new EmbeddingAwareCommandBus({
       repositories: {} as never,

@@ -18,6 +18,7 @@
     "test": "npm run test --workspaces --if-present",
     "prisma:generate": "npm run db:generate -w @spydr/db",
     "db:push": "npm run db:push -w @spydr/db",
-    "db:studio": "npm run db:studio -w @spydr/db"
+    "db:studio": "npm run db:studio -w @spydr/db",
+    "db:pgboss:migrate": "node --import tsx scripts/migrate-pg-boss.ts"
   }
 }

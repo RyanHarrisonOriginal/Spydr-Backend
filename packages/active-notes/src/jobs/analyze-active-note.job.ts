@@ -93,7 +93,7 @@ function createRecorder(
       }
     },
     async recordFailure() {
-      // Persist failed only after BullMQ's last attempt so retries can re-run.
+      // Persist failed only after pg-boss's last attempt so retries can re-run.
     },
   };
 }

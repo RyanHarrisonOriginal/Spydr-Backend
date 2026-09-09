@@ -1,18 +1,14 @@
 import "./load-env.js";
 
-import type { RedisEnvConfig } from "./types.js";
+/** Postgres schema used by pg-boss (separate from Prisma `public` tables). */
+export const PG_BOSS_SCHEMA = "bullmq";
 
-export function loadRedisEnv(): RedisEnvConfig {
-  const url = process.env.REDIS_URL?.trim() || undefined;
-  const password = process.env.REDIS_PASSWORD?.trim() || undefined;
-
-  return {
-    url,
-    host: process.env.REDIS_HOST?.trim() || "127.0.0.1",
-    port: Number(process.env.REDIS_PORT ?? 6379),
-    password,
-    tls: process.env.REDIS_TLS === "true",
-  };
+export function getDatabaseUrl(): string {
+  const url = process.env.DATABASE_URL?.trim();
+  if (!url) {
+    throw new Error("DATABASE_URL is required for pg-boss");
+  }
+  return url;
 }
 
 export function getWorkerConcurrency(): number {

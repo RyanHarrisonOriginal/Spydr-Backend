@@ -1,17 +1,19 @@
-import type { Job } from "bullmq";
-import { UnrecoverableError } from "bullmq";
+import type { JobWithMetadata } from "pg-boss";
 import {
   ActiveNoteJobUnrecoverableError,
   runAnalyzeActiveNoteJob,
 } from "@spydr/active-notes";
-import type { ActiveNoteAnalyzeJobPayload } from "@spydr/shared";
+import {
+  JobUnrecoverableError,
+  type ActiveNoteAnalyzeJobPayload,
+} from "@spydr/shared";
 
 export async function handleAnalyzeActiveNote(
-  job: Job<ActiveNoteAnalyzeJobPayload>
+  job: JobWithMetadata<ActiveNoteAnalyzeJobPayload>
 ): Promise<void> {
   const { sessionId } = job.data;
-  const attempt = job.attemptsMade + 1;
-  const maxAttempts = job.opts.attempts ?? 3;
+  const attempt = job.retryCount + 1;
+  const maxAttempts = job.retryLimit + 1;
 
   console.info(
     `[job] analyze-active-note started (jobId=${job.id}, sessionId=${sessionId}, attempt=${attempt})`
@@ -21,7 +23,7 @@ export async function handleAnalyzeActiveNote(
     await runAnalyzeActiveNoteJob(
       { sessionId },
       {
-        attemptsMade: job.attemptsMade,
+        attemptsMade: job.retryCount,
         maxAttempts,
       }
     );
@@ -37,7 +39,7 @@ export async function handleAnalyzeActiveNote(
     );
 
     if (error instanceof ActiveNoteJobUnrecoverableError) {
-      throw new UnrecoverableError(error.message);
+      throw new JobUnrecoverableError(error.message);
     }
 
     throw error instanceof Error ? error : new Error(message);

@@ -2,7 +2,7 @@ import "@spydr/config";
 
 import { SpydrNodeType as NodeType } from "@prisma/client";
 import { disconnectPrisma, prisma } from "@spydr/db";
-import { closeProjectEmbeddingQueue } from "../queues/embedding.queue.js";
+import { stopPgBoss } from "@spydr/config";
 import { enqueueProjectEmbedding } from "../producers/embedding.producer.js";
 import { embeddingService } from "../services/embedding.service.js";
 
@@ -61,8 +61,8 @@ One-time backfill of project retrieval embeddings for all active projects.
 
 Options:
   --dry-run            List project count/ids only; do not embed or enqueue
-  --enqueue            Enqueue BullMQ jobs instead of embedding inline
-                       (requires Redis and a running embedding worker)
+  --enqueue            Enqueue pg-boss jobs instead of embedding inline
+                       (requires DATABASE_URL and a running embedding worker)
   --skip-existing      Skip projects that already have a retrieval context row
   --concurrency=N      Direct mode only; parallel embeds (default: 3)
   -h, --help           Show this help
@@ -204,6 +204,6 @@ main()
     process.exitCode = 1;
   })
   .finally(async () => {
-    await closeProjectEmbeddingQueue();
+    await stopPgBoss();
     await disconnectPrisma();
   });

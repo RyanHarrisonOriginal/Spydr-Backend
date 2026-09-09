@@ -15,8 +15,8 @@
     "build": "tsc"
   },
   "dependencies": {
-    "bullmq": "^5.34.10",
-    "dotenv": "^17.4.2"
+    "dotenv": "^17.4.2",
+    "pg-boss": "^12.30.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

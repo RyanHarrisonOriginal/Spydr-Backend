@@ -1,21 +1,23 @@
+import { getPgBoss } from "@spydr/config";
 import {
-  ANALYZE_ACTIVE_NOTE_JOB_NAME,
-  ACTIVE_NOTE_ANALYZE_DEFAULT_JOB_OPTIONS,
-  buildActiveNoteAnalyzeJobId,
+  ACTIVE_NOTE_ANALYZE_QUEUE_NAME,
+  ACTIVE_NOTE_ANALYZE_SEND_OPTIONS,
+  buildActiveNoteAnalyzeSingletonKey,
   type ActiveNoteAnalyzeJobPayload,
 } from "@spydr/shared";
-import { getActiveNoteAnalyzeQueue } from "./active-note-analyze.queue.js";
 
 export async function enqueueActiveNoteAnalyze(
   sessionId: string
 ): Promise<void> {
-  const queue = getActiveNoteAnalyzeQueue();
-  await queue.add(
-    ANALYZE_ACTIVE_NOTE_JOB_NAME,
+  const boss = await getPgBoss();
+  const singletonKey = buildActiveNoteAnalyzeSingletonKey(sessionId);
+
+  await boss.send(
+    ACTIVE_NOTE_ANALYZE_QUEUE_NAME,
     { sessionId } satisfies ActiveNoteAnalyzeJobPayload,
     {
-      jobId: buildActiveNoteAnalyzeJobId(sessionId),
-      ...ACTIVE_NOTE_ANALYZE_DEFAULT_JOB_OPTIONS,
+      ...ACTIVE_NOTE_ANALYZE_SEND_OPTIONS,
+      singletonKey,
     }
   );
 }

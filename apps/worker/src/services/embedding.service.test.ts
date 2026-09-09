@@ -1,4 +1,4 @@
-import { UnrecoverableError } from "bullmq";
+import { JobUnrecoverableError } from "@spydr/shared";
 import { describe, expect, it, vi } from "vitest";
 import { EmbeddingGenerationError } from "@spydr/ai";
 import { createRetrievalContentHash } from "@spydr/shared";
@@ -146,7 +146,7 @@ describe("EmbeddingService.refreshProjectEmbedding", () => {
     });
 
     await expect(service.refreshProjectEmbedding(PROJECT_ID)).rejects.toBeInstanceOf(
-      UnrecoverableError
+      JobUnrecoverableError
     );
   });
 

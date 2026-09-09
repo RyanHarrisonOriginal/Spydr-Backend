@@ -1,6 +1,9 @@
-import type { Worker } from "bullmq";
+export interface WorkerHandle {
+  queue: string;
+  id: string;
+}
 
 export interface ShutdownResources {
-  workers: Worker[];
+  workers: WorkerHandle[];
   onShutdown?: () => Promise<void>;
 }

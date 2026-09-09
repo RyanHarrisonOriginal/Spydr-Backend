@@ -1,34 +1,56 @@
-import { Worker } from "bullmq";
-import { getWorkerConcurrency, createRedisConnectionOptions } from "@spydr/config";
-import { PROJECT_EMBEDDING_QUEUE_NAME } from "@spydr/shared";
+import { getPgBoss, getWorkerConcurrency } from "@spydr/config";
+import {
+  JobUnrecoverableError,
+  PROJECT_EMBEDDING_QUEUE_NAME,
+  type ProjectEmbeddingJobPayload,
+} from "@spydr/shared";
+import type { JobWithMetadata } from "pg-boss";
 import { handleRefreshProjectEmbedding } from "../jobs/refreshProjectEmbedding.job.js";
-import type { ProjectEmbeddingJobPayload } from "@spydr/shared";
 
-export function createEmbeddingWorker(): Worker<ProjectEmbeddingJobPayload> {
-  const worker = new Worker<ProjectEmbeddingJobPayload>(
+export async function startEmbeddingWorker(): Promise<string> {
+  const boss = await getPgBoss();
+  const concurrency = getWorkerConcurrency();
+
+  const workerId = await boss.work(
     PROJECT_EMBEDDING_QUEUE_NAME,
-    async (job) => handleRefreshProjectEmbedding(job),
     {
-      connection: createRedisConnectionOptions(),
-      concurrency: getWorkerConcurrency(),
-    }
+      localConcurrency: concurrency,
+      includeMetadata: true as const,
+      perJobResults: true as const,
+      pollingIntervalSeconds: 1,
+    },
+    async (jobs) =>
+      Promise.all(
+        jobs.map(async (job) => {
+          try {
+            const output = await handleRefreshProjectEmbedding(
+              job as JobWithMetadata<ProjectEmbeddingJobPayload>
+            );
+            return { id: job.id, status: "completed" as const, output };
+          } catch (error) {
+            console.error(
+              `[worker] Job failed (jobId=${job.id}, name=${job.name}): ${
+                error instanceof Error ? error.message : String(error)
+              }`
+            );
+
+            if (error instanceof JobUnrecoverableError) {
+              return {
+                id: job.id,
+                status: "deadletter" as const,
+                output: error,
+              };
+            }
+
+            return { id: job.id, status: "failed" as const, output: error };
+          }
+        })
+      )
   );
 
-  worker.on("ready", () => {
-    console.info(
-      `[worker] ${PROJECT_EMBEDDING_QUEUE_NAME} worker ready (concurrency=${getWorkerConcurrency()})`
-    );
-  });
+  console.info(
+    `[worker] ${PROJECT_EMBEDDING_QUEUE_NAME} worker ready (concurrency=${concurrency})`
+  );
 
-  worker.on("failed", (job, error) => {
-    console.error(
-      `[worker] Job failed (jobId=${job?.id ?? "unknown"}, name=${job?.name ?? "unknown"}): ${error.message}`
-    );
-  });
-
-  worker.on("error", (error) => {
-    console.error("[worker] Worker error", error);
-  });
-
-  return worker;
+  return workerId;
 }

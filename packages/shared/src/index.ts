@@ -23,18 +23,20 @@ export { createRetrievalContentHash } from "./content-hash.js";
 export {
   PROJECT_EMBEDDING_QUEUE_NAME,
   REFRESH_PROJECT_EMBEDDING_JOB_NAME,
-  PROJECT_EMBEDDING_DEFAULT_JOB_OPTIONS,
-  buildProjectEmbeddingJobId,
+  PROJECT_EMBEDDING_DEBOUNCE_SECONDS,
+  PROJECT_EMBEDDING_SEND_OPTIONS,
+  buildProjectEmbeddingSingletonKey,
   type ProjectEmbeddingJobPayload,
 } from "./queue/embedding-queue.js";
 export {
   ACTIVE_NOTE_ANALYZE_QUEUE_NAME,
   ANALYZE_ACTIVE_NOTE_JOB_NAME,
-  ACTIVE_NOTE_ANALYZE_DEFAULT_JOB_OPTIONS,
+  ACTIVE_NOTE_ANALYZE_SEND_OPTIONS,
   ACTIVE_NOTE_ANALYZE_LOCK_DURATION_MS,
-  buildActiveNoteAnalyzeJobId,
+  buildActiveNoteAnalyzeSingletonKey,
   type ActiveNoteAnalyzeJobPayload,
 } from "./queue/active-note-analyze-queue.js";
+export { JobUnrecoverableError } from "./queue/job-unrecoverable-error.js";
 export {
   PROJECT_CHILD_NODE_TYPES,
   RETRIEVAL_CHILD_NODE_TYPES,

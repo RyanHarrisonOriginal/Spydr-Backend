@@ -1,4 +1,3 @@
-import { UnrecoverableError } from "bullmq";
 import {
   findExistingProjectRetrievalContext,
   findProjectForEmbedding,
@@ -13,6 +12,7 @@ import {
 import {
   buildProjectRetrievalDocument,
   createRetrievalContentHash,
+  JobUnrecoverableError,
 } from "@spydr/shared";
 
 export interface EmbeddingServiceDependencies {
@@ -79,7 +79,7 @@ export class EmbeddingService {
     try {
       const project = await this.findProjectForEmbeddingFn(projectId);
       if (!project) {
-        throw new UnrecoverableError(
+        throw new JobUnrecoverableError(
           `Project not found or deleted: ${projectId}`
         );
       }

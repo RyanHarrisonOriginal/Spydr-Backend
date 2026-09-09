@@ -1,22 +1,16 @@
-import type { Job } from "bullmq";
+import type { JobWithMetadata } from "pg-boss";
 import { projectLoaderService, type LoadedProjectState } from "@spydr/shared";
 import type { ProjectEmbeddingJobPayload } from "@spydr/shared";
 import { embeddingService } from "../services/embedding.service.js";
 
 export async function handleRefreshProjectEmbedding(
-  job: Job<ProjectEmbeddingJobPayload>
+  job: JobWithMetadata<ProjectEmbeddingJobPayload>
 ): Promise<LoadedProjectState> {
   const { projectId } = job.data;
+  const attempt = job.retryCount + 1;
 
   console.info(
-    `
-    [job] refresh-project-embedding started 
-    (
-      jobId=${job.id}, 
-      projectId=${projectId}, 
-      attempt=${job.attemptsMade + 1}
-    )
-  `
+    `[job] refresh-project-embedding started (jobId=${job.id}, projectId=${projectId}, attempt=${attempt})`
   );
 
   const project = await projectLoaderService.loadLatestProjectState(projectId);
@@ -30,14 +24,7 @@ export async function handleRefreshProjectEmbedding(
     await embeddingService.refreshProjectEmbedding(projectId);
 
     console.info(
-      `
-      [job] refresh-project-embedding succeeded 
-      (
-        jobId=${job.id}, 
-        projectId=${projectId}, 
-        attempt=${job.attemptsMade + 1}
-      )
-    `
+      `[job] refresh-project-embedding succeeded (jobId=${job.id}, projectId=${projectId}, attempt=${attempt})`
     );
 
     return project;
@@ -46,12 +33,7 @@ export async function handleRefreshProjectEmbedding(
       error instanceof Error ? error.message : "Unknown embedding refresh error";
 
     console.error(
-      `[job] refresh-project-embedding failed 
-      (
-        jobId=${job.id}, 
-        projectId=${projectId}, 
-        attempt=${job.attemptsMade + 1}
-      ): ${message}`,
+      `[job] refresh-project-embedding failed (jobId=${job.id}, projectId=${projectId}, attempt=${attempt}): ${message}`,
       error
     );
 

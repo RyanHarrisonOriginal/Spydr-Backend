@@ -1,6 +1,5 @@
+import { getPgBoss, stopPgBoss } from "@spydr/config";
 import { disconnectPrisma } from "@spydr/db";
-import { closeProjectEmbeddingQueue } from "../queues/embedding.queue.js";
-import { closeActiveNoteAnalyzeQueue } from "../queues/active-note-analyze.queue.js";
 import type { ShutdownResources } from "../types/shutdown.types.js";
 
 export function registerGracefulShutdown(resources: ShutdownResources): void {
@@ -15,19 +14,19 @@ export function registerGracefulShutdown(resources: ShutdownResources): void {
     console.info(`[worker] Received ${signal}, shutting down gracefully...`);
 
     try {
+      const boss = await getPgBoss();
+
       await Promise.all(
         resources.workers.map(async (worker) => {
-          await worker.close();
+          await boss.offWork(worker.queue, { id: worker.id, wait: true });
         })
       );
-
-      await closeProjectEmbeddingQueue();
-      await closeActiveNoteAnalyzeQueue();
 
       if (resources.onShutdown) {
         await resources.onShutdown();
       }
 
+      await stopPgBoss();
       await disconnectPrisma();
 
       console.info("[worker] Shutdown complete");
