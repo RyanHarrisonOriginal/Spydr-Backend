@@ -1,6 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
-import type { ISaveStrategy } from "../../../domains/shared/save-strategy.js";
-import type { TodoItem } from "../../../domains/todos/models/index.js";
+import type { ISaveStrategy } from "../../../../domains/shared/save-strategy.js";
+import type { TodoItem } from "../../../../domains/todos/models/index.js";
 import { PrismaTodoItemMapper } from "../prisma-todo-item.mapper.js";
 
 export class StandardTodoItemSaveStrategy
