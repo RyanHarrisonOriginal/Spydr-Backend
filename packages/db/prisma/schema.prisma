@@ -86,6 +86,13 @@ enum OrganizationMemberRole {
   @@map("organization_member_role")
 }
 
+enum SpydrTodoItemSource {
+  user
+  agent
+
+  @@map("spydr_todo_item_source")
+}
+
 model Organization {
   id        String               @id(map: "organizations_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name      String
@@ -100,6 +107,7 @@ model Organization {
   personCollectionSorts SpydrPersonCollectionSort[]
   nodeTypeHistory       SpydrNodeTypeHistory[]
   activeNoteSessions    SpydrActiveNoteSession[]
+  todoItems             SpydrTodoItem[]
 
   @@map("organizations")
 }
@@ -150,6 +158,7 @@ model SpydrNode {
   resourceDetails            SpydrResourceDetails?
   taskDetails                SpydrTaskDetails?
   typeHistory                SpydrNodeTypeHistory[]     @relation("NodeTypeHistory")
+  todoItems                  SpydrTodoItem[]
 
   @@index([tags], map: "idx_spydr_nodes_tags", type: Gin)
   @@index([orgId, status], map: "idx_spydr_nodes_org_status")
@@ -390,6 +399,27 @@ model SpydrNodeTypeHistory {
 
   @@index([orgId, nodeId, transformedAt], map: "idx_spydr_node_type_history_node")
   @@map("spydr_node_type_history")
+}
+
+model SpydrTodoItem {
+  id         String              @id(map: "spydr_todo_items_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId      String              @map("org_id") @db.Uuid
+  organization Organization      @relation(fields: [orgId], references: [id], onDelete: Cascade, map: "spydr_todo_items_org_id_fkey")
+  userId     String              @map("user_id")
+  taskNodeId String              @map("task_node_id") @db.Uuid
+  taskNode   SpydrNode           @relation(fields: [taskNodeId], references: [id], onDelete: Cascade, map: "spydr_todo_items_task_node_id_fkey")
+  source     SpydrTodoItemSource @default(user)
+  sortOrder  Int                 @default(0) @map("sort_order")
+  addedAt    DateTime            @default(now()) @map("added_at") @db.Timestamptz(6)
+  isStale    Boolean             @default(false) @map("is_stale")
+  staleAt    DateTime?           @map("stale_at") @db.Timestamptz(6)
+  removedAt  DateTime?           @map("removed_at") @db.Timestamptz(6)
+  createdAt  DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime            @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([orgId, userId, taskNodeId], map: "spydr_todo_items_org_user_task_key")
+  @@index([taskNodeId], map: "idx_spydr_todo_items_task")
+  @@map("spydr_todo_items")
 }
 
 model SpydrActiveNoteProjectRetrievalContext {

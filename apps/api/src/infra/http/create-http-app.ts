@@ -16,6 +16,7 @@ import { createProjectsRouter } from "./routes/projects.router.js";
 import { createResourcesRouter } from "./routes/resources.router.js";
 import { createDashboardRouter } from "./routes/dashboard.router.js";
 import { createTasksRouter } from "./routes/tasks.router.js";
+import { createTodosRouter } from "./routes/todos.router.js";
 import { createCollectionsRouter } from "./routes/collections.router.js";
 import { createActiveNotesRouter } from "./routes/active-notes.router.js";
 import { createEntitiesRouter } from "./routes/entities.router.js";
@@ -61,6 +62,7 @@ export function createHttpApp(options: IHttpAppOptions): Express {
   app.use(`${apiPrefix}/resources`, createResourcesRouter(options.queryBus));
   app.use(`${apiPrefix}/dashboard`, createDashboardRouter(options.queryBus));
   app.use(`${apiPrefix}/tasks`, createTasksRouter(options.queryBus, options.commandBus));
+  app.use(`${apiPrefix}/todos`, createTodosRouter(options.queryBus, options.commandBus));
   app.use(`${apiPrefix}/collections`, createCollectionsRouter(options.commandBus));
   app.use(
     `${apiPrefix}/active-notes`,

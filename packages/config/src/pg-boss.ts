@@ -4,6 +4,7 @@ import { getDatabaseUrl, PG_BOSS_SCHEMA } from "./env.js";
 /** Must match `@spydr/shared` queue name constants. */
 const PROJECT_EMBEDDING_QUEUE_NAME = "project-embedding";
 const ACTIVE_NOTE_ANALYZE_QUEUE_NAME = "active-note-analyze";
+const TODO_STALE_QUEUE_NAME = "todo-stale";
 
 let bossPromise: Promise<PgBoss> | undefined;
 
@@ -21,6 +22,13 @@ async function ensureJobQueues(boss: PgBoss): Promise<void> {
     retryBackoff: true,
     expireInSeconds: 5 * 60,
     heartbeatSeconds: 60,
+    deleteAfterSeconds: 60 * 60,
+  });
+
+  await boss.createQueue(TODO_STALE_QUEUE_NAME, {
+    retryLimit: 1,
+    retryDelay: 5,
+    retryBackoff: true,
     deleteAfterSeconds: 60 * 60,
   });
 }

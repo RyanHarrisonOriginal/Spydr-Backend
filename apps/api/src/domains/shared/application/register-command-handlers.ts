@@ -32,6 +32,11 @@ import {
   DeleteTaskCommandHandler,
 } from "../../tasks/commands/index.js";
 import {
+  AddTaskToTodoCommandHandler,
+  RemoveTodoItemCommandHandler,
+  RemoveTodoItemByTaskCommandHandler,
+} from "../../todos/commands/index.js";
+import {
   UpdateNoteCommandHandler,
   DeleteNoteCommandHandler,
 } from "../../notes/commands/index.js";
@@ -96,6 +101,16 @@ export function registerCommandHandlers(
     ),
     new CompleteTaskCommandHandler(repositories.tasks, repositories.taskViews),
     new DeleteTaskCommandHandler(repositories.tasks),
+    new AddTaskToTodoCommandHandler(
+      repositories.todos,
+      repositories.todoViews,
+      repositories.tasks
+    ),
+    new RemoveTodoItemCommandHandler(repositories.todos),
+    new RemoveTodoItemByTaskCommandHandler(
+      repositories.todos,
+      repositories.todoViews
+    ),
     new UpdateNoteCommandHandler(repositories.notes, repositories.noteViews),
     new DeleteNoteCommandHandler(repositories.notes),
     new DeleteIdeaCommandHandler(repositories.ideas),

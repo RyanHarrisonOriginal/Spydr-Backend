@@ -36,6 +36,14 @@ export {
   buildActiveNoteAnalyzeSingletonKey,
   type ActiveNoteAnalyzeJobPayload,
 } from "./queue/active-note-analyze-queue.js";
+export {
+  TODO_STALE_QUEUE_NAME,
+  MARK_STALE_TODO_ITEMS_JOB_NAME,
+  TODO_STALE_AFTER_MS,
+  TODO_STALE_CRON,
+  TODO_STALE_SEND_OPTIONS,
+  type TodoStaleJobPayload,
+} from "./queue/todo-stale-queue.js";
 export { JobUnrecoverableError } from "./queue/job-unrecoverable-error.js";
 export {
   PROJECT_CHILD_NODE_TYPES,
