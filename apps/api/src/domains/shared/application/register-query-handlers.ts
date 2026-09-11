@@ -29,6 +29,10 @@ import {
   GetTaskQueryHandler,
 } from "../../tasks/queries/index.js";
 import { ListTodoItemsQueryHandler } from "../../todos/queries/index.js";
+import {
+  GetProjectTemplateQueryHandler,
+  ListProjectTemplatesQueryHandler,
+} from "../../project-templates/queries/index.js";
 import { GetWorkspaceDashboardQueryHandler } from "../../dashboard/queries/index.js";
 import { ACTIVE_NOTE_PROMPT_VERSION } from "@spydr/active-notes";
 
@@ -59,6 +63,8 @@ export function registerQueryHandlers(
     new ListTasksQueryHandler(repositories.taskViews),
     new GetTaskQueryHandler(repositories.taskViews),
     new ListTodoItemsQueryHandler(repositories.todoViews),
+    new ListProjectTemplatesQueryHandler(repositories.projectTemplateViews),
+    new GetProjectTemplateQueryHandler(repositories.projectTemplateViews),
     new GetWorkspaceDashboardQueryHandler(repositories.workspaceDashboard),
     new ListActiveNotesQueryHandler(repositories.activeNoteSessions),
     new GetActiveNoteAnalysisQueryHandler(repositories.activeNoteSessions),

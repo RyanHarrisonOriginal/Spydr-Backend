@@ -17,6 +17,8 @@ export * from "../../tasks/commands/index.js";
 export * from "../../tasks/queries/index.js";
 export * from "../../todos/commands/index.js";
 export * from "../../todos/queries/index.js";
+export * from "../../project-templates/commands/index.js";
+export * from "../../project-templates/queries/index.js";
 export * from "../../notes/commands/index.js";
 export * from "../../notes/queries/index.js";
 export * from "../../ideas/commands/index.js";

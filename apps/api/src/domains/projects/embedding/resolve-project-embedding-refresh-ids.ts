@@ -13,6 +13,7 @@ import {
   AddNoteToProjectCommand,
   AddTaskToProjectCommand,
 } from "../commands/index.js";
+import { InvokeProjectTemplateCommand } from "../../project-templates/commands/index.js";
 import {
   DeleteProjectChildCommand,
   UpdateProjectChildCommand,
@@ -121,6 +122,11 @@ export async function resolveProjectEmbeddingRefreshIds(
     return uniqueProjectIds([project?.id]);
   }
 
+  if (command instanceof InvokeProjectTemplateCommand) {
+    const project = result as ProjectNode;
+    return uniqueProjectIds([project?.id]);
+  }
+
   if (command instanceof UpdateProjectCommand) {
     if (result === null || !projectUpdateAffectsRetrievalContext(command.input)) {
       return [];
@@ -200,6 +206,7 @@ export function isProjectEmbeddingTrackedCommand(
 ): boolean {
   return (
     command instanceof CreateProjectCommand ||
+    command instanceof InvokeProjectTemplateCommand ||
     command instanceof UpdateProjectCommand ||
     command instanceof AddTaskToProjectCommand ||
     command instanceof AddNoteToProjectCommand ||

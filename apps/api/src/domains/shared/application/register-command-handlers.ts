@@ -37,6 +37,13 @@ import {
   RemoveTodoItemByTaskCommandHandler,
 } from "../../todos/commands/index.js";
 import {
+  CreateProjectTemplateCommandHandler,
+  CreateProjectTemplateFromProjectCommandHandler,
+  DeleteProjectTemplateCommandHandler,
+  InvokeProjectTemplateCommandHandler,
+  UpdateProjectTemplateCommandHandler,
+} from "../../project-templates/commands/index.js";
+import {
   UpdateNoteCommandHandler,
   DeleteNoteCommandHandler,
 } from "../../notes/commands/index.js";
@@ -110,6 +117,19 @@ export function registerCommandHandlers(
     new RemoveTodoItemByTaskCommandHandler(
       repositories.todos,
       repositories.todoViews
+    ),
+    new CreateProjectTemplateCommandHandler(repositories.projectTemplates),
+    new CreateProjectTemplateFromProjectCommandHandler(
+      repositories.projectTemplates,
+      repositories.projects
+    ),
+    new UpdateProjectTemplateCommandHandler(repositories.projectTemplates),
+    new DeleteProjectTemplateCommandHandler(repositories.projectTemplates),
+    new InvokeProjectTemplateCommandHandler(
+      repositories.projectTemplateViews,
+      repositories.projects,
+      repositories.projectAreas,
+      repositories.spydrNodeViews
     ),
     new UpdateNoteCommandHandler(repositories.notes, repositories.noteViews),
     new DeleteNoteCommandHandler(repositories.notes),

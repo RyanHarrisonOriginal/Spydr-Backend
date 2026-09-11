@@ -108,6 +108,7 @@ model Organization {
   nodeTypeHistory       SpydrNodeTypeHistory[]
   activeNoteSessions    SpydrActiveNoteSession[]
   todoItems             SpydrTodoItem[]
+  projectTemplates      SpydrProjectTemplate[]
 
   @@map("organizations")
 }
@@ -159,6 +160,7 @@ model SpydrNode {
   taskDetails                SpydrTaskDetails?
   typeHistory                SpydrNodeTypeHistory[]     @relation("NodeTypeHistory")
   todoItems                  SpydrTodoItem[]
+  projectTemplatesAsSource   SpydrProjectTemplate[]     @relation("ProjectTemplateSourceProject")
 
   @@index([tags], map: "idx_spydr_nodes_tags", type: Gin)
   @@index([orgId, status], map: "idx_spydr_nodes_org_status")
@@ -420,6 +422,66 @@ model SpydrTodoItem {
   @@unique([orgId, userId, taskNodeId], map: "spydr_todo_items_org_user_task_key")
   @@index([taskNodeId], map: "idx_spydr_todo_items_task")
   @@map("spydr_todo_items")
+}
+
+model SpydrProjectTemplate {
+  id                  String                         @id(map: "spydr_project_templates_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId               String                         @map("org_id") @db.Uuid
+  organization        Organization                   @relation(fields: [orgId], references: [id], onDelete: Cascade, map: "spydr_project_templates_org_id_fkey")
+  createdByUserId     String                         @map("created_by_user_id")
+  name                String
+  description         String?
+  titleTemplate       String                         @map("title_template")
+  bodyTemplate        String                         @default("") @map("body_template")
+  outcomeTemplate     String?                        @map("outcome_template")
+  status              SpydrNodeStatus                @default(active)
+  priority            SpydrPriority                  @default(medium)
+  riskLevel           SpydrPriority                  @default(medium) @map("risk_level")
+  area                String?
+  tags                String[]                       @default([])
+  sourceProjectNodeId String?                        @map("source_project_node_id") @db.Uuid
+  sourceProjectNode   SpydrNode?                     @relation("ProjectTemplateSourceProject", fields: [sourceProjectNodeId], references: [id], onDelete: SetNull, map: "spydr_project_templates_source_project_node_id_fkey")
+  isArchived          Boolean                        @default(false) @map("is_archived")
+  createdAt           DateTime                       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime                       @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
+  parameters          SpydrProjectTemplateParameter[]
+  tasks               SpydrProjectTemplateTask[]
+
+  @@index([orgId, isArchived], map: "idx_spydr_project_templates_org_archived")
+  @@map("spydr_project_templates")
+}
+
+model SpydrProjectTemplateParameter {
+  id           String              @id(map: "spydr_project_template_parameters_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  templateId   String              @map("template_id") @db.Uuid
+  template     SpydrProjectTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade, map: "spydr_project_template_parameters_template_id_fkey")
+  key          String
+  label        String
+  valueType    String              @default("string") @map("value_type")
+  required     Boolean             @default(true)
+  defaultValue String?             @map("default_value")
+  sortOrder    Int                 @default(0) @map("sort_order")
+
+  @@unique([templateId, key], map: "spydr_project_template_parameters_template_key_key")
+  @@index([templateId, sortOrder], map: "idx_spydr_project_template_parameters_sort")
+  @@map("spydr_project_template_parameters")
+}
+
+model SpydrProjectTemplateTask {
+  id                String               @id(map: "spydr_project_template_tasks_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  templateId        String               @map("template_id") @db.Uuid
+  template          SpydrProjectTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade, map: "spydr_project_template_tasks_template_id_fkey")
+  titleTemplate     String               @map("title_template")
+  bodyTemplate      String               @default("") @map("body_template")
+  status            SpydrNodeStatus      @default(active)
+  priority          SpydrPriority        @default(medium)
+  dueOffsetDays     Int?                 @map("due_offset_days")
+  estimatedMinutes  Int?                 @map("estimated_minutes")
+  tags              String[]             @default([])
+  sortOrder         Int                  @default(0) @map("sort_order")
+
+  @@index([templateId, sortOrder], map: "idx_spydr_project_template_tasks_sort")
+  @@map("spydr_project_template_tasks")
 }
 
 model SpydrActiveNoteProjectRetrievalContext {

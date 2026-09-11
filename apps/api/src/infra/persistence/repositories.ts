@@ -25,6 +25,8 @@ import type { ITaskRepository } from "../../domains/tasks/repository.js";
 import type { ITaskViews } from "../../domains/tasks/views.js";
 import type { ITodoItemRepository } from "../../domains/todos/repository.js";
 import type { ITodoViews } from "../../domains/todos/views.js";
+import type { IProjectTemplateRepository } from "../../domains/project-templates/repository.js";
+import type { IProjectTemplateViews } from "../../domains/project-templates/views.js";
 import type { INodeTypeTransformRepository } from "../../domains/node-type-transform/repository.js";
 import type { IWorkspaceDashboardRepository } from "../../domains/dashboard/views.js";
 import {
@@ -47,6 +49,8 @@ import { PostgresTaskRepository } from "./tasks/postgres-task.repository.js";
 import { PostgresTaskViews } from "./tasks/postgres-task.views.js";
 import { PostgresTodoItemRepository } from "./todos/postgres-todo-item.repository.js";
 import { PostgresTodoViews } from "./todos/postgres-todo.views.js";
+import { PostgresProjectTemplateRepository } from "./project-templates/postgres-project-template.repository.js";
+import { PostgresProjectTemplateViews } from "./project-templates/postgres-project-template.views.js";
 import { PostgresNodeTypeTransformRepository } from "./prisma/repositories/postgres-node-type-transform.repository.js";
 import { PostgresWorkspaceDashboardRepository } from "./prisma/repositories/postgres-workspace-dashboard.repository.js";
 import { LegacyListViews } from "./legacy-list-views.js";
@@ -76,6 +80,8 @@ export interface IPersistenceRepositories {
   taskViews: ITaskViews;
   todos: ITodoItemRepository;
   todoViews: ITodoViews;
+  projectTemplates: IProjectTemplateRepository;
+  projectTemplateViews: IProjectTemplateViews;
   nodeTypeTransforms: INodeTypeTransformRepository;
   workspaceDashboard: IWorkspaceDashboardRepository;
   activeNoteSessions: IActiveNoteSessionRepository;
@@ -90,6 +96,8 @@ export function createPersistenceRepositories(
   const taskViews = new PostgresTaskViews(prisma);
   const todos = new PostgresTodoItemRepository(prisma);
   const todoViews = new PostgresTodoViews(prisma, taskViews);
+  const projectTemplates = new PostgresProjectTemplateRepository(prisma);
+  const projectTemplateViews = new PostgresProjectTemplateViews(prisma);
   const personCollectionSort = new PostgresPersonCollectionSortRepository(prisma);
   const notes = new PostgresNoteRepository(prisma);
   const ideas = new PostgresIdeaRepository(prisma);
@@ -141,6 +149,8 @@ export function createPersistenceRepositories(
     taskViews,
     todos,
     todoViews,
+    projectTemplates,
+    projectTemplateViews,
     nodeTypeTransforms: new PostgresNodeTypeTransformRepository(prisma),
     workspaceDashboard: new PostgresWorkspaceDashboardRepository(prisma),
     activeNoteSessions: new PostgresActiveNoteSessionRepository(prisma),

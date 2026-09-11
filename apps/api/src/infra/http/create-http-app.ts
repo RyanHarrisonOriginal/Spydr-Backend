@@ -13,6 +13,7 @@ import { createOrganizationsRouter } from "./routes/organizations.router.js";
 import { createPeopleRouter } from "./routes/people.router.js";
 import { createProjectAreasRouter } from "./routes/project-areas.router.js";
 import { createProjectsRouter } from "./routes/projects.router.js";
+import { createProjectTemplatesRouter } from "./routes/project-templates.router.js";
 import { createResourcesRouter } from "./routes/resources.router.js";
 import { createDashboardRouter } from "./routes/dashboard.router.js";
 import { createTasksRouter } from "./routes/tasks.router.js";
@@ -58,6 +59,10 @@ export function createHttpApp(options: IHttpAppOptions): Express {
   app.use(
     `${apiPrefix}/projects`,
     createProjectsRouter(options.queryBus, options.commandBus)
+  );
+  app.use(
+    `${apiPrefix}/project-templates`,
+    createProjectTemplatesRouter(options.queryBus, options.commandBus)
   );
   app.use(`${apiPrefix}/resources`, createResourcesRouter(options.queryBus));
   app.use(`${apiPrefix}/dashboard`, createDashboardRouter(options.queryBus));
