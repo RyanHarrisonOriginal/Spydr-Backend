@@ -43,6 +43,13 @@ export class PrismaProjectMapper
             assigneePersonNodeId: persistence.projectDetails.assigneePersonNodeId,
             sponsorPersonNodeId: persistence.projectDetails.sponsorPersonNodeId,
             reviewerPersonNodeId: persistence.projectDetails.reviewerPersonNodeId,
+            sourceTemplateId: persistence.projectDetails.sourceTemplateId,
+            templateParamValues: readParamValues(
+              persistence.projectDetails.templateParamValues
+            ),
+            templateSyncEnabled: persistence.projectDetails.templateSyncEnabled,
+            templateSpawnedAt: persistence.projectDetails.templateSpawnedAt,
+            templateSyncedAt: persistence.projectDetails.templateSyncedAt,
             createdAt: persistence.projectDetails.createdAt,
             updatedAt: persistence.projectDetails.updatedAt,
           })
@@ -85,8 +92,21 @@ export class PrismaProjectMapper
       assigneePersonNodeId: details.assigneePersonNodeId,
       sponsorPersonNodeId: details.sponsorPersonNodeId,
       reviewerPersonNodeId: details.reviewerPersonNodeId,
+      sourceTemplateId: details.sourceTemplateId,
+      templateParamValues: details.templateParamValues,
+      templateSyncEnabled: details.templateSyncEnabled,
+      templateSpawnedAt: details.templateSpawnedAt,
+      templateSyncedAt: details.templateSyncedAt,
       createdAt: details.createdAt,
       updatedAt: details.updatedAt,
     };
   }
+}
+
+function readParamValues(value: unknown): Record<string, string> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const entries = Object.entries(value as Record<string, unknown>).filter(
+    (entry): entry is [string, string] => typeof entry[1] === "string"
+  );
+  return Object.fromEntries(entries);
 }

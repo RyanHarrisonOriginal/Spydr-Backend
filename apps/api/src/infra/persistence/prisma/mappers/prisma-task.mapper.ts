@@ -40,6 +40,7 @@ export class PrismaTaskMapper
             estimatedMinutes: persistence.taskDetails.estimatedMinutes,
             assigneePersonNodeId: persistence.taskDetails.assigneePersonNodeId,
             tags: persistence.taskDetails.tags,
+            sourceTemplateTaskId: persistence.taskDetails.sourceTemplateTaskId,
             createdAt: persistence.taskDetails.createdAt,
             updatedAt: persistence.taskDetails.updatedAt,
           })
@@ -79,6 +80,7 @@ export class PrismaTaskMapper
       estimatedMinutes: details.estimatedMinutes,
       assigneePersonNodeId: details.assigneePersonNodeId,
       tags: details.tags,
+      sourceTemplateTaskId: details.sourceTemplateTaskId,
       createdAt: details.createdAt,
       updatedAt: details.updatedAt,
     };

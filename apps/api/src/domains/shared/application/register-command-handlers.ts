@@ -123,12 +123,18 @@ export function registerCommandHandlers(
       repositories.projectTemplates,
       repositories.projects
     ),
-    new UpdateProjectTemplateCommandHandler(repositories.projectTemplates),
+    new UpdateProjectTemplateCommandHandler(
+      repositories.projectTemplates,
+      repositories.projects,
+      repositories.projectViews,
+      repositories.projectAreaViews
+    ),
     new DeleteProjectTemplateCommandHandler(repositories.projectTemplates),
     new InvokeProjectTemplateCommandHandler(
       repositories.projectTemplateViews,
       repositories.projects,
       repositories.projectAreas,
+      repositories.projectAreaViews,
       repositories.spydrNodeViews
     ),
     new UpdateNoteCommandHandler(repositories.notes, repositories.noteViews),

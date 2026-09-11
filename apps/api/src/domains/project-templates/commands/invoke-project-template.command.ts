@@ -1,4 +1,5 @@
 import type { IProjectAreaRepository } from "../../project-areas/repository.js";
+import type { IProjectAreaViews } from "../../project-areas/views.js";
 import type { IProjectRepository } from "../../projects/repository.js";
 import type { IProjectTemplateViews } from "../views.js";
 import type { ISpydrNodeViews } from "../../nodes/views.js";
@@ -40,6 +41,7 @@ export class InvokeProjectTemplateCommandHandler
     private readonly templateViews: IProjectTemplateViews,
     private readonly projects: IProjectRepository,
     private readonly projectAreas: IProjectAreaRepository,
+    private readonly projectAreaViews: IProjectAreaViews,
     private readonly nodeViews: ISpydrNodeViews,
     private readonly projectMapper = new ProjectMapper(),
     private readonly taskMapper = new TaskMapper()
@@ -76,7 +78,7 @@ export class InvokeProjectTemplateCommandHandler
     tags.forEach((tag, i) => assertFullyRendered(`tag[${i}]`, tag));
 
     let area = template.area;
-    const areaNodeId = command.input.areaNodeId;
+    let areaNodeId = command.input.areaNodeId ?? null;
     if (areaNodeId) {
       const areaNode = await this.projectAreas.get({
         id: areaNodeId,
@@ -84,8 +86,18 @@ export class InvokeProjectTemplateCommandHandler
       });
       if (!areaNode) throw new Error("Project area not found");
       area = areaNode.title;
+    } else if (template.area) {
+      const areaNode = await this.projectAreaViews.getByTitle(
+        command.orgId,
+        template.area
+      );
+      if (areaNode) {
+        areaNodeId = areaNode.id;
+        area = areaNode.title;
+      }
     }
 
+    const invokeDay = new Date();
     const projectSort = await nextCollectionSortOrder(
       this.nodeViews,
       command.orgId,
@@ -103,8 +115,11 @@ export class InvokeProjectTemplateCommandHandler
         tags,
         outcome,
         riskLevel: template.riskLevel,
+        sourceTemplateId: template.id,
+        templateParamValues: params,
+        templateSpawnedAt: invokeDay,
       },
-      new Date(),
+      invokeDay,
       projectSort
     );
 
@@ -114,7 +129,6 @@ export class InvokeProjectTemplateCommandHandler
       "task"
     );
 
-    const invokeDay = new Date();
     const dateOnly = invokeDay.toISOString().slice(0, 10);
 
     for (const templateTask of [...template.tasks].sort(
@@ -146,20 +160,17 @@ export class InvokeProjectTemplateCommandHandler
           priority: templateTask.priority,
           dueDate,
           estimatedMinutes: templateTask.estimatedMinutes,
+          tags: taskTags,
+          sourceTemplateTaskId: templateTask.id,
         },
         {
           userId: command.userId,
           orgId: command.orgId,
           area: project.area,
           sortOrder: taskSort,
-        }
+        },
+        invokeDay
       );
-      if (taskTags.length > 0) {
-        task.tags = taskTags;
-        if (task.details) {
-          task.details.tags = taskTags;
-        }
-      }
       project.addTask(task);
       taskSort += 1000;
     }

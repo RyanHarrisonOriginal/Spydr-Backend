@@ -8,6 +8,7 @@ export interface ITaskDetailsProps extends ITimestampedDetails {
   estimatedMinutes: number | null;
   assigneePersonNodeId: string | null;
   tags: string[];
+  sourceTemplateTaskId: string | null;
 }
 
 export interface ITaskNodeProps extends Omit<IDomainNodeProps<"task">, "nodeType"> {

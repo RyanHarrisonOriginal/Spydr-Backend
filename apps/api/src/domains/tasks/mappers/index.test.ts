@@ -30,6 +30,7 @@ function baseTask(overrides?: Partial<ConstructorParameters<typeof TaskNode>[0]>
       estimatedMinutes: null,
       assigneePersonNodeId: null,
       tags: [],
+      sourceTemplateTaskId: null,
       createdAt: earlier,
       updatedAt: earlier,
     },

@@ -21,6 +21,7 @@ export class TaskDetails implements ITaskDetailsProps {
   estimatedMinutes: number | null;
   assigneePersonNodeId: string | null;
   tags: string[];
+  sourceTemplateTaskId: string | null;
   readonly createdAt: Date;
   updatedAt: Date;
 
@@ -31,6 +32,7 @@ export class TaskDetails implements ITaskDetailsProps {
     this.estimatedMinutes = props.estimatedMinutes;
     this.assigneePersonNodeId = props.assigneePersonNodeId;
     this.tags = [...props.tags];
+    this.sourceTemplateTaskId = props.sourceTemplateTaskId ?? null;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
   }
@@ -52,6 +54,16 @@ export class TaskDetails implements ITaskDetailsProps {
 
   setCompletedAt(completedAt: Date | null, now = new Date()): void {
     this.completedAt = completedAt;
+    this.touch(now);
+  }
+
+  setSourceTemplateTaskId(sourceTemplateTaskId: string | null, now = new Date()): void {
+    this.sourceTemplateTaskId = sourceTemplateTaskId;
+    this.touch(now);
+  }
+
+  setTags(tags: string[], now = new Date()): void {
+    this.tags = [...tags];
     this.touch(now);
   }
 
@@ -90,6 +102,16 @@ export class TaskNode extends DomainNode<"task"> {
       details: this.details,
       assignee,
     });
+  }
+
+  isOpenForTemplateSync(): boolean {
+    if (this.isDeleted) return false;
+    return this.status !== "completed" && this.status !== "archived";
+  }
+
+  bindSourceTemplateTask(templateTaskId: string, now = new Date()): void {
+    this.ensureDetails(now).setSourceTemplateTaskId(templateTaskId, now);
+    this.touch(now);
   }
 
   complete(now = new Date()): void {
@@ -148,6 +170,7 @@ export class TaskNode extends DomainNode<"task"> {
         estimatedMinutes: null,
         assigneePersonNodeId: null,
         tags: [],
+        sourceTemplateTaskId: null,
         createdAt: now,
         updatedAt: now,
       });

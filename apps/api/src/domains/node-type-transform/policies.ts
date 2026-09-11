@@ -106,6 +106,7 @@ export function defaultTaskDetailsFromSource(input: {
     assigneePersonNodeId:
       taskDetails?.assigneePersonNodeId ?? projectDetails?.assigneePersonNodeId ?? null,
     tags: [] as string[],
+    sourceTemplateTaskId: null as string | null,
     createdAt: now,
     updatedAt: now,
   };
@@ -142,6 +143,11 @@ export function defaultProjectDetailsFromSource(input: {
       projectDetails?.assigneePersonNodeId ?? taskDetails?.assigneePersonNodeId ?? null,
     sponsorPersonNodeId: null as string | null,
     reviewerPersonNodeId: null as string | null,
+    sourceTemplateId: null as string | null,
+    templateParamValues: {} as Record<string, string>,
+    templateSyncEnabled: true,
+    templateSpawnedAt: null as Date | null,
+    templateSyncedAt: null as Date | null,
     createdAt: now,
     updatedAt: now,
   };

@@ -43,6 +43,11 @@ export class ProjectDetails implements IProjectDetailsProps {
   assigneePersonNodeId: string | null;
   sponsorPersonNodeId: string | null;
   reviewerPersonNodeId: string | null;
+  sourceTemplateId: string | null;
+  templateParamValues: Record<string, string>;
+  templateSyncEnabled: boolean;
+  templateSpawnedAt: Date | null;
+  templateSyncedAt: Date | null;
   readonly lastActivityAt: Date | null;
   readonly createdAt: Date;
   updatedAt: Date;
@@ -56,6 +61,11 @@ export class ProjectDetails implements IProjectDetailsProps {
     this.assigneePersonNodeId = props.assigneePersonNodeId;
     this.sponsorPersonNodeId = props.sponsorPersonNodeId;
     this.reviewerPersonNodeId = props.reviewerPersonNodeId;
+    this.sourceTemplateId = props.sourceTemplateId ?? null;
+    this.templateParamValues = { ...(props.templateParamValues ?? {}) };
+    this.templateSyncEnabled = props.templateSyncEnabled ?? true;
+    this.templateSpawnedAt = props.templateSpawnedAt ?? null;
+    this.templateSyncedAt = props.templateSyncedAt ?? null;
     this.lastActivityAt = props.lastActivityAt;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
@@ -98,6 +108,24 @@ export class ProjectDetails implements IProjectDetailsProps {
 
   setReviewerPersonNodeId(personNodeId: string | null): void {
     this.reviewerPersonNodeId = personNodeId;
+    this.touch();
+  }
+
+  bindTemplateSpawn(input: {
+    sourceTemplateId: string;
+    templateParamValues: Record<string, string>;
+    templateSpawnedAt: Date;
+  }): void {
+    this.sourceTemplateId = input.sourceTemplateId;
+    this.templateParamValues = { ...input.templateParamValues };
+    this.templateSyncEnabled = true;
+    this.templateSpawnedAt = input.templateSpawnedAt;
+    this.templateSyncedAt = input.templateSpawnedAt;
+    this.touch();
+  }
+
+  markTemplateSynced(now = new Date()): void {
+    this.templateSyncedAt = now;
     this.touch();
   }
 
@@ -172,6 +200,56 @@ export class ProjectNode extends DomainNode<"project"> {
 
   findTask(taskId: string): TaskNode | undefined {
     return this.tasks.find((entry) => entry.id === taskId);
+  }
+
+  findTaskBySourceTemplateTaskId(templateTaskId: string): TaskNode | undefined {
+    return this.tasks.find(
+      (entry) => entry.details?.sourceTemplateTaskId === templateTaskId
+    );
+  }
+
+  isOpenForTemplateSync(): boolean {
+    if (this.isDeleted) return false;
+    if (this.status === "completed" || this.status === "archived") return false;
+    if (!this.details?.sourceTemplateId) return false;
+    return this.details.templateSyncEnabled;
+  }
+
+  bindTemplateSpawn(input: {
+    sourceTemplateId: string;
+    templateParamValues: Record<string, string>;
+    templateSpawnedAt: Date;
+  }): void {
+    this.projectDetails().bindTemplateSpawn(input);
+    this.touch(input.templateSpawnedAt);
+  }
+
+  applyTemplateSyncProjection(
+    input: {
+      title: string;
+      body: string;
+      outcome: string | null;
+      tags: string[];
+      priority: SpydrPriority;
+      riskLevel: SpydrPriority;
+      area?: string | null;
+    },
+    now = new Date()
+  ): void {
+    this.applyUpdate(
+      {
+        title: input.title,
+        body: input.body,
+        priority: input.priority,
+        riskLevel: input.riskLevel,
+        area: input.area,
+      },
+      now
+    );
+    this.tags = [...input.tags];
+    this.projectDetails().setOutcome(input.outcome);
+    this.projectDetails().markTemplateSynced(now);
+    this.touch(now);
   }
 
   addTask(taskNode: TaskNode): void {

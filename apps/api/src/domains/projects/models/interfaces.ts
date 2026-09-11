@@ -16,6 +16,11 @@ export interface IProjectDetailsProps extends ITimestampedDetails {
   assigneePersonNodeId: string | null;
   sponsorPersonNodeId: string | null;
   reviewerPersonNodeId: string | null;
+  sourceTemplateId: string | null;
+  templateParamValues: Record<string, string>;
+  templateSyncEnabled: boolean;
+  templateSpawnedAt: Date | null;
+  templateSyncedAt: Date | null;
 }
 
 export interface IProjectNodeProps extends Omit<IDomainNodeProps<"project">, "nodeType"> {

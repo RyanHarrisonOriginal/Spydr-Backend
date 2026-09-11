@@ -24,6 +24,9 @@ export interface IProjectCreateModelInput {
   startDate?: string | null;
   targetDate?: string | null;
   riskLevel?: SpydrPriority;
+  sourceTemplateId?: string | null;
+  templateParamValues?: Record<string, string>;
+  templateSpawnedAt?: Date | null;
 }
 
 export class ProjectMapper {
@@ -69,6 +72,11 @@ export class ProjectMapper {
         assigneePersonNodeId: null,
         sponsorPersonNodeId: null,
         reviewerPersonNodeId: null,
+        sourceTemplateId: input.sourceTemplateId ?? null,
+        templateParamValues: { ...(input.templateParamValues ?? {}) },
+        templateSyncEnabled: true,
+        templateSpawnedAt: input.templateSpawnedAt ?? null,
+        templateSyncedAt: input.templateSpawnedAt ?? null,
         createdAt: now,
         updatedAt: now,
       },

@@ -90,6 +90,27 @@ export class PostgresProjectRepository implements IProjectRepository {
     return this.attachAssigneesToProjects(orgId, projects);
   }
 
+  async listOpenIdsBySourceTemplate(
+    orgId: string,
+    templateId: string
+  ): Promise<string[]> {
+    const rows = await this.db.spydrNode.findMany({
+      where: {
+        orgId,
+        nodeType: "project",
+        isDeleted: false,
+        status: { notIn: ["completed", "archived"] },
+        projectDetails: {
+          sourceTemplateId: templateId,
+          templateSyncEnabled: true,
+        },
+      },
+      select: { id: true },
+      orderBy: [{ updatedAt: "desc" }],
+    });
+    return rows.map((row) => row.id);
+  }
+
   private async attachAssigneesToProjects(
     orgId: string,
     projects: ProjectNode[]
@@ -315,6 +336,9 @@ export class PostgresProjectRepository implements IProjectRepository {
       }
 
       for (const task of entity.tasks) {
+        await this.persistTask(tx, entity, task);
+      }
+      for (const task of entity.deletedTasks) {
         await this.persistTask(tx, entity, task);
       }
 

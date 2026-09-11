@@ -29,6 +29,8 @@ export interface ITaskCreateModelInput {
   dueDate?: string | null;
   estimatedMinutes?: number | null;
   assigneePersonNodeId?: string | null;
+  sourceTemplateTaskId?: string | null;
+  tags?: string[];
 }
 
 export interface ITaskCreateModelContext {
@@ -50,6 +52,7 @@ export class TaskMapper {
     }
 
     const status = this.normalizeStatus(input.status);
+    const tags = Array.isArray(input.tags) ? [...input.tags] : [];
 
     return new TaskNode({
       id: randomUUID(),
@@ -60,7 +63,7 @@ export class TaskMapper {
       status,
       priority: this.normalizePriority(input.priority),
       area: context.area ?? null,
-      tags: [],
+      tags,
       sortOrder: context.sortOrder,
       createdAt: now,
       updatedAt: now,
@@ -73,7 +76,8 @@ export class TaskMapper {
         isBlocked: false,
         estimatedMinutes: input.estimatedMinutes ?? null,
         assigneePersonNodeId: input.assigneePersonNodeId ?? null,
-        tags: [],
+        tags,
+        sourceTemplateTaskId: input.sourceTemplateTaskId ?? null,
         createdAt: now,
         updatedAt: now,
       },

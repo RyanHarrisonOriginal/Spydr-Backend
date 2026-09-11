@@ -5,4 +5,9 @@ export interface IProjectViews {
   listByOrg(orgId: string): Promise<ProjectNode[]>;
   listDeletedByOrg(orgId: string): Promise<ProjectNode[]>;
   getById(orgId: string, projectId: string): Promise<ProjectNode | null>;
+  /** Open (non-completed/archived), sync-enabled projects spawned from a template. */
+  listOpenIdsBySourceTemplate(
+    orgId: string,
+    templateId: string
+  ): Promise<string[]>;
 }

@@ -66,13 +66,15 @@ export class LegacyListViews {
     this.projectAreas = {
       listByOrg: (orgId) => deps.projectAreas.listByOrg(orgId),
       getByTitle: (orgId, title) =>
-        deps.projectAreas.findByTitleForOrg(title, orgId),
+        deps.projectAreas.findByTitleForOrg(orgId, title),
     };
     this.projects = {
       listByOrg: (orgId) => deps.projects.listByOrg(orgId),
       listDeletedByOrg: (orgId) => deps.projects.listDeletedByOrg(orgId),
       getById: (orgId, projectId) =>
         deps.projects.findByIdForOrg(projectId, orgId),
+      listOpenIdsBySourceTemplate: (orgId, templateId) =>
+        deps.projects.listOpenIdsBySourceTemplate(orgId, templateId),
     };
     this.resources = {
       listByOrg: (orgId) => deps.resources.listByOrg(orgId),

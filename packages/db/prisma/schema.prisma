@@ -313,20 +313,27 @@ model SpydrPersonDetails {
 }
 
 model SpydrProjectDetails {
-  nodeId                 String         @id(map: "spydr_project_details_pkey") @map("node_id") @db.Uuid
-  node                   SpydrNode      @relation(fields: [nodeId], references: [id], onDelete: Cascade, map: "spydr_project_details_node_id_fkey")
+  nodeId                 String               @id(map: "spydr_project_details_pkey") @map("node_id") @db.Uuid
+  node                   SpydrNode            @relation(fields: [nodeId], references: [id], onDelete: Cascade, map: "spydr_project_details_node_id_fkey")
   outcome                String?
-  startDate              DateTime?      @map("start_date") @db.Date
-  targetDate             DateTime?      @map("target_date") @db.Date
-  riskLevel              SpydrPriority  @default(medium) @map("risk_level")
-  lastActivityAt         DateTime?      @map("last_activity_at") @db.Timestamptz(6)
-  requesterPersonNodeId  String?        @map("requester_person_node_id") @db.Uuid
-  assigneePersonNodeId   String?        @map("assignee_person_node_id") @db.Uuid
-  sponsorPersonNodeId    String?        @map("sponsor_person_node_id") @db.Uuid
-  reviewerPersonNodeId   String?        @map("reviewer_person_node_id") @db.Uuid
-  createdAt              DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt              DateTime       @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
+  startDate              DateTime?            @map("start_date") @db.Date
+  targetDate             DateTime?            @map("target_date") @db.Date
+  riskLevel              SpydrPriority        @default(medium) @map("risk_level")
+  lastActivityAt         DateTime?            @map("last_activity_at") @db.Timestamptz(6)
+  requesterPersonNodeId  String?              @map("requester_person_node_id") @db.Uuid
+  assigneePersonNodeId   String?              @map("assignee_person_node_id") @db.Uuid
+  sponsorPersonNodeId    String?              @map("sponsor_person_node_id") @db.Uuid
+  reviewerPersonNodeId   String?              @map("reviewer_person_node_id") @db.Uuid
+  sourceTemplateId       String?              @map("source_template_id") @db.Uuid
+  sourceTemplate         SpydrProjectTemplate? @relation("ProjectSpawnedFromTemplate", fields: [sourceTemplateId], references: [id], onDelete: SetNull, map: "spydr_project_details_source_template_id_fkey")
+  templateParamValues    Json                 @default("{}") @map("template_param_values")
+  templateSyncEnabled    Boolean              @default(true) @map("template_sync_enabled")
+  templateSpawnedAt      DateTime?            @map("template_spawned_at") @db.Timestamptz(6)
+  templateSyncedAt       DateTime?            @map("template_synced_at") @db.Timestamptz(6)
+  createdAt              DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime             @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
 
+  @@index([sourceTemplateId], map: "idx_spydr_project_details_source_template")
   @@map("spydr_project_details")
 }
 
@@ -354,19 +361,22 @@ model SpydrResourceDetails {
 }
 
 model SpydrTaskDetails {
-  nodeId               String    @id(map: "spydr_task_details_pkey") @map("node_id") @db.Uuid
-  node                 SpydrNode @relation(fields: [nodeId], references: [id], onDelete: Cascade, map: "spydr_task_details_node_id_fkey")
-  dueDate              DateTime? @map("due_date") @db.Date
-  completedAt          DateTime? @map("completed_at") @db.Timestamptz(6)
-  isBlocked            Boolean   @default(false) @map("is_blocked")
-  estimatedMinutes     Int?      @map("estimated_minutes")
-  assigneePersonNodeId String?   @map("assignee_person_node_id") @db.Uuid
-  tags                 String[]  @default([]) @map("tag")
-  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt            DateTime  @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
+  nodeId               String                  @id(map: "spydr_task_details_pkey") @map("node_id") @db.Uuid
+  node                 SpydrNode               @relation(fields: [nodeId], references: [id], onDelete: Cascade, map: "spydr_task_details_node_id_fkey")
+  dueDate              DateTime?               @map("due_date") @db.Date
+  completedAt          DateTime?               @map("completed_at") @db.Timestamptz(6)
+  isBlocked            Boolean                 @default(false) @map("is_blocked")
+  estimatedMinutes     Int?                    @map("estimated_minutes")
+  assigneePersonNodeId String?                 @map("assignee_person_node_id") @db.Uuid
+  tags                 String[]                @default([]) @map("tag")
+  sourceTemplateTaskId String?                 @map("source_template_task_id") @db.Uuid
+  sourceTemplateTask   SpydrProjectTemplateTask? @relation("TaskSpawnedFromTemplateTask", fields: [sourceTemplateTaskId], references: [id], onDelete: SetNull, map: "spydr_task_details_source_template_task_id_fkey")
+  createdAt            DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime                @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
 
   @@index([dueDate], map: "idx_spydr_task_due_date")
   @@index([assigneePersonNodeId], map: "idx_spydr_task_assignee")
+  @@index([sourceTemplateTaskId], map: "idx_spydr_task_details_source_template_task")
   @@map("spydr_task_details")
 }
 
@@ -446,6 +456,7 @@ model SpydrProjectTemplate {
   updatedAt           DateTime                       @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
   parameters          SpydrProjectTemplateParameter[]
   tasks               SpydrProjectTemplateTask[]
+  spawnedProjects     SpydrProjectDetails[]          @relation("ProjectSpawnedFromTemplate")
 
   @@index([orgId, isArchived], map: "idx_spydr_project_templates_org_archived")
   @@map("spydr_project_templates")
@@ -479,6 +490,7 @@ model SpydrProjectTemplateTask {
   estimatedMinutes  Int?                 @map("estimated_minutes")
   tags              String[]             @default([])
   sortOrder         Int                  @default(0) @map("sort_order")
+  spawnedTasks      SpydrTaskDetails[]   @relation("TaskSpawnedFromTemplateTask")
 
   @@index([templateId, sortOrder], map: "idx_spydr_project_template_tasks_sort")
   @@map("spydr_project_template_tasks")

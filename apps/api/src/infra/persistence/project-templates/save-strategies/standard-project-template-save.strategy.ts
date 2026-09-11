@@ -59,21 +59,49 @@ export class StandardProjectTemplateSaveStrategy
         },
       });
 
+      const parameterIds = data.parameters.map((param) => param.id);
       await tx.spydrProjectTemplateParameter.deleteMany({
-        where: { templateId: data.id },
+        where: {
+          templateId: data.id,
+          ...(parameterIds.length > 0 ? { id: { notIn: parameterIds } } : {}),
+        },
       });
-      await tx.spydrProjectTemplateTask.deleteMany({
-        where: { templateId: data.id },
-      });
-
-      if (data.parameters.length > 0) {
-        await tx.spydrProjectTemplateParameter.createMany({
-          data: data.parameters,
+      for (const param of data.parameters) {
+        await tx.spydrProjectTemplateParameter.upsert({
+          where: { id: param.id },
+          create: param,
+          update: {
+            key: param.key,
+            label: param.label,
+            valueType: param.valueType,
+            required: param.required,
+            defaultValue: param.defaultValue,
+            sortOrder: param.sortOrder,
+          },
         });
       }
-      if (data.tasks.length > 0) {
-        await tx.spydrProjectTemplateTask.createMany({
-          data: data.tasks,
+
+      const taskIds = data.tasks.map((task) => task.id);
+      await tx.spydrProjectTemplateTask.deleteMany({
+        where: {
+          templateId: data.id,
+          ...(taskIds.length > 0 ? { id: { notIn: taskIds } } : {}),
+        },
+      });
+      for (const task of data.tasks) {
+        await tx.spydrProjectTemplateTask.upsert({
+          where: { id: task.id },
+          create: task,
+          update: {
+            titleTemplate: task.titleTemplate,
+            bodyTemplate: task.bodyTemplate,
+            status: task.status,
+            priority: task.priority,
+            dueOffsetDays: task.dueOffsetDays,
+            estimatedMinutes: task.estimatedMinutes,
+            tags: task.tags,
+            sortOrder: task.sortOrder,
+          },
         });
       }
 
