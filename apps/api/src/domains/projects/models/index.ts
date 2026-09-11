@@ -296,6 +296,20 @@ export class ProjectNode extends DomainNode<"project"> {
     this.projectDetails().setAssigneePersonNodeId(personNodeId);
   }
 
+  assignUnassignedTasksToOwner(
+    ownerPersonNodeId: string,
+    now = new Date()
+  ): TaskNode[] {
+    const updated: TaskNode[] = [];
+    for (const task of this.tasks) {
+      if (task.isDeleted) continue;
+      if (task.details?.assigneePersonNodeId) continue;
+      task.applyUpdate({ assigneePersonNodeId: ownerPersonNodeId }, now);
+      updated.push(task);
+    }
+    return updated;
+  }
+
   setSponsorPersonNodeId(personNodeId: string | null): void {
     this.projectDetails().setSponsorPersonNodeId(personNodeId);
   }

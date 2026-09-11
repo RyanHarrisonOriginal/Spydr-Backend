@@ -77,7 +77,8 @@ export function registerCommandHandlers(
     new UpdateProjectCommandHandler(
       repositories.projects,
       repositories.projectAreas,
-      repositories.people
+      repositories.people,
+      repositories.tasks
     ),
     new DeleteProjectCommandHandler(repositories.projects),
     new RestoreProjectCommandHandler(repositories.projects),

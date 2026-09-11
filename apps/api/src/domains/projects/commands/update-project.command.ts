@@ -1,5 +1,6 @@
 import type { IProjectAreaRepository } from "../../project-areas/repository.js";
 import type { IPersonRepository } from "../../people/repository.js";
+import type { ITaskRepository } from "../../tasks/repository.js";
 import type { IProjectRepository } from "../repository.js";
 import type { IProjectUpdateInput, ProjectNode } from "../models/index.js";
 import type { SpydrNodeStatus, SpydrPriority } from "../../shared/models/shared.js";
@@ -51,7 +52,8 @@ export class UpdateProjectCommandHandler
   constructor(
     private readonly projects: IProjectRepository,
     private readonly projectAreas: IProjectAreaRepository,
-    private readonly people: IPersonRepository
+    private readonly people: IPersonRepository,
+    private readonly tasks: ITaskRepository
   ) {}
 
   async execute(command: UpdateProjectCommand): Promise<ProjectNode | null> {
@@ -61,8 +63,19 @@ export class UpdateProjectCommandHandler
     });
     if (!existing || existing.isDeleted) return null;
 
+    const previousAssigneeId = existing.details?.assigneePersonNodeId ?? null;
     const patch = await this.resolvePatch(command.orgId, command.input);
     existing.applyUpdate(patch);
+
+    if (command.input.assigneePersonNodeId !== undefined) {
+      const nextAssigneeId = existing.details?.assigneePersonNodeId ?? null;
+      if (nextAssigneeId && nextAssigneeId !== previousAssigneeId) {
+        const touched = existing.assignUnassignedTasksToOwner(nextAssigneeId);
+        for (const task of touched) {
+          await this.tasks.save(task);
+        }
+      }
+    }
 
     if (command.input.areaNodeId !== undefined) {
       return this.projects.save(existing, {
