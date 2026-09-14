@@ -52,7 +52,7 @@ async function createAndStartPgBoss(): Promise<PgBoss> {
   return boss;
 }
 
-/** Shared pg-boss instance backed by DATABASE_URL / schema `bullmq`. */
+/** Shared pg-boss instance backed by DATABASE_URL / schema `pgboss`. */
 export function getPgBoss(): Promise<PgBoss> {
   if (!bossPromise) {
     bossPromise = createAndStartPgBoss();

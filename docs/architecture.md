@@ -134,3 +134,16 @@ Keep transforms out of handlers and repositories except for calling mappers. Upd
 - `@spydr/active-notes` session persistence may keep pipeline-specific methods (begin/complete/fail) — treat as a session store, not a domain write repo.
 - Auth/org membership checks used by HTTP middleware live on organization **views**.
 - Project graph hydration (`personas`, related children) is shared via `infra/persistence/projects/project-graph-loaders.ts` for both the write repository `get` path and `PostgresProjectViews.getById`.
+
+## Background jobs
+
+Spydr uses **one** job stack: **pg-boss** on Postgres (schema `pgboss`), not Redis/BullMQ.
+
+| Role | Location |
+|------|----------|
+| Enqueue (API) | `apps/api/src/infra/jobs/` |
+| Cross-cutting refresh | `EmbeddingAwareCommandBus` after tracked commands |
+| Consumers | `apps/worker` (project embeddings, active-note analyze, todo-stale) |
+| Schema migrate | `npm run db:pgboss:migrate` (renames legacy `bullmq` → `pgboss` when needed) |
+
+Do not add a second queue system. Shared queue name constants live in `@spydr/shared`.

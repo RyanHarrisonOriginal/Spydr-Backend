@@ -3,5 +3,6 @@ export {
   getDatabaseUrl,
   getWorkerConcurrency,
   PG_BOSS_SCHEMA,
+  PG_BOSS_LEGACY_SCHEMA,
 } from "./env.js";
 export { getPgBoss, stopPgBoss } from "./pg-boss.js";

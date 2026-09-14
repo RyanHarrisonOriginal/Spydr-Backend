@@ -5,6 +5,15 @@ node_modules/
 dist/
 build/
 
+
+# Migrations
+docs/migrations/
+
+db/prisma/migrations/manual/
+
+# Scripts
+scripts/
+
 # Environment (never commit secrets)
 .env
 .env.local

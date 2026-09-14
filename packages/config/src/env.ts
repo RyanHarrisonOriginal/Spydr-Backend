@@ -1,7 +1,10 @@
 import "./load-env.js";
 
 /** Postgres schema used by pg-boss (separate from Prisma `public` tables). */
-export const PG_BOSS_SCHEMA = "bullmq";
+export const PG_BOSS_SCHEMA = "pgboss";
+
+/** Pre-rename schema name kept only for one-time migration. */
+export const PG_BOSS_LEGACY_SCHEMA = "bullmq";
 
 export function getDatabaseUrl(): string {
   const url = process.env.DATABASE_URL?.trim();
