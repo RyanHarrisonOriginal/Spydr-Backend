@@ -6,18 +6,11 @@ import type {
   IRemoveOrganizationMemberContext,
   OrganizationSaveContext,
 } from "../../../../domains/organizations/repository.js";
-import type {
-  IOrganizationMemberView,
-} from "../../../../domains/organizations/views.js";
 import {
   Organization,
   type OrganizationMemberRole,
 } from "../../../../domains/organizations/models/index.js";
 import { slugifyOrganizationName } from "../../../../domains/shared/utils/slugify.js";
-
-const memberPersonInclude = {
-  person: true,
-} as const;
 
 export class PostgresOrganizationRepository implements IOrganizationRepository {
   constructor(private readonly db: PrismaClient) {}
@@ -79,74 +72,13 @@ export class PostgresOrganizationRepository implements IOrganizationRepository {
     await this.db.organization.delete({ where: { id } });
   }
 
-  async listForUser(userId: string): Promise<Organization[]> {
-    const rows = await this.db.organizationMember.findMany({
-      where: { userId },
-      include: { organization: true },
-      orderBy: { organization: { name: "asc" } },
-    });
-
-    return rows.map((row) => this.toDomain(row.organization, row.role));
-  }
-
-  async findByIdForUser(id: string, userId: string): Promise<Organization | null> {
+  private async findByIdForUser(id: string, userId: string): Promise<Organization | null> {
     const row = await this.db.organizationMember.findFirst({
       where: { organizationId: id, userId },
       include: { organization: true },
     });
 
     return row ? this.toDomain(row.organization, row.role) : null;
-  }
-
-  async isMember(userId: string, orgId: string): Promise<boolean> {
-    const row = await this.db.organizationMember.findFirst({
-      where: { organizationId: orgId, userId },
-      select: { id: true },
-    });
-    return Boolean(row);
-  }
-
-  async getMemberRole(
-    userId: string,
-    orgId: string
-  ): Promise<OrganizationMemberRole | null> {
-    const row = await this.db.organizationMember.findFirst({
-      where: { organizationId: orgId, userId },
-      select: { role: true },
-    });
-    return row ? (row.role as OrganizationMemberRole) : null;
-  }
-
-  async listMembers(orgId: string): Promise<IOrganizationMemberView[]> {
-    const rows = await this.db.organizationMember.findMany({
-      where: { organizationId: orgId },
-      include: memberPersonInclude,
-      orderBy: { createdAt: "asc" },
-    });
-
-    return rows.map((row) => this.toMemberView(row));
-  }
-
-  async getMemberById(
-    orgId: string,
-    memberId: string
-  ): Promise<IOrganizationMemberView | null> {
-    const row = await this.db.organizationMember.findFirst({
-      where: { id: memberId, organizationId: orgId },
-      include: memberPersonInclude,
-    });
-    return row ? this.toMemberView(row) : null;
-  }
-
-  async getMemberByUserId(
-    orgId: string,
-    userId: string
-  ): Promise<IOrganizationMemberView | null> {
-    const row = await this.db.organizationMember.findFirst({
-      where: { organizationId: orgId, userId },
-      include: memberPersonInclude,
-    });
-    return row ? this.toMemberView(row) : null;
   }
 
   private async createForUser(
@@ -226,38 +158,6 @@ export class PostgresOrganizationRepository implements IOrganizationRepository {
       throw new Error("Member not found");
     }
     return org;
-  }
-
-  private toMemberView(row: {
-    id: string;
-    organizationId: string;
-    userId: string;
-    personId: string;
-    role: OrganizationMemberRole;
-    createdAt: Date;
-    person: {
-      id: string;
-      fullName: string;
-      email: string | null;
-      clerkUserId: string | null;
-    } | null;
-  }): IOrganizationMemberView {
-    return {
-      id: row.id,
-      organizationId: row.organizationId,
-      userId: row.userId,
-      personId: row.personId,
-      role: row.role,
-      createdAt: row.createdAt,
-      person: row.person
-        ? {
-            id: row.person.id,
-            fullName: row.person.fullName,
-            email: row.person.email,
-            clerkUserId: row.person.clerkUserId,
-          }
-        : null,
-    };
   }
 
   private toDomain(

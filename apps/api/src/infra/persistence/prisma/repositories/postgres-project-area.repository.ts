@@ -12,57 +12,11 @@ export class PostgresProjectAreaRepository implements IProjectAreaRepository {
     private readonly mapper = new PrismaProjectAreaMapper()
   ) {}
 
-  async findById(id: string): Promise<ProjectAreaNode | null> {
-    const row = await this.db.spydrNode.findUnique({
-      where: { id },
-      include: projectAreaInclude,
-    });
-    return row && row.nodeType === "project_area"
-      ? this.mapper.toDomain(row)
-      : null;
-  }
-
   async get(criteria: { id: string; orgId?: string; includeDeleted?: boolean }) {
     if (criteria.orgId) {
       return this.findByIdForOrg(criteria.id, criteria.orgId);
     }
     return this.findById(criteria.id);
-  }
-
-  async findByIdForOrg(
-    id: string,
-    orgId: string
-  ): Promise<ProjectAreaNode | null> {
-    const row = await this.db.spydrNode.findFirst({
-      where: { id, orgId, nodeType: "project_area", isDeleted: false },
-      include: projectAreaInclude,
-    });
-    return row ? this.mapper.toDomain(row) : null;
-  }
-
-  async findByTitleForOrg(
-    orgId: string,
-    title: string
-  ): Promise<ProjectAreaNode | null> {
-    const row = await this.db.spydrNode.findFirst({
-      where: {
-        orgId,
-        nodeType: "project_area",
-        isDeleted: false,
-        title: { equals: title, mode: "insensitive" },
-      },
-      include: projectAreaInclude,
-    });
-    return row ? this.mapper.toDomain(row) : null;
-  }
-
-  async listByOrg(orgId: string): Promise<ProjectAreaNode[]> {
-    const rows = await this.db.spydrNode.findMany({
-      where: { orgId, nodeType: "project_area", isDeleted: false },
-      include: projectAreaInclude,
-      orderBy: { title: "asc" },
-    });
-    return rows.map((row) => this.mapper.toDomain(row));
   }
 
   async save(
@@ -116,7 +70,31 @@ export class PostgresProjectAreaRepository implements IProjectAreaRepository {
     await this.db.spydrNode.delete({ where: { id } });
   }
 
-  async clearProjectsUsingArea(orgId: string, areaTitle: string): Promise<void> {
+  private async findById(id: string): Promise<ProjectAreaNode | null> {
+    const row = await this.db.spydrNode.findUnique({
+      where: { id },
+      include: projectAreaInclude,
+    });
+    return row && row.nodeType === "project_area"
+      ? this.mapper.toDomain(row)
+      : null;
+  }
+
+  private async findByIdForOrg(
+    id: string,
+    orgId: string
+  ): Promise<ProjectAreaNode | null> {
+    const row = await this.db.spydrNode.findFirst({
+      where: { id, orgId, nodeType: "project_area", isDeleted: false },
+      include: projectAreaInclude,
+    });
+    return row ? this.mapper.toDomain(row) : null;
+  }
+
+  private async clearProjectsUsingArea(
+    orgId: string,
+    areaTitle: string
+  ): Promise<void> {
     await this.db.spydrNode.updateMany({
       where: {
         orgId,

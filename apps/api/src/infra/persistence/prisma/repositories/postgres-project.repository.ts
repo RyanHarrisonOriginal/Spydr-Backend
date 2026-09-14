@@ -7,39 +7,29 @@ import type { ResourceNode } from "../../../../domains/resources/models/index.js
 import type { TaskStatus } from "../../../../domains/shared/models/shared.js";
 import type { TaskNode } from "../../../../domains/tasks/models/index.js";
 import { ProjectNode } from "../../../../domains/projects/models/index.js";
-import { emptyProjectPersonas } from "../../../../domains/projects/models/personas.js";
-import type { PersonNode } from "../../../../domains/people/models/index.js";
-import {
-  personVisibleInOrgWhere,
-  PrismaPersonMapper,
-} from "../mappers/prisma-person.mapper.js";
 import { withNodePersonId } from "../mappers/spydr-node-write.js";
+import { personVisibleInOrgWhere } from "../mappers/prisma-person.mapper.js";
 import { PrismaProjectMapper } from "../mappers/prisma-project.mapper.js";
 import { PrismaDecisionMapper } from "../mappers/prisma-decision.mapper.js";
 import { PrismaNoteMapper } from "../mappers/prisma-note.mapper.js";
 import { PrismaResourceMapper } from "../mappers/prisma-resource.mapper.js";
 import { PrismaTaskMapper } from "../mappers/prisma-task.mapper.js";
 import { PrismaIdeaMapper } from "../mappers/prisma-idea.mapper.js";
+import { ProjectGraphLoaders } from "../../projects/project-graph-loaders.js";
 
 export class PostgresProjectRepository implements IProjectRepository {
+  private readonly graph: ProjectGraphLoaders;
+
   constructor(
     private readonly db: PrismaClient,
     private readonly mapper = new PrismaProjectMapper(),
-    private readonly personMapper = new PrismaPersonMapper(),
     private readonly taskMapper = new PrismaTaskMapper(),
     private readonly decisionMapper = new PrismaDecisionMapper(),
     private readonly noteMapper = new PrismaNoteMapper(),
     private readonly resourceMapper = new PrismaResourceMapper(),
     private readonly ideaMapper = new PrismaIdeaMapper()
-  ) {}
-
-  async findById(id: string): Promise<ProjectNode | null> {
-    const row = await this.db.spydrNode.findUnique({
-      where: { id },
-      include: { projectDetails: true },
-    });
-
-    return row && row.nodeType === "project" ? this.mapper.toDomain(row) : null;
+  ) {
+    this.graph = new ProjectGraphLoaders(db);
   }
 
   async get(criteria: { id: string; orgId?: string; includeDeleted?: boolean }) {
@@ -49,163 +39,17 @@ export class PostgresProjectRepository implements IProjectRepository {
     return this.findById(criteria.id);
   }
 
-  async findByIdForOrg(id: string, orgId: string): Promise<ProjectNode | null> {
-    const row = await this.db.spydrNode.findFirst({
-      where: { id, orgId, nodeType: "project", isDeleted: false },
+  private async findById(id: string): Promise<ProjectNode | null> {
+    const row = await this.db.spydrNode.findUnique({
+      where: { id },
       include: { projectDetails: true },
     });
 
-    if (!row) return null;
-
-    const project = this.mapper.toDomain(row);
-    const related = await this.loadRelatedNodes(id, orgId);
-    const personas = await this.loadPersonas(orgId, project.details);
-
-    return new ProjectNode({
-      id: project.id,
-      orgId: project.orgId,
-      userId: project.userId,
-      personId: project.personId,
-      title: project.title,
-      body: project.body,
-      status: project.status,
-      priority: project.priority,
-      area: project.area,
-      tags: project.tags,
-      sortOrder: project.sortOrder,
-      createdAt: project.createdAt,
-      updatedAt: project.updatedAt,
-      archivedAt: project.archivedAt,
-      isDeleted: project.isDeleted,
-      deletedAt: project.deletedAt,
-      details: project.details,
-      personas,
-      ...related,
-    });
+    return row && row.nodeType === "project" ? this.mapper.toDomain(row) : null;
   }
 
-  async listByOrg(orgId: string): Promise<ProjectNode[]> {
-    const rows = await this.db.spydrNode.findMany({
-      where: { orgId, nodeType: "project", isDeleted: false },
-      include: { projectDetails: true },
-      orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
-    });
-
-    const projects = rows.map((row) => this.mapper.toDomain(row));
-    return this.attachAssigneesToProjects(orgId, projects);
-  }
-
-  async listOpenIdsBySourceTemplate(
-    orgId: string,
-    templateId: string
-  ): Promise<string[]> {
-    const rows = await this.db.spydrNode.findMany({
-      where: {
-        orgId,
-        nodeType: "project",
-        isDeleted: false,
-        status: { notIn: ["completed", "archived"] },
-        projectDetails: {
-          sourceTemplateId: templateId,
-          templateSyncEnabled: true,
-        },
-      },
-      select: { id: true },
-      orderBy: [{ updatedAt: "desc" }],
-    });
-    return rows.map((row) => row.id);
-  }
-
-  private async loadPeopleByIds(
-    orgId: string,
-    ids: string[]
-  ): Promise<Map<string, PersonNode>> {
-    if (ids.length === 0) return new Map();
-
-    const rows = await this.db.spydrPersonDetails.findMany({
-      where: {
-        id: { in: ids },
-        ...personVisibleInOrgWhere(orgId),
-      },
-    });
-
-    return new Map(rows.map((row) => [row.id, this.personMapper.toDomain(row)]));
-  }
-
-  private async attachAssigneesToProjects(
-    orgId: string,
-    projects: ProjectNode[]
-  ): Promise<ProjectNode[]> {
-    const assigneeIds = [
-      ...new Set(
-        projects
-          .map((project) => project.details?.assigneePersonNodeId)
-          .filter((id): id is string => Boolean(id))
-      ),
-    ];
-
-    const assigneeById = await this.loadPeopleByIds(orgId, assigneeIds);
-
-    return projects.map((project) => {
-      const assigneeId = project.details?.assigneePersonNodeId ?? null;
-      const assignee = assigneeId ? assigneeById.get(assigneeId) ?? null : null;
-
-      return new ProjectNode({
-        id: project.id,
-        orgId: project.orgId,
-        userId: project.userId,
-        personId: project.personId,
-        title: project.title,
-        body: project.body,
-        status: project.status,
-        priority: project.priority,
-        area: project.area,
-        tags: project.tags,
-        sortOrder: project.sortOrder,
-        createdAt: project.createdAt,
-        updatedAt: project.updatedAt,
-        archivedAt: project.archivedAt,
-        isDeleted: project.isDeleted,
-        deletedAt: project.deletedAt,
-        details: project.details,
-        personas: {
-          ...emptyProjectPersonas(),
-          assignee,
-        },
-      });
-    });
-  }
-
-  private async attachAssigneesToTasks(
-    orgId: string,
-    tasks: TaskNode[]
-  ): Promise<TaskNode[]> {
-    const assigneeIds = [
-      ...new Set(
-        tasks
-          .map((task) => task.details?.assigneePersonNodeId)
-          .filter((id): id is string => Boolean(id))
-      ),
-    ];
-
-    const assigneeById = await this.loadPeopleByIds(orgId, assigneeIds);
-    if (assigneeById.size === 0) return tasks;
-
-    return tasks.map((task) => {
-      const assigneeId = task.details?.assigneePersonNodeId ?? null;
-      if (!assigneeId) return task;
-      return task.withAssignee(assigneeById.get(assigneeId) ?? null);
-    });
-  }
-
-  async listDeletedByOrg(orgId: string): Promise<ProjectNode[]> {
-    const rows = await this.db.spydrNode.findMany({
-      where: { orgId, nodeType: "project", isDeleted: true },
-      include: { projectDetails: true },
-      orderBy: { deletedAt: "desc" },
-    });
-
-    return rows.map((row) => this.mapper.toDomain(row));
+  private async findByIdForOrg(id: string, orgId: string): Promise<ProjectNode | null> {
+    return this.graph.getProject(orgId, id);
   }
 
   async restoreProject(orgId: string, projectId: string): Promise<ProjectNode | null> {
@@ -577,112 +421,6 @@ export class PostgresProjectRepository implements IProjectRepository {
     });
 
     return this.findByIdForOrg(projectId, orgId);
-  }
-
-  private async loadPersonas(
-    orgId: string,
-    details: ProjectNode["details"]
-  ) {
-    const personas = emptyProjectPersonas();
-    if (!details) return personas;
-
-    const ids = [
-      details.requesterPersonNodeId,
-      details.assigneePersonNodeId,
-      details.sponsorPersonNodeId,
-      details.reviewerPersonNodeId,
-    ].filter((id): id is string => Boolean(id));
-
-    const byId = await this.loadPeopleByIds(orgId, ids);
-    if (byId.size === 0) return personas;
-
-    personas.requester = details.requesterPersonNodeId
-      ? byId.get(details.requesterPersonNodeId) ?? null
-      : null;
-    personas.assignee = details.assigneePersonNodeId
-      ? byId.get(details.assigneePersonNodeId) ?? null
-      : null;
-    personas.sponsor = details.sponsorPersonNodeId
-      ? byId.get(details.sponsorPersonNodeId) ?? null
-      : null;
-    personas.reviewer = details.reviewerPersonNodeId
-      ? byId.get(details.reviewerPersonNodeId) ?? null
-      : null;
-
-    return personas;
-  }
-
-  private async loadRelatedNodes(projectId: string, orgId: string) {
-    const relationships = await this.db.spydrNodeRelationship.findMany({
-      where: {
-        orgId,
-        OR: [{ sourceNodeId: projectId }, { targetNodeId: projectId }],
-      },
-    });
-
-    const relatedIds = relationships.map((relationship) =>
-      relationship.sourceNodeId === projectId
-        ? relationship.targetNodeId
-        : relationship.sourceNodeId
-    );
-
-    if (relatedIds.length === 0) {
-      return {
-        tasks: [],
-        decisions: [],
-        ideas: [],
-        notes: [],
-        resources: [],
-        deletedTasks: [],
-        deletedDecisions: [],
-        deletedIdeas: [],
-        deletedNotes: [],
-        deletedResources: [],
-      };
-    }
-
-    const rows = await this.db.spydrNode.findMany({
-      where: {
-        orgId,
-        id: { in: relatedIds },
-        nodeType: { in: ["task", "decision", "idea", "note", "resource"] },
-      },
-      include: {
-        taskDetails: true,
-        decisionDetails: true,
-        ideaDetails: true,
-        resourceDetails: true,
-      },
-      orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
-    });
-
-    const taskRows = rows.filter((row) => row.nodeType === "task");
-    const decisionRows = rows.filter((row) => row.nodeType === "decision");
-    const ideaRows = rows.filter((row) => row.nodeType === "idea");
-    const noteRows = rows.filter((row) => row.nodeType === "note");
-    const resourceRows = rows.filter((row) => row.nodeType === "resource");
-
-    const taskNodes = await this.attachAssigneesToTasks(
-      orgId,
-      taskRows.map((row) => this.taskMapper.toDomain(row))
-    );
-    const decisionNodes = decisionRows.map((row) => this.decisionMapper.toDomain(row));
-    const ideaNodes = ideaRows.map((row) => this.ideaMapper.toDomain(row));
-    const noteNodes = noteRows.map((row) => this.noteMapper.toDomain(row));
-    const resourceNodes = resourceRows.map((row) => this.resourceMapper.toDomain(row));
-
-    return {
-      tasks: taskNodes.filter((node) => !node.isDeleted),
-      decisions: decisionNodes.filter((node) => !node.isDeleted),
-      ideas: ideaNodes.filter((node) => !node.isDeleted),
-      notes: noteNodes.filter((node) => !node.isDeleted),
-      resources: resourceNodes.filter((node) => !node.isDeleted),
-      deletedTasks: taskNodes.filter((node) => node.isDeleted),
-      deletedDecisions: decisionNodes.filter((node) => node.isDeleted),
-      deletedIdeas: ideaNodes.filter((node) => node.isDeleted),
-      deletedNotes: noteNodes.filter((node) => node.isDeleted),
-      deletedResources: resourceNodes.filter((node) => node.isDeleted),
-    };
   }
 
   private async ensureRelatedChild(

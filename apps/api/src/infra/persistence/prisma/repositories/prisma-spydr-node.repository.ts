@@ -1,9 +1,6 @@
-import type { Prisma, PrismaClient, SpydrNodeType as PrismaSpydrNodeType } from "@prisma/client";
+import type { PrismaClient, SpydrNodeType as PrismaSpydrNodeType } from "@prisma/client";
 import type { DomainNode, SpydrNodeType } from "../../../../domains/shared/models/shared.js";
-import type {
-  ISpydrNodeListCriteria,
-  ISpydrNodeRepository,
-} from "../../../../domains/index.js";
+import type { ISpydrNodeRepository } from "../../../../domains/index.js";
 import { PrismaSpydrNodeMapper } from "../mappers/prisma-spydr-node.mapper.js";
 import { withNodePersonId } from "../mappers/spydr-node-write.js";
 
@@ -18,42 +15,11 @@ export class PrismaSpydrNodeRepository implements ISpydrNodeRepository {
     private readonly mapper = new PrismaSpydrNodeMapper()
   ) {}
 
-  async findById(id: string): Promise<DomainNode | null> {
-    const row = await this.db.spydrNode.findUnique({ where: { id } });
-    return row ? this.mapper.toDomain(row) : null;
-  }
-
   async get(criteria: { id: string; orgId?: string; includeDeleted?: boolean }) {
     if (criteria.orgId) {
       return this.findByIdForOrg(criteria.id, criteria.orgId);
     }
     return this.findById(criteria.id);
-  }
-
-  async findByIdForOrg(id: string, orgId: string): Promise<DomainNode | null> {
-    const row = await this.db.spydrNode.findFirst({ where: { id, orgId } });
-    return row ? this.mapper.toDomain(row) : null;
-  }
-
-  async list(criteria: ISpydrNodeListCriteria): Promise<DomainNode[]> {
-    const nodeType = criteria.nodeType
-      ? asPrismaNodeType(criteria.nodeType)
-      : undefined;
-    if (criteria.nodeType && !nodeType) return [];
-
-    const where: Prisma.SpydrNodeWhereInput = {
-      orgId: criteria.orgId,
-      ...(nodeType ? { nodeType } : {}),
-      ...(criteria.status ? { status: criteria.status } : {}),
-      ...(criteria.tag ? { tags: { has: criteria.tag } } : {}),
-    };
-
-    const rows = await this.db.spydrNode.findMany({
-      where,
-      orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
-    });
-
-    return rows.map((row) => this.mapper.toDomain(row));
   }
 
   async save(
@@ -92,7 +58,17 @@ export class PrismaSpydrNodeRepository implements ISpydrNodeRepository {
     await this.db.spydrNode.delete({ where: { id } });
   }
 
-  async reorderForOrg(
+  private async findById(id: string): Promise<DomainNode | null> {
+    const row = await this.db.spydrNode.findUnique({ where: { id } });
+    return row ? this.mapper.toDomain(row) : null;
+  }
+
+  private async findByIdForOrg(id: string, orgId: string): Promise<DomainNode | null> {
+    const row = await this.db.spydrNode.findFirst({ where: { id, orgId } });
+    return row ? this.mapper.toDomain(row) : null;
+  }
+
+  private async reorderForOrg(
     orgId: string,
     nodeType: SpydrNodeType,
     orderedIds: readonly string[]
@@ -131,18 +107,5 @@ export class PrismaSpydrNodeRepository implements ISpydrNodeRepository {
         })
       )
     );
-  }
-
-  async nextSortOrderForOrg(orgId: string, nodeType: SpydrNodeType): Promise<number> {
-    const prismaNodeType = asPrismaNodeType(nodeType);
-    if (!prismaNodeType) return 0;
-
-    const result = await this.db.spydrNode.aggregate({
-      where: { orgId, nodeType: prismaNodeType, isDeleted: false },
-      _max: { sortOrder: true },
-    });
-
-    const currentMax = result._max.sortOrder;
-    return (currentMax ?? -1000) + 1000;
   }
 }

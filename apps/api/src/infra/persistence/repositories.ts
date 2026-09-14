@@ -54,7 +54,15 @@ import { PostgresProjectTemplateRepository } from "./project-templates/postgres-
 import { PostgresProjectTemplateViews } from "./project-templates/postgres-project-template.views.js";
 import { PostgresNodeTypeTransformRepository } from "./prisma/repositories/postgres-node-type-transform.repository.js";
 import { PostgresWorkspaceDashboardRepository } from "./prisma/repositories/postgres-workspace-dashboard.repository.js";
-import { LegacyListViews } from "./legacy-list-views.js";
+import { PostgresIdeaViews } from "./ideas/postgres-idea.views.js";
+import { PostgresResourceViews } from "./resources/postgres-resource.views.js";
+import { PostgresProjectAreaViews } from "./project-areas/postgres-project-area.views.js";
+import { PostgresDecisionViews } from "./decisions/postgres-decision.views.js";
+import { PostgresNoteViews } from "./notes/postgres-note.views.js";
+import { PostgresPersonViews } from "./people/postgres-person.views.js";
+import { PostgresOrganizationViews } from "./organizations/postgres-organization.views.js";
+import { PostgresProjectViews } from "./projects/postgres-project.views.js";
+import { PostgresSpydrNodeViews } from "./nodes/postgres-spydr-node.views.js";
 
 export interface IPersistenceRepositories {
   decisions: IDecisionRepository;
@@ -94,7 +102,9 @@ export function createPersistenceRepositories(
   prisma: PrismaClient
 ): IPersistenceRepositories {
   const people = new PostgresPersonRepository(prisma);
+  const personViews = new PostgresPersonViews(prisma);
   const projects = new PostgresProjectRepository(prisma);
+  const projectViews = new PostgresProjectViews(prisma);
   const tasks = new PostgresTaskRepository(prisma);
   const taskViews = new PostgresTaskViews(prisma);
   const todos = new PostgresTodoItemRepository(prisma);
@@ -103,54 +113,49 @@ export function createPersistenceRepositories(
   const projectTemplateViews = new PostgresProjectTemplateViews(prisma);
   const personCollectionSort = new PostgresPersonCollectionSortRepository(prisma);
   const notes = new PostgresNoteRepository(prisma);
+  const noteViews = new PostgresNoteViews(prisma);
   const ideas = new PostgresIdeaRepository(prisma);
+  const ideaViews = new PostgresIdeaViews(prisma);
   const decisions = new PostgresDecisionRepository(prisma);
+  const decisionViews = new PostgresDecisionViews(prisma);
   const projectAreas = new PostgresProjectAreaRepository(prisma);
+  const projectAreaViews = new PostgresProjectAreaViews(prisma);
   const resources = new PostgresResourceRepository(prisma);
+  const resourceViews = new PostgresResourceViews(prisma);
   const spydrNodes = new PrismaSpydrNodeRepository(prisma);
+  const spydrNodeViews = new PostgresSpydrNodeViews(prisma);
   const organizations = new PostgresOrganizationRepository(prisma);
+  const organizationViews = new PostgresOrganizationViews(prisma);
   const organizationInvites = new PostgresOrganizationInviteRepository(prisma);
-
-  const legacyViews = new LegacyListViews({
-    people,
-    projects,
-    notes,
-    ideas,
-    decisions,
-    projectAreas,
-    resources,
-    spydrNodes,
-    organizations,
-  });
 
   return {
     decisions,
-    decisionViews: legacyViews.decisions,
+    decisionViews,
     ideas,
-    ideaViews: legacyViews.ideas,
+    ideaViews,
     notes,
-    noteViews: legacyViews.notes,
+    noteViews,
     organizations,
-    organizationViews: legacyViews.organizations,
+    organizationViews,
     organizationInvites,
     organizationInviteViews: organizationInvites,
     people,
-    personViews: legacyViews.people,
+    personViews,
     personCollectionSort,
     personWork: new PostgresPersonWorkRepository(
       people,
-      legacyViews.projects,
+      projectViews,
       taskViews,
       personCollectionSort
     ),
     projectAreas,
-    projectAreaViews: legacyViews.projectAreas,
+    projectAreaViews,
     projects,
-    projectViews: legacyViews.projects,
+    projectViews,
     resources,
-    resourceViews: legacyViews.resources,
+    resourceViews,
     spydrNodes,
-    spydrNodeViews: legacyViews.spydrNodes,
+    spydrNodeViews,
     tasks,
     taskViews,
     todos,
