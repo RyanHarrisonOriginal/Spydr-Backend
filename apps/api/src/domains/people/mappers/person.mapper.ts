@@ -14,6 +14,7 @@ export interface IPersonCreateModelInput {
   title?: string | null;
   organization?: string | null;
   relationshipContext?: string | null;
+  clerkUserId?: string | null;
   status?: SpydrNodeStatus;
   priority?: SpydrPriority;
 }
@@ -53,6 +54,7 @@ export class PersonMapper {
         title: this.nullableTrim(input.title),
         organization: this.nullableTrim(input.organization),
         relationshipContext: this.nullableTrim(input.relationshipContext),
+        clerkUserId: this.nullableTrim(input.clerkUserId),
         createdAt: now,
         updatedAt: now,
       }),

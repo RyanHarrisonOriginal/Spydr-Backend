@@ -5,9 +5,9 @@ import type { IIdeaRepository } from "../../domains/ideas/repository.js";
 import type { IIdeaViews } from "../../domains/ideas/views.js";
 import type { INoteRepository } from "../../domains/notes/repository.js";
 import type { INoteViews } from "../../domains/notes/views.js";
-import type {
-  IOrganizationRepository,
-} from "../../domains/organizations/repository.js";
+import type { IOrganizationInviteRepository } from "../../domains/organizations/invite-repository.js";
+import type { IOrganizationInviteViews } from "../../domains/organizations/invite-views.js";
+import type { IOrganizationRepository } from "../../domains/organizations/repository.js";
 import type { IOrganizationViews } from "../../domains/organizations/views.js";
 import type { IPersonCollectionSortRepository } from "../../domains/people/collection-sort-repository.js";
 import type { IPersonRepository } from "../../domains/people/repository.js";
@@ -35,6 +35,7 @@ import {
 } from "@spydr/active-notes";
 
 import { PostgresOrganizationRepository } from "./prisma/repositories/postgres-organization.repository.js";
+import { PostgresOrganizationInviteRepository } from "./prisma/repositories/postgres-organization-invite.repository.js";
 import { PostgresPersonRepository } from "./prisma/repositories/postgres-person.repository.js";
 import { PostgresPersonCollectionSortRepository } from "./prisma/repositories/postgres-person-collection-sort.repository.js";
 import { PostgresPersonWorkRepository } from "./prisma/repositories/postgres-person-work.repository.js";
@@ -64,6 +65,8 @@ export interface IPersistenceRepositories {
   noteViews: INoteViews;
   organizations: IOrganizationRepository;
   organizationViews: IOrganizationViews;
+  organizationInvites: IOrganizationInviteRepository;
+  organizationInviteViews: IOrganizationInviteViews;
   people: IPersonRepository;
   personViews: IPersonViews;
   personCollectionSort: IPersonCollectionSortRepository;
@@ -106,6 +109,7 @@ export function createPersistenceRepositories(
   const resources = new PostgresResourceRepository(prisma);
   const spydrNodes = new PrismaSpydrNodeRepository(prisma);
   const organizations = new PostgresOrganizationRepository(prisma);
+  const organizationInvites = new PostgresOrganizationInviteRepository(prisma);
 
   const legacyViews = new LegacyListViews({
     people,
@@ -128,6 +132,8 @@ export function createPersistenceRepositories(
     noteViews: legacyViews.notes,
     organizations,
     organizationViews: legacyViews.organizations,
+    organizationInvites,
+    organizationInviteViews: organizationInvites,
     people,
     personViews: legacyViews.people,
     personCollectionSort,

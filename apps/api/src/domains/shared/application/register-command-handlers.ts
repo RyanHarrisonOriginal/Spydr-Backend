@@ -1,7 +1,14 @@
 import type { IPersistenceRepositories } from "../../../infra/persistence/index.js";
 import type { ICommandBus } from "./command-bus.js";
 import { ApplyActiveNoteCommandHandler } from "../../active-notes/commands/index.js";
-import { CreateOrganizationCommandHandler } from "../../organizations/commands/index.js";
+import {
+  AcceptOrganizationInviteCommandHandler,
+  AddOrganizationMemberCommandHandler,
+  CreateOrganizationCommandHandler,
+  InviteOrganizationMemberCommandHandler,
+  RemoveOrganizationMemberCommandHandler,
+  RevokeOrganizationInviteCommandHandler,
+} from "../../organizations/commands/index.js";
 import {
   CreateProjectAreaCommandHandler,
   DeleteProjectAreaCommandHandler,
@@ -51,6 +58,10 @@ import { DeleteIdeaCommandHandler } from "../../ideas/commands/index.js";
 import { DeleteDecisionCommandHandler } from "../../decisions/commands/index.js";
 import { ReorderNodesCommandHandler } from "../../nodes/commands/index.js";
 import { TransformNodeTypeCommandHandler } from "../../node-type-transform/commands/index.js";
+import {
+  ClerkInvitationSender,
+  ClerkUserDirectory,
+} from "../../../infra/clerk/clerk-users.js";
 
 export function registerCommandHandlers(
   commandBus: ICommandBus,
@@ -63,7 +74,10 @@ export function registerCommandHandlers(
     ),
     new UpdateProjectAreaCommandHandler(repositories.projectAreas),
     new DeleteProjectAreaCommandHandler(repositories.projectAreas),
-    new CreatePersonCommandHandler(repositories.people, repositories.spydrNodeViews),
+    new CreatePersonCommandHandler(
+      repositories.people,
+      repositories.personViews
+    ),
     new UpdatePersonCommandHandler(repositories.people),
     new DeletePersonCommandHandler(
       repositories.people,
@@ -142,7 +156,7 @@ export function registerCommandHandlers(
     new DeleteNoteCommandHandler(repositories.notes),
     new DeleteIdeaCommandHandler(repositories.ideas),
     new DeleteDecisionCommandHandler(repositories.decisions),
-    new ReorderNodesCommandHandler(repositories.spydrNodes),
+    new ReorderNodesCommandHandler(repositories.spydrNodes, repositories.people),
     new ReorderPersonCollectionCommandHandler(
       repositories.people,
       repositories.personWork,
@@ -151,7 +165,52 @@ export function registerCommandHandlers(
   ]);
 
   commandBus.register(
-    new CreateOrganizationCommandHandler(repositories.organizations, commandBus)
+    new CreateOrganizationCommandHandler(
+      repositories.organizations,
+      repositories.personViews,
+      commandBus
+    )
+  );
+  commandBus.register(
+    new InviteOrganizationMemberCommandHandler(
+      repositories.organizations,
+      repositories.organizationViews,
+      repositories.organizationInvites,
+      repositories.organizationInviteViews,
+      new ClerkInvitationSender()
+    )
+  );
+  commandBus.register(
+    new AcceptOrganizationInviteCommandHandler(
+      repositories.organizationInvites,
+      repositories.organizationInviteViews,
+      repositories.organizations,
+      repositories.people,
+      repositories.personViews,
+      commandBus
+    )
+  );
+  commandBus.register(
+    new RevokeOrganizationInviteCommandHandler(
+      repositories.organizations,
+      repositories.organizationInvites
+    )
+  );
+  commandBus.register(
+    new AddOrganizationMemberCommandHandler(
+      repositories.organizations,
+      repositories.organizationViews,
+      repositories.people,
+      repositories.personViews,
+      new ClerkUserDirectory(),
+      commandBus
+    )
+  );
+  commandBus.register(
+    new RemoveOrganizationMemberCommandHandler(
+      repositories.organizations,
+      repositories.organizationViews
+    )
   );
 
   commandBus.register(

@@ -8,6 +8,7 @@ import { NoteMapper } from "../../../../domains/notes/mappers/note.mapper.js";
 import type { INoteUpdateModelInput } from "../../../../domains/notes/mappers/note.mapper.js";
 import type { NoteNode } from "../../../../domains/notes/models/index.js";
 import { PrismaNoteMapper } from "../mappers/prisma-note.mapper.js";
+import { withNodePersonId } from "../mappers/spydr-node-write.js";
 
 export class PostgresNoteRepository implements INoteRepository {
   constructor(
@@ -148,7 +149,7 @@ export class PostgresNoteRepository implements INoteRepository {
   }
 
   async save(entity: NoteNode): Promise<NoteNode> {
-    const nodeData = this.mapper.toPersistence(entity);
+    const nodeData = await withNodePersonId(this.db, this.mapper.toPersistence(entity));
     const { id, ...nodeUpdateData } = nodeData;
     const saved = await this.db.spydrNode.upsert({
       where: { id },

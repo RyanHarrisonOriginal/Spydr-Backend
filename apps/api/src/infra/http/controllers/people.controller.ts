@@ -73,7 +73,10 @@ export class PeopleController {
       if (!ctx) return;
 
       const person = await this.commandBus.execute<CreatePersonCommand, PersonNode>(
-        new CreatePersonCommand(ctx.userId, ctx.orgId, req.body as ICreatePersonInput)
+        new CreatePersonCommand(ctx.userId, ctx.orgId, {
+          ...(req.body as ICreatePersonInput),
+          clerkUserId: null,
+        })
       );
 
       res.status(201).json(this.mapper.toRepresentation(person));
@@ -208,6 +211,15 @@ export class PeopleController {
 
       res.status(204).send();
     } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message ===
+          "Cannot delete an app user; remove their organization membership instead"
+      ) {
+        res.status(409).json({ message: error.message });
+        return;
+      }
+
       console.error(error);
       res.status(500).json({ message: "Failed to delete person" });
     }

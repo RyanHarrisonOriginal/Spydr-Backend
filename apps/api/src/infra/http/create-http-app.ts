@@ -9,7 +9,7 @@ import type { IQueryBus } from "../../domains/shared/application/index.js";
 import { createDecisionsRouter } from "./routes/decisions.router.js";
 import { createIdeasRouter } from "./routes/ideas.router.js";
 import { createNotesRouter } from "./routes/notes.router.js";
-import { createOrganizationsRouter } from "./routes/organizations.router.js";
+import { createOrganizationsRouter, createInvitesRouter } from "./routes/organizations.router.js";
 import { createPeopleRouter } from "./routes/people.router.js";
 import { createProjectAreasRouter } from "./routes/project-areas.router.js";
 import { createProjectsRouter } from "./routes/projects.router.js";
@@ -42,6 +42,10 @@ export function createHttpApp(options: IHttpAppOptions): Express {
   app.use(
     `${apiPrefix}/organizations`,
     createOrganizationsRouter(options.queryBus, options.commandBus)
+  );
+  app.use(
+    `${apiPrefix}/invites`,
+    createInvitesRouter(options.queryBus, options.commandBus)
   );
 
   app.use(apiPrefix, requireOrgContext);

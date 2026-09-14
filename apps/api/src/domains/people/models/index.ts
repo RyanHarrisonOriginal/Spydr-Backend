@@ -26,6 +26,7 @@ export class PersonDetails implements IPersonDetailsProps {
   title: string | null;
   organization: string | null;
   relationshipContext: string | null;
+  clerkUserId: string | null;
   readonly createdAt: Date;
   updatedAt: Date;
 
@@ -35,6 +36,7 @@ export class PersonDetails implements IPersonDetailsProps {
     this.title = props.title;
     this.organization = props.organization;
     this.relationshipContext = props.relationshipContext;
+    this.clerkUserId = props.clerkUserId ?? null;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
   }
@@ -61,6 +63,18 @@ export class PersonDetails implements IPersonDetailsProps {
 
   setRelationshipContext(relationshipContext: string | null): void {
     this.relationshipContext = relationshipContext;
+    this.touch();
+  }
+
+  linkClerkUser(clerkUserId: string): void {
+    const next = clerkUserId.trim();
+    if (!next) {
+      throw new Error("Clerk user id is required");
+    }
+    if (this.clerkUserId && this.clerkUserId !== next) {
+      throw new Error("Person is already linked to a different Clerk user");
+    }
+    this.clerkUserId = next;
     this.touch();
   }
 
@@ -101,6 +115,10 @@ export class PersonNode extends DomainNode<"person"> {
 
   setOrganization(organization: string | null): void {
     this.personDetails().setOrganization(organization);
+  }
+
+  linkClerkUser(clerkUserId: string): void {
+    this.personDetails().linkClerkUser(clerkUserId);
   }
 
   applyUpdate(input: IPersonUpdateInput, now = new Date()): void {

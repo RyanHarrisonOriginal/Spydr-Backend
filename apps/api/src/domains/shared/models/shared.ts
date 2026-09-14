@@ -92,6 +92,7 @@ export interface IDomainNodeProps<TType extends SpydrNodeType = SpydrNodeType> {
   id: string;
   orgId: string;
   userId: string;
+  personId?: string;
   nodeType: TType;
   title: string;
   body: string;
@@ -121,6 +122,7 @@ export class DomainNode<TType extends SpydrNodeType = SpydrNodeType>
   readonly id: string;
   readonly orgId: string;
   readonly userId: string;
+  readonly personId: string;
   readonly nodeType: TType;
   title: string;
   body: string;
@@ -144,6 +146,7 @@ export class DomainNode<TType extends SpydrNodeType = SpydrNodeType>
     this.id = props.id;
     this.orgId = props.orgId;
     this.userId = props.userId;
+    this.personId = props.personId ?? "";
     this.nodeType = props.nodeType;
     this.title = props.title;
     this.body = props.body;

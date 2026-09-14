@@ -1,29 +1,34 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma, SpydrPersonDetails } from "@prisma/client";
 import { PersonDetails, PersonNode } from "../../../../domains/people/models/index.js";
-import type { IPersonDetailsProps } from "../../../../domains/people/models/index.js";
 import type { IDomainMapper } from "../../../../domains/shared/mappers/mapper.js";
 import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
 
-export type PrismaPersonWithDetails = Prisma.SpydrNodeGetPayload<{
-  include: { personDetails: true };
-}>;
+export type PrismaPersonRow = SpydrPersonDetails;
+
+export function personVisibleInOrgWhere(
+  orgId: string
+): Prisma.SpydrPersonDetailsWhereInput {
+  return {
+    isDeleted: false,
+    OR: [{ orgId }, { memberships: { some: { organizationId: orgId } } }],
+  };
+}
 
 export class PrismaPersonMapper
   implements
     IDomainMapper<
-      PrismaPersonWithDetails,
+      PrismaPersonRow,
       PersonNode,
-      Prisma.SpydrNodeUncheckedCreateInput
+      Prisma.SpydrPersonDetailsUncheckedCreateInput
     >
 {
-  toDomain(persistence: PrismaPersonWithDetails): PersonNode {
-    const fullName = persistence.personDetails?.fullName ?? persistence.title;
-
+  toDomain(persistence: PrismaPersonRow): PersonNode {
     return new PersonNode({
       id: persistence.id,
       orgId: persistence.orgId,
-      userId: persistence.userId,
-      title: fullName,
+      userId: persistence.createdByUserId,
+      personId: persistence.id,
+      title: persistence.fullName,
       body: persistence.body,
       status: persistence.status,
       priority: persistence.priority,
@@ -34,53 +39,42 @@ export class PrismaPersonMapper
       updatedAt: persistence.updatedAt,
       archivedAt: persistence.archivedAt,
       ...readNodeLifecycle(persistence),
-      details: persistence.personDetails
-        ? new PersonDetails({
-            fullName: persistence.personDetails.fullName,
-            email: persistence.personDetails.email,
-            title: persistence.personDetails.title,
-            organization: persistence.personDetails.organization,
-            relationshipContext: persistence.personDetails.relationshipContext,
-            createdAt: persistence.personDetails.createdAt,
-            updatedAt: persistence.personDetails.updatedAt,
-          })
-        : null,
+      details: new PersonDetails({
+        fullName: persistence.fullName,
+        email: persistence.email,
+        title: persistence.title,
+        organization: persistence.organization,
+        relationshipContext: persistence.relationshipContext,
+        clerkUserId: persistence.clerkUserId ?? null,
+        createdAt: persistence.createdAt,
+        updatedAt: persistence.updatedAt,
+      }),
     });
   }
 
-  toPersistence(domain: PersonNode): Prisma.SpydrNodeUncheckedCreateInput {
+  toPersistence(
+    domain: PersonNode
+  ): Prisma.SpydrPersonDetailsUncheckedCreateInput {
     return {
       id: domain.id,
       orgId: domain.orgId,
-      userId: domain.userId,
-      nodeType: "person",
-      title: domain.details?.fullName ?? domain.title,
+      createdByUserId: domain.userId,
+      fullName: domain.details?.fullName ?? domain.title,
+      email: domain.details?.email ?? null,
+      title: domain.details?.title ?? null,
+      organization: domain.details?.organization ?? null,
+      relationshipContext: domain.details?.relationshipContext ?? null,
+      clerkUserId: domain.details?.clerkUserId ?? null,
       body: domain.body,
       status: domain.status,
       priority: domain.priority,
       area: domain.area,
       tags: domain.tags,
       sortOrder: domain.sortOrder,
+      archivedAt: domain.archivedAt,
       createdAt: domain.createdAt,
       updatedAt: domain.updatedAt,
-      archivedAt: domain.archivedAt,
       ...writeNodeLifecycle(domain),
-    };
-  }
-
-  toPersonDetailsPersistence(
-    nodeId: string,
-    details: IPersonDetailsProps
-  ): Prisma.SpydrPersonDetailsUncheckedCreateInput {
-    return {
-      nodeId,
-      fullName: details.fullName,
-      email: details.email,
-      title: details.title,
-      organization: details.organization,
-      relationshipContext: details.relationshipContext,
-      createdAt: details.createdAt,
-      updatedAt: details.updatedAt,
     };
   }
 }

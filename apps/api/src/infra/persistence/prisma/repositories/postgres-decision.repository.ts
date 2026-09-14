@@ -6,6 +6,7 @@ import type {
 import type { ITaskProjectRef } from "../../../../domains/tasks/views.js";
 import type { DecisionNode } from "../../../../domains/decisions/models/index.js";
 import { PrismaDecisionMapper } from "../mappers/prisma-decision.mapper.js";
+import { withNodePersonId } from "../mappers/spydr-node-write.js";
 
 export class PostgresDecisionRepository implements IDecisionRepository {
   constructor(
@@ -122,7 +123,7 @@ export class PostgresDecisionRepository implements IDecisionRepository {
   }
 
   async save(entity: DecisionNode): Promise<DecisionNode> {
-    const nodeData = this.mapper.toPersistence(entity);
+    const nodeData = await withNodePersonId(this.db, this.mapper.toPersistence(entity));
     const { id, ...nodeUpdateData } = nodeData;
 
     await this.db.$transaction(async (tx) => {

@@ -1,10 +1,9 @@
 import type { ICommand, ICommandHandler } from "../../shared/application/command.js";
 import type { IPersonRepository } from "../../people/repository.js";
-import type { ISpydrNodeViews } from "../../nodes/views.js";
+import type { IPersonViews } from "../../people/views.js";
 import { PersonMapper } from "../mappers/index.js";
 import type { PersonNode } from "../models/index.js";
 import type { SpydrNodeStatus, SpydrPriority } from "../../shared/models/shared.js";
-import { nextCollectionSortOrder } from "../../shared/utils/collection-sort-order.js";
 
 export interface ICreatePersonInput {
   fullName: string;
@@ -13,6 +12,7 @@ export interface ICreatePersonInput {
   title?: string | null;
   organization?: string | null;
   relationshipContext?: string | null;
+  clerkUserId?: string | null;
   status?: SpydrNodeStatus;
   priority?: SpydrPriority;
 }
@@ -35,20 +35,24 @@ export class CreatePersonCommandHandler
 
   constructor(
     private readonly people: IPersonRepository,
-    private readonly nodeViews: ISpydrNodeViews,
+    private readonly personViews: IPersonViews,
     private readonly mapper = new PersonMapper()
   ) {}
 
   async execute(command: CreatePersonCommand): Promise<PersonNode> {
-    const sortOrder = await nextCollectionSortOrder(
-      this.nodeViews,
-      command.orgId,
-      "person"
-    );
+    const clerkUserId = command.input.clerkUserId?.trim() || null;
+    if (clerkUserId) {
+      const existing = await this.personViews.getByClerkUserId(clerkUserId);
+      if (existing) {
+        throw new Error("A person already exists for this Clerk user");
+      }
+    }
+
+    const sortOrder = await this.personViews.nextSortOrderForOrg(command.orgId);
     const person = this.mapper.toModel(
       command.userId,
       command.orgId,
-      command.input,
+      { ...command.input, clerkUserId },
       new Date(),
       sortOrder
     );

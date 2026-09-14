@@ -7,7 +7,10 @@ import type {
 import type { TaskNode } from "../../../domains/tasks/models/index.js";
 import type { PersonNode } from "../../../domains/people/models/index.js";
 import { PrismaTaskMapper } from "../prisma/mappers/prisma-task.mapper.js";
-import { PrismaPersonMapper } from "../prisma/mappers/prisma-person.mapper.js";
+import {
+  personVisibleInOrgWhere,
+  PrismaPersonMapper,
+} from "../prisma/mappers/prisma-person.mapper.js";
 
 export class PostgresTaskViews implements ITaskViews {
   constructor(
@@ -107,14 +110,11 @@ export class PostgresTaskViews implements ITaskViews {
 
     if (assigneeIds.length === 0) return tasks;
 
-    const rows = await this.db.spydrNode.findMany({
+    const rows = await this.db.spydrPersonDetails.findMany({
       where: {
         id: { in: assigneeIds },
-        orgId,
-        nodeType: "person",
-        isDeleted: false,
+        ...personVisibleInOrgWhere(orgId),
       },
-      include: { personDetails: true },
     });
 
     const assigneeById = new Map<string, PersonNode>(

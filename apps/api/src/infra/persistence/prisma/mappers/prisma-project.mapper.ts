@@ -2,7 +2,8 @@ import type { Prisma } from "@prisma/client";
 import { ProjectDetails, ProjectNode } from "../../../../domains/projects/models/index.js";
 import type { IProjectDetailsProps } from "../../../../domains/projects/models/index.js";
 import type { IDomainMapper } from "../../../../domains/shared/mappers/mapper.js";
-import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
+import { readNodeLifecycle } from "./node-lifecycle.js";
+import { toSpydrNodePersistence } from "./spydr-node-write.js";
 
 export type PrismaProjectWithDetails = Prisma.SpydrNodeGetPayload<{
   include: { projectDetails: true };
@@ -21,6 +22,7 @@ export class PrismaProjectMapper
       id: persistence.id,
       orgId: persistence.orgId,
       userId: persistence.userId,
+      personId: persistence.personId,
       title: persistence.title,
       body: persistence.body,
       status: persistence.status,
@@ -39,10 +41,10 @@ export class PrismaProjectMapper
             targetDate: persistence.projectDetails.targetDate,
             riskLevel: persistence.projectDetails.riskLevel,
             lastActivityAt: persistence.projectDetails.lastActivityAt,
-            requesterPersonNodeId: persistence.projectDetails.requesterPersonNodeId,
-            assigneePersonNodeId: persistence.projectDetails.assigneePersonNodeId,
-            sponsorPersonNodeId: persistence.projectDetails.sponsorPersonNodeId,
-            reviewerPersonNodeId: persistence.projectDetails.reviewerPersonNodeId,
+            requesterPersonNodeId: persistence.projectDetails.requesterPersonId,
+            assigneePersonNodeId: persistence.projectDetails.assigneePersonId,
+            sponsorPersonNodeId: persistence.projectDetails.sponsorPersonId,
+            reviewerPersonNodeId: persistence.projectDetails.reviewerPersonId,
             sourceTemplateId: persistence.projectDetails.sourceTemplateId,
             templateParamValues: readParamValues(
               persistence.projectDetails.templateParamValues
@@ -58,23 +60,7 @@ export class PrismaProjectMapper
   }
 
   toPersistence(domain: ProjectNode): Prisma.SpydrNodeUncheckedCreateInput {
-    return {
-      id: domain.id,
-      orgId: domain.orgId,
-      userId: domain.userId,
-      nodeType: "project",
-      title: domain.title,
-      body: domain.body,
-      status: domain.status,
-      priority: domain.priority,
-      area: domain.area,
-      tags: domain.tags,
-      sortOrder: domain.sortOrder,
-      createdAt: domain.createdAt,
-      updatedAt: domain.updatedAt,
-      archivedAt: domain.archivedAt,
-      ...writeNodeLifecycle(domain),
-    };
+    return toSpydrNodePersistence(domain, "project");
   }
 
   toProjectDetailsPersistence(
@@ -88,10 +74,10 @@ export class PrismaProjectMapper
       targetDate: details.targetDate,
       riskLevel: details.riskLevel,
       lastActivityAt: details.lastActivityAt,
-      requesterPersonNodeId: details.requesterPersonNodeId,
-      assigneePersonNodeId: details.assigneePersonNodeId,
-      sponsorPersonNodeId: details.sponsorPersonNodeId,
-      reviewerPersonNodeId: details.reviewerPersonNodeId,
+      requesterPersonId: details.requesterPersonNodeId,
+      assigneePersonId: details.assigneePersonNodeId,
+      sponsorPersonId: details.sponsorPersonNodeId,
+      reviewerPersonId: details.reviewerPersonNodeId,
       sourceTemplateId: details.sourceTemplateId,
       templateParamValues: details.templateParamValues,
       templateSyncEnabled: details.templateSyncEnabled,

@@ -51,7 +51,11 @@ export type {
   IOrganizationRepository,
   ICreateOrganizationInput,
 } from "./organizations/repository.js";
-export type { IOrganizationViews } from "./organizations/views.js";
+export type {
+  IOrganizationViews,
+  IOrganizationMemberView,
+  IOrganizationMemberPersonView,
+} from "./organizations/views.js";
 export type { IResourceRepository } from "./resources/repository.js";
 export type { IResourceViews } from "./resources/views.js";
 export type { ISpydrNodeRepository } from "./nodes/repository.js";

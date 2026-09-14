@@ -87,6 +87,7 @@ export class TaskNode extends DomainNode<"task"> {
       id: this.id,
       orgId: this.orgId,
       userId: this.userId,
+      personId: this.personId,
       title: this.title,
       body: this.body,
       status: this.status,

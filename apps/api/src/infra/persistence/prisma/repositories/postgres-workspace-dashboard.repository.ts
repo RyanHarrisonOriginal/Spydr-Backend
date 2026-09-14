@@ -14,17 +14,17 @@ const UNASSIGNED_AREA_COLOR = "0 0% 45%";
 const DEFAULT_AREA_COLOR = "18 94% 50%";
 
 const personaFields = [
-  "assigneePersonNodeId",
-  "requesterPersonNodeId",
-  "sponsorPersonNodeId",
-  "reviewerPersonNodeId",
+  "assigneePersonId",
+  "requesterPersonId",
+  "sponsorPersonId",
+  "reviewerPersonId",
 ] as const;
 
 const roleByField: Record<(typeof personaFields)[number], keyof IWorkspaceDashboardPersonRoleCounts> = {
-  assigneePersonNodeId: "assignee",
-  requesterPersonNodeId: "requester",
-  sponsorPersonNodeId: "sponsor",
-  reviewerPersonNodeId: "reviewer",
+  assigneePersonId: "assignee",
+  requesterPersonId: "requester",
+  sponsorPersonId: "sponsor",
+  reviewerPersonId: "reviewer",
 };
 
 function startOfUtcDay(date: Date): Date {
@@ -128,14 +128,16 @@ export class PostgresWorkspaceDashboardRepository
     const peopleRows =
       personIds.size === 0
         ? []
-        : await this.db.spydrNode.findMany({
+        : await this.db.spydrPersonDetails.findMany({
             where: {
-              orgId,
               id: { in: Array.from(personIds) },
-              nodeType: "person",
               isDeleted: false,
+              OR: [
+                { orgId },
+                { memberships: { some: { organizationId: orgId } } },
+              ],
             },
-            include: { personDetails: true },
+            select: { id: true, fullName: true },
           });
 
     const personRefById = new Map<string, IWorkspaceDashboardPersonRef>(
@@ -143,7 +145,7 @@ export class PostgresWorkspaceDashboardRepository
         person.id,
         {
           id: person.id,
-          name: person.personDetails?.fullName ?? person.title,
+          name: person.fullName,
         },
       ])
     );
@@ -267,7 +269,7 @@ export class PostgresWorkspaceDashboardRepository
       }
 
       const details = project.projectDetails;
-      const assigneeId = details?.assigneePersonNodeId ?? null;
+      const assigneeId = details?.assigneePersonId ?? null;
       const assigneeKey = personKey(assigneeId);
       const assigneeLoad = ensurePersonLoad(assigneeKey, assigneeId);
 

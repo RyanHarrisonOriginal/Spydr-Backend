@@ -2,6 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 import type { ISaveStrategy } from "../../../../domains/shared/save-strategy.js";
 import type { TaskNode } from "../../../../domains/tasks/models/index.js";
 import { PrismaTaskMapper } from "../../prisma/mappers/prisma-task.mapper.js";
+import { withNodePersonId } from "../../prisma/mappers/spydr-node-write.js";
 
 export class StandardTaskSaveStrategy implements ISaveStrategy<TaskNode> {
   readonly key = "standard";
@@ -13,7 +14,7 @@ export class StandardTaskSaveStrategy implements ISaveStrategy<TaskNode> {
     _context: unknown,
     db: PrismaClient
   ): Promise<TaskNode> {
-    const nodeData = this.mapper.toPersistence(entity);
+    const nodeData = await withNodePersonId(db, this.mapper.toPersistence(entity));
     const { id, ...nodeUpdateData } = nodeData;
 
     await db.$transaction(async (tx) => {

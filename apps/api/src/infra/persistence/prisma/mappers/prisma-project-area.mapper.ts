@@ -5,7 +5,8 @@ import {
 } from "../../../../domains/project-areas/models/index.js";
 import type { IProjectAreaDetailsProps } from "../../../../domains/project-areas/models/index.js";
 import type { IDomainMapper } from "../../../../domains/shared/mappers/mapper.js";
-import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
+import { readNodeLifecycle } from "./node-lifecycle.js";
+import { toSpydrNodePersistence } from "./spydr-node-write.js";
 
 export type PrismaProjectAreaWithDetails = Prisma.SpydrNodeGetPayload<{
   include: { projectAreaDetails: true };
@@ -24,6 +25,7 @@ export class PrismaProjectAreaMapper
       id: persistence.id,
       orgId: persistence.orgId,
       userId: persistence.userId,
+      personId: persistence.personId,
       title: persistence.title,
       body: persistence.body,
       status: persistence.status,
@@ -45,22 +47,7 @@ export class PrismaProjectAreaMapper
   }
 
   toPersistence(domain: ProjectAreaNode): Prisma.SpydrNodeUncheckedCreateInput {
-    return {
-      id: domain.id,
-      orgId: domain.orgId,
-      userId: domain.userId,
-      nodeType: "project_area",
-      title: domain.title,
-      body: domain.body,
-      status: domain.status,
-      priority: domain.priority,
-      area: domain.area,
-      tags: domain.tags,
-      createdAt: domain.createdAt,
-      updatedAt: domain.updatedAt,
-      archivedAt: domain.archivedAt,
-      ...writeNodeLifecycle(domain),
-    };
+    return toSpydrNodePersistence(domain, "project_area");
   }
 
   toProjectAreaDetailsPersistence(

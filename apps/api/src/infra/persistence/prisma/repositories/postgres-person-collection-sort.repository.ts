@@ -11,7 +11,7 @@ export class PostgresPersonCollectionSortRepository
 
   async getSortOrderMap(
     orgId: string,
-    personNodeId: string,
+    personId: string,
     nodeIds: readonly string[]
   ): Promise<Map<string, number>> {
     if (nodeIds.length === 0) return new Map();
@@ -19,7 +19,7 @@ export class PostgresPersonCollectionSortRepository
     const rows = await this.db.spydrPersonCollectionSort.findMany({
       where: {
         orgId,
-        personNodeId,
+        personId,
         nodeId: { in: [...nodeIds] },
       },
       select: { nodeId: true, sortOrder: true },
@@ -30,7 +30,7 @@ export class PostgresPersonCollectionSortRepository
 
   async reorderForPerson(
     orgId: string,
-    personNodeId: string,
+    personId: string,
     nodeType: PersonCollectionNodeType,
     orderedIds: readonly string[],
     eligibleIds: readonly string[]
@@ -46,7 +46,7 @@ export class PostgresPersonCollectionSortRepository
     await this.db.spydrPersonCollectionSort.deleteMany({
       where: {
         orgId,
-        personNodeId,
+        personId,
         nodeType,
         nodeId: { notIn: [...eligibleIds] },
       },
@@ -56,15 +56,15 @@ export class PostgresPersonCollectionSortRepository
       finalOrder.map((nodeId, index) =>
         this.db.spydrPersonCollectionSort.upsert({
           where: {
-            orgId_personNodeId_nodeId: {
+            orgId_personId_nodeId: {
               orgId,
-              personNodeId,
+              personId,
               nodeId,
             },
           },
           create: {
             orgId,
-            personNodeId,
+            personId,
             nodeId,
             nodeType,
             sortOrder: index * 1000,
@@ -78,9 +78,9 @@ export class PostgresPersonCollectionSortRepository
     );
   }
 
-  async deleteForPerson(orgId: string, personNodeId: string): Promise<void> {
+  async deleteForPerson(orgId: string, personId: string): Promise<void> {
     await this.db.spydrPersonCollectionSort.deleteMany({
-      where: { orgId, personNodeId },
+      where: { orgId, personId },
     });
   }
 }

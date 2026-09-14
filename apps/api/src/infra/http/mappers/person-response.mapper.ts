@@ -7,6 +7,7 @@ export interface IPersonDetailsResponse {
   title: string | null;
   organization: string | null;
   relationshipContext: string | null;
+  clerkUserId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -53,6 +54,7 @@ export class PersonResponseMapper
             title: domain.details.title,
             organization: domain.details.organization,
             relationshipContext: domain.details.relationshipContext,
+            clerkUserId: domain.details.clerkUserId,
             createdAt: domain.details.createdAt.toISOString(),
             updatedAt: domain.details.updatedAt.toISOString(),
           }

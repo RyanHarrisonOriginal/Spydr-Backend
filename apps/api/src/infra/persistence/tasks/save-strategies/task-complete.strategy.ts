@@ -2,6 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 import type { ISaveStrategy } from "../../../../domains/shared/save-strategy.js";
 import type { TaskNode } from "../../../../domains/tasks/models/index.js";
 import { PrismaTaskMapper } from "../../prisma/mappers/prisma-task.mapper.js";
+import { withNodePersonId } from "../../prisma/mappers/spydr-node-write.js";
 
 /**
  * Completes a task: persists node status plus task_details.completed_at.
@@ -21,7 +22,7 @@ export class TaskCompleteSaveStrategy implements ISaveStrategy<TaskNode> {
       throw new Error("complete strategy requires task details with completedAt");
     }
 
-    const nodeData = this.mapper.toPersistence(entity);
+    const nodeData = await withNodePersonId(db, this.mapper.toPersistence(entity));
     const { id, ...nodeUpdateData } = nodeData;
     const detailsData = this.mapper.toTaskDetailsPersistence(
       entity.id,

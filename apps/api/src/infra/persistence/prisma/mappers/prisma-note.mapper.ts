@@ -1,7 +1,8 @@
 import type { Prisma } from "@prisma/client";
 import { NoteNode } from "../../../../domains/notes/models/index.js";
 import type { IDomainMapper } from "../../../../domains/shared/mappers/mapper.js";
-import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
+import { readNodeLifecycle } from "./node-lifecycle.js";
+import { toSpydrNodePersistence } from "./spydr-node-write.js";
 
 export type PrismaNote = Prisma.SpydrNodeGetPayload<Record<string, never>>;
 
@@ -18,6 +19,7 @@ export class PrismaNoteMapper
       id: persistence.id,
       orgId: persistence.orgId,
       userId: persistence.userId,
+      personId: persistence.personId,
       title: persistence.title,
       body: persistence.body,
       status: persistence.status,
@@ -34,22 +36,6 @@ export class PrismaNoteMapper
   }
 
   toPersistence(domain: NoteNode): Prisma.SpydrNodeUncheckedCreateInput {
-    return {
-      id: domain.id,
-      orgId: domain.orgId,
-      userId: domain.userId,
-      nodeType: "note",
-      title: domain.title,
-      body: domain.body,
-      status: domain.status,
-      priority: domain.priority,
-      area: domain.area,
-      tags: domain.tags,
-      sortOrder: domain.sortOrder,
-      createdAt: domain.createdAt,
-      updatedAt: domain.updatedAt,
-      archivedAt: domain.archivedAt,
-      ...writeNodeLifecycle(domain),
-    };
+    return toSpydrNodePersistence(domain, "note");
   }
 }

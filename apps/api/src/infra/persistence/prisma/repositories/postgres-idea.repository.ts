@@ -2,6 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 import type { IIdeaRepository } from "../../../../domains/index.js";
 import type { IdeaNode } from "../../../../domains/ideas/models/index.js";
 import { PrismaIdeaMapper } from "../mappers/prisma-idea.mapper.js";
+import { withNodePersonId } from "../mappers/spydr-node-write.js";
 
 export class PostgresIdeaRepository implements IIdeaRepository {
   constructor(
@@ -45,7 +46,7 @@ export class PostgresIdeaRepository implements IIdeaRepository {
   }
 
   async save(entity: IdeaNode): Promise<IdeaNode> {
-    const nodeData = this.mapper.toPersistence(entity);
+    const nodeData = await withNodePersonId(this.db, this.mapper.toPersistence(entity));
     const { id, ...nodeUpdateData } = nodeData;
 
     await this.db.$transaction(async (tx) => {

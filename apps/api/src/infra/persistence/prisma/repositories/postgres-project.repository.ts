@@ -9,7 +9,11 @@ import type { TaskNode } from "../../../../domains/tasks/models/index.js";
 import { ProjectNode } from "../../../../domains/projects/models/index.js";
 import { emptyProjectPersonas } from "../../../../domains/projects/models/personas.js";
 import type { PersonNode } from "../../../../domains/people/models/index.js";
-import { PrismaPersonMapper } from "../mappers/prisma-person.mapper.js";
+import {
+  personVisibleInOrgWhere,
+  PrismaPersonMapper,
+} from "../mappers/prisma-person.mapper.js";
+import { withNodePersonId } from "../mappers/spydr-node-write.js";
 import { PrismaProjectMapper } from "../mappers/prisma-project.mapper.js";
 import { PrismaDecisionMapper } from "../mappers/prisma-decision.mapper.js";
 import { PrismaNoteMapper } from "../mappers/prisma-note.mapper.js";
@@ -61,6 +65,7 @@ export class PostgresProjectRepository implements IProjectRepository {
       id: project.id,
       orgId: project.orgId,
       userId: project.userId,
+      personId: project.personId,
       title: project.title,
       body: project.body,
       status: project.status,
@@ -111,6 +116,22 @@ export class PostgresProjectRepository implements IProjectRepository {
     return rows.map((row) => row.id);
   }
 
+  private async loadPeopleByIds(
+    orgId: string,
+    ids: string[]
+  ): Promise<Map<string, PersonNode>> {
+    if (ids.length === 0) return new Map();
+
+    const rows = await this.db.spydrPersonDetails.findMany({
+      where: {
+        id: { in: ids },
+        ...personVisibleInOrgWhere(orgId),
+      },
+    });
+
+    return new Map(rows.map((row) => [row.id, this.personMapper.toDomain(row)]));
+  }
+
   private async attachAssigneesToProjects(
     orgId: string,
     projects: ProjectNode[]
@@ -123,21 +144,7 @@ export class PostgresProjectRepository implements IProjectRepository {
       ),
     ];
 
-    const assigneeById = new Map<string, PersonNode>();
-    if (assigneeIds.length > 0) {
-      const rows = await this.db.spydrNode.findMany({
-        where: {
-          id: { in: assigneeIds },
-          orgId,
-          nodeType: "person",
-          isDeleted: false,
-        },
-        include: { personDetails: true },
-      });
-      for (const row of rows) {
-        assigneeById.set(row.id, this.personMapper.toDomain(row));
-      }
-    }
+    const assigneeById = await this.loadPeopleByIds(orgId, assigneeIds);
 
     return projects.map((project) => {
       const assigneeId = project.details?.assigneePersonNodeId ?? null;
@@ -147,6 +154,7 @@ export class PostgresProjectRepository implements IProjectRepository {
         id: project.id,
         orgId: project.orgId,
         userId: project.userId,
+        personId: project.personId,
         title: project.title,
         body: project.body,
         status: project.status,
@@ -180,21 +188,8 @@ export class PostgresProjectRepository implements IProjectRepository {
       ),
     ];
 
-    if (assigneeIds.length === 0) return tasks;
-
-    const rows = await this.db.spydrNode.findMany({
-      where: {
-        id: { in: assigneeIds },
-        orgId,
-        nodeType: "person",
-        isDeleted: false,
-      },
-      include: { personDetails: true },
-    });
-
-    const assigneeById = new Map<string, PersonNode>(
-      rows.map((row) => [row.id, this.personMapper.toDomain(row)])
-    );
+    const assigneeById = await this.loadPeopleByIds(orgId, assigneeIds);
+    if (assigneeById.size === 0) return tasks;
 
     return tasks.map((task) => {
       const assigneeId = task.details?.assigneePersonNodeId ?? null;
@@ -311,7 +306,7 @@ export class PostgresProjectRepository implements IProjectRepository {
       return result;
     }
 
-    const nodeData = this.mapper.toPersistence(entity);
+    const nodeData = await withNodePersonId(this.db, this.mapper.toPersistence(entity));
     const { id, ...nodeUpdateData } = nodeData;
 
     await this.db.$transaction(async (tx) => {
@@ -363,7 +358,7 @@ export class PostgresProjectRepository implements IProjectRepository {
   }
 
   async updateProject(entity: ProjectNode): Promise<ProjectNode> {
-    const nodeData = this.mapper.toPersistence(entity);
+    const nodeData = await withNodePersonId(this.db, this.mapper.toPersistence(entity));
     const { id, userId, createdAt, ...nodeUpdateData } = nodeData;
 
     await this.db.$transaction(async (tx) => {
@@ -474,12 +469,10 @@ export class PostgresProjectRepository implements IProjectRepository {
       const existing = await this.loadTask(childId, orgId);
       if (!existing || existing.isDeleted) return null;
       if (input.assigneePersonNodeId) {
-        const person = await this.db.spydrNode.findFirst({
+        const person = await this.db.spydrPersonDetails.findFirst({
           where: {
             id: input.assigneePersonNodeId,
-            orgId,
-            nodeType: "person",
-            isDeleted: false,
+            ...personVisibleInOrgWhere(orgId),
           },
           select: { id: true },
         });
@@ -600,21 +593,8 @@ export class PostgresProjectRepository implements IProjectRepository {
       details.reviewerPersonNodeId,
     ].filter((id): id is string => Boolean(id));
 
-    if (ids.length === 0) return personas;
-
-    const rows = await this.db.spydrNode.findMany({
-      where: {
-        id: { in: ids },
-        orgId,
-        nodeType: "person",
-        isDeleted: false,
-      },
-      include: { personDetails: true },
-    });
-
-    const byId = new Map<string, PersonNode>(
-      rows.map((row) => [row.id, this.personMapper.toDomain(row)])
-    );
+    const byId = await this.loadPeopleByIds(orgId, ids);
+    if (byId.size === 0) return personas;
 
     personas.requester = details.requesterPersonNodeId
       ? byId.get(details.requesterPersonNodeId) ?? null
@@ -783,7 +763,7 @@ export class PostgresProjectRepository implements IProjectRepository {
     project: ProjectNode,
     task: (typeof project.tasks)[number]
   ) {
-    const taskData = this.taskMapper.toPersistence(task);
+    const taskData = await withNodePersonId(tx, this.taskMapper.toPersistence(task));
     const { id: taskId, ...taskUpdateData } = taskData;
 
     await tx.spydrNode.upsert({
@@ -814,7 +794,7 @@ export class PostgresProjectRepository implements IProjectRepository {
     project: ProjectNode,
     decision: (typeof project.decisions)[number]
   ) {
-    const nodeData = this.decisionMapper.toPersistence(decision);
+    const nodeData = await withNodePersonId(tx, this.decisionMapper.toPersistence(decision));
     const { id: nodeId, ...nodeUpdateData } = nodeData;
 
     await tx.spydrNode.upsert({
@@ -845,7 +825,7 @@ export class PostgresProjectRepository implements IProjectRepository {
     project: ProjectNode,
     idea: (typeof project.ideas)[number]
   ) {
-    const nodeData = this.ideaMapper.toPersistence(idea);
+    const nodeData = await withNodePersonId(tx, this.ideaMapper.toPersistence(idea));
     const { id: nodeId, ...nodeUpdateData } = nodeData;
 
     await tx.spydrNode.upsert({
@@ -876,7 +856,7 @@ export class PostgresProjectRepository implements IProjectRepository {
     project: ProjectNode,
     note: (typeof project.notes)[number]
   ) {
-    const nodeData = this.noteMapper.toPersistence(note);
+    const nodeData = await withNodePersonId(tx, this.noteMapper.toPersistence(note));
     const { id: nodeId, ...nodeUpdateData } = nodeData;
 
     await tx.spydrNode.upsert({

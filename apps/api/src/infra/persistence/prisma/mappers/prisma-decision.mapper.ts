@@ -2,7 +2,8 @@ import type { Prisma } from "@prisma/client";
 import { DecisionDetails, DecisionNode } from "../../../../domains/decisions/models/index.js";
 import type { IDecisionDetailsProps } from "../../../../domains/decisions/models/index.js";
 import type { IDomainMapper } from "../../../../domains/shared/mappers/mapper.js";
-import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
+import { readNodeLifecycle } from "./node-lifecycle.js";
+import { toSpydrNodePersistence } from "./spydr-node-write.js";
 
 export type PrismaDecisionWithDetails = Prisma.SpydrNodeGetPayload<{
   include: { decisionDetails: true };
@@ -21,6 +22,7 @@ export class PrismaDecisionMapper
       id: persistence.id,
       orgId: persistence.orgId,
       userId: persistence.userId,
+      personId: persistence.personId,
       title: persistence.title,
       body: persistence.body,
       status: persistence.status,
@@ -47,23 +49,7 @@ export class PrismaDecisionMapper
   }
 
   toPersistence(domain: DecisionNode): Prisma.SpydrNodeUncheckedCreateInput {
-    return {
-      id: domain.id,
-      orgId: domain.orgId,
-      userId: domain.userId,
-      nodeType: "decision",
-      title: domain.title,
-      body: domain.body,
-      status: domain.status,
-      priority: domain.priority,
-      area: domain.area,
-      tags: domain.tags,
-      sortOrder: domain.sortOrder,
-      createdAt: domain.createdAt,
-      updatedAt: domain.updatedAt,
-      archivedAt: domain.archivedAt,
-      ...writeNodeLifecycle(domain),
-    };
+    return toSpydrNodePersistence(domain, "decision");
   }
 
   toDecisionDetailsPersistence(

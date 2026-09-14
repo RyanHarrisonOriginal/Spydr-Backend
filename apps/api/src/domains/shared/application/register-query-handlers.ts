@@ -5,7 +5,13 @@ import {
   GetActiveNoteAnalysisQueryHandler,
   ListActiveNotesQueryHandler,
 } from "../../active-notes/queries/index.js";
-import { ListOrganizationsQueryHandler } from "../../organizations/queries/index.js";
+import {
+  GetOrganizationInviteQueryHandler,
+  ListMyOrganizationInvitesQueryHandler,
+  ListOrganizationInvitesQueryHandler,
+  ListOrganizationMembersQueryHandler,
+  ListOrganizationsQueryHandler,
+} from "../../organizations/queries/index.js";
 import { ListDecisionsQueryHandler } from "../../decisions/queries/index.js";
 import { ListIdeasQueryHandler } from "../../ideas/queries/index.js";
 import {
@@ -48,6 +54,16 @@ export function registerQueryHandlers(
 ): void {
   queryBus.registerMany([
     new ListOrganizationsQueryHandler(repositories.organizationViews),
+    new ListOrganizationMembersQueryHandler(
+      repositories.organizations,
+      repositories.organizationViews
+    ),
+    new ListOrganizationInvitesQueryHandler(
+      repositories.organizations,
+      repositories.organizationInviteViews
+    ),
+    new ListMyOrganizationInvitesQueryHandler(repositories.organizationInviteViews),
+    new GetOrganizationInviteQueryHandler(repositories.organizationInviteViews),
     new ListDecisionsQueryHandler(repositories.decisionViews),
     new ListIdeasQueryHandler(repositories.ideaViews),
     new ListNotesQueryHandler(repositories.noteViews),

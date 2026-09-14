@@ -30,6 +30,12 @@ export class DeletePersonCommandHandler
     });
     if (!person || person.isDeleted) return false;
 
+    if (person.details?.clerkUserId) {
+      throw new Error(
+        "Cannot delete an app user; remove their organization membership instead"
+      );
+    }
+
     person.softDelete();
     await this.people.save(person, {
       strategy: "clearReferences",

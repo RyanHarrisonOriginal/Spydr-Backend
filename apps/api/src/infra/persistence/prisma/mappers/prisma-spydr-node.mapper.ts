@@ -1,11 +1,12 @@
-import type { Prisma, SpydrNode as PrismaSpydrNode } from "@prisma/client";
+import type { Prisma, SpydrNode as PrismaSpydrNode, SpydrNodeType as PrismaSpydrNodeType } from "@prisma/client";
 import {
   DomainNode,
   type SpydrNodeStatus,
   type SpydrNodeType,
 } from "../../../../domains/shared/models/shared.js";
 import type { IDomainMapper } from "../../../../domains/shared/mappers/mapper.js";
-import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
+import { readNodeLifecycle } from "./node-lifecycle.js";
+import { toSpydrNodePersistence } from "./spydr-node-write.js";
 
 export class PrismaSpydrNodeMapper
   implements
@@ -20,6 +21,7 @@ export class PrismaSpydrNodeMapper
       id: persistence.id,
       orgId: persistence.orgId,
       userId: persistence.userId,
+      personId: persistence.personId,
       nodeType: persistence.nodeType as SpydrNodeType,
       title: persistence.title,
       body: persistence.body,
@@ -36,22 +38,9 @@ export class PrismaSpydrNodeMapper
   }
 
   toPersistence(domain: DomainNode): Prisma.SpydrNodeUncheckedCreateInput {
-    return {
-      id: domain.id,
-      orgId: domain.orgId,
-      userId: domain.userId,
-      nodeType: domain.nodeType,
-      title: domain.title,
-      body: domain.body,
-      status: domain.status,
-      priority: domain.priority,
-      area: domain.area,
-      tags: domain.tags,
-      sortOrder: domain.sortOrder,
-      createdAt: domain.createdAt,
-      updatedAt: domain.updatedAt,
-      archivedAt: domain.archivedAt,
-      ...writeNodeLifecycle(domain),
-    };
+    if (domain.nodeType === "person") {
+      throw new Error("People are not persisted as spydr nodes");
+    }
+    return toSpydrNodePersistence(domain, domain.nodeType as PrismaSpydrNodeType);
   }
 }

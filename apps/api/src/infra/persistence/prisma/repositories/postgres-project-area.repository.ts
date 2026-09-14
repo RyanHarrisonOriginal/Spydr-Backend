@@ -2,6 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 import type { IProjectAreaRepository } from "../../../../domains/project-areas/repository.js";
 import type { ProjectAreaNode } from "../../../../domains/project-areas/models/index.js";
 import { PrismaProjectAreaMapper } from "../mappers/prisma-project-area.mapper.js";
+import { withNodePersonId } from "../mappers/spydr-node-write.js";
 
 const projectAreaInclude = { projectAreaDetails: true } as const;
 
@@ -79,7 +80,7 @@ export class PostgresProjectAreaRepository implements IProjectAreaRepository {
       return entity;
     }
 
-    const nodeData = this.mapper.toPersistence(entity);
+    const nodeData = await withNodePersonId(this.db, this.mapper.toPersistence(entity));
     const { id, ...nodeUpdateData } = nodeData;
 
     await this.db.$transaction(async (tx) => {

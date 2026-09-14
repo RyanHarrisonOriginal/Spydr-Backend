@@ -3,6 +3,7 @@ import type { Organization } from "../models/index.js";
 import type { ICommand, ICommandHandler } from "../../shared/application/command.js";
 import type { ICommandBus } from "../../shared/application/command-bus.js";
 import { CreatePersonCommand } from "../../people/commands/create-person.command.js";
+import type { IPersonViews } from "../../people/views.js";
 
 export interface ICreateOrganizationCreatorInput {
   fullName: string;
@@ -31,31 +32,53 @@ export class CreateOrganizationCommandHandler
 
   constructor(
     private readonly organizations: IOrganizationRepository,
+    private readonly personViews: IPersonViews,
     private readonly commandBus: ICommandBus
   ) {}
 
   async execute(command: CreateOrganizationCommand): Promise<Organization> {
+    const existingPerson = await this.personViews.getByClerkUserId(command.userId);
+
     const org = await this.organizations.save(
       { name: command.input.name },
-      { strategy: "createForUser", context: { userId: command.userId } }
+      {
+        strategy: "createForUser",
+        context: {
+          userId: command.userId,
+          personId: existingPerson?.id ?? null,
+          role: "owner",
+        },
+      }
     );
 
-    const fullName = command.input.creator?.fullName?.trim();
-    if (fullName) {
-      try {
-        await this.commandBus.execute(
-          new CreatePersonCommand(command.userId, org.id, {
-            fullName,
-            email: command.input.creator?.email?.trim() || null,
-            organization: org.name,
-          })
-        );
-      } catch (error) {
-        console.error(
-          `Failed to create person for org owner ${command.userId} in org ${org.id}`,
-          error
-        );
-      }
+    if (existingPerson) {
+      return org;
+    }
+
+    const fullName =
+      command.input.creator?.fullName?.trim() ||
+      command.input.creator?.email?.trim()?.split("@")[0] ||
+      "Owner";
+
+    try {
+      const person = await this.commandBus.execute(
+        new CreatePersonCommand(command.userId, org.id, {
+          fullName,
+          email: command.input.creator?.email?.trim() || null,
+          organization: org.name,
+          clerkUserId: command.userId,
+        })
+      );
+
+      await this.organizations.save(org, {
+        strategy: "linkMemberPerson",
+        context: { userId: command.userId, personId: person.id },
+      });
+    } catch (error) {
+      console.error(
+        `Failed to create person for org owner ${command.userId} in org ${org.id}`,
+        error
+      );
     }
 
     return org;

@@ -2,7 +2,8 @@ import type { Prisma } from "@prisma/client";
 import { TaskDetails, TaskNode } from "../../../../domains/tasks/models/index.js";
 import type { ITaskDetailsProps } from "../../../../domains/tasks/models/index.js";
 import type { IDomainMapper } from "../../../../domains/shared/mappers/mapper.js";
-import { readNodeLifecycle, writeNodeLifecycle } from "./node-lifecycle.js";
+import { readNodeLifecycle } from "./node-lifecycle.js";
+import { toSpydrNodePersistence } from "./spydr-node-write.js";
 
 export type PrismaTaskWithDetails = Prisma.SpydrNodeGetPayload<{
   include: { taskDetails: true };
@@ -21,6 +22,7 @@ export class PrismaTaskMapper
       id: persistence.id,
       orgId: persistence.orgId,
       userId: persistence.userId,
+      personId: persistence.personId,
       title: persistence.title,
       body: persistence.body,
       status: persistence.status,
@@ -38,7 +40,7 @@ export class PrismaTaskMapper
             completedAt: persistence.taskDetails.completedAt,
             isBlocked: persistence.taskDetails.isBlocked,
             estimatedMinutes: persistence.taskDetails.estimatedMinutes,
-            assigneePersonNodeId: persistence.taskDetails.assigneePersonNodeId,
+            assigneePersonNodeId: persistence.taskDetails.assigneePersonId,
             tags: persistence.taskDetails.tags,
             sourceTemplateTaskId: persistence.taskDetails.sourceTemplateTaskId,
             createdAt: persistence.taskDetails.createdAt,
@@ -49,23 +51,7 @@ export class PrismaTaskMapper
   }
 
   toPersistence(domain: TaskNode): Prisma.SpydrNodeUncheckedCreateInput {
-    return {
-      id: domain.id,
-      orgId: domain.orgId,
-      userId: domain.userId,
-      nodeType: "task",
-      title: domain.title,
-      body: domain.body,
-      status: domain.status,
-      priority: domain.priority,
-      area: domain.area,
-      tags: domain.tags,
-      sortOrder: domain.sortOrder,
-      createdAt: domain.createdAt,
-      updatedAt: domain.updatedAt,
-      archivedAt: domain.archivedAt,
-      ...writeNodeLifecycle(domain),
-    };
+    return toSpydrNodePersistence(domain, "task");
   }
 
   toTaskDetailsPersistence(
@@ -78,7 +64,7 @@ export class PrismaTaskMapper
       completedAt: details.completedAt,
       isBlocked: details.isBlocked,
       estimatedMinutes: details.estimatedMinutes,
-      assigneePersonNodeId: details.assigneePersonNodeId,
+      assigneePersonId: details.assigneePersonNodeId,
       tags: details.tags,
       sourceTemplateTaskId: details.sourceTemplateTaskId,
       createdAt: details.createdAt,

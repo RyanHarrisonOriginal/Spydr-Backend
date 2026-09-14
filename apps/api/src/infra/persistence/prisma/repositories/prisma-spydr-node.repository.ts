@@ -1,10 +1,16 @@
-import type { Prisma, PrismaClient, SpydrNodeType } from "@prisma/client";
-import type { DomainNode } from "../../../../domains/shared/models/shared.js";
+import type { Prisma, PrismaClient, SpydrNodeType as PrismaSpydrNodeType } from "@prisma/client";
+import type { DomainNode, SpydrNodeType } from "../../../../domains/shared/models/shared.js";
 import type {
   ISpydrNodeListCriteria,
   ISpydrNodeRepository,
 } from "../../../../domains/index.js";
 import { PrismaSpydrNodeMapper } from "../mappers/prisma-spydr-node.mapper.js";
+import { withNodePersonId } from "../mappers/spydr-node-write.js";
+
+function asPrismaNodeType(nodeType: SpydrNodeType): PrismaSpydrNodeType | null {
+  if (nodeType === "person") return null;
+  return nodeType;
+}
 
 export class PrismaSpydrNodeRepository implements ISpydrNodeRepository {
   constructor(
@@ -30,9 +36,14 @@ export class PrismaSpydrNodeRepository implements ISpydrNodeRepository {
   }
 
   async list(criteria: ISpydrNodeListCriteria): Promise<DomainNode[]> {
+    const nodeType = criteria.nodeType
+      ? asPrismaNodeType(criteria.nodeType)
+      : undefined;
+    if (criteria.nodeType && !nodeType) return [];
+
     const where: Prisma.SpydrNodeWhereInput = {
       orgId: criteria.orgId,
-      ...(criteria.nodeType ? { nodeType: criteria.nodeType } : {}),
+      ...(nodeType ? { nodeType } : {}),
       ...(criteria.status ? { status: criteria.status } : {}),
       ...(criteria.tag ? { tags: { has: criteria.tag } } : {}),
     };
@@ -66,7 +77,7 @@ export class PrismaSpydrNodeRepository implements ISpydrNodeRepository {
       return entity;
     }
 
-    const data = this.mapper.toPersistence(entity);
+    const data = await withNodePersonId(this.db, this.mapper.toPersistence(entity));
     const { id, ...updateData } = data;
     const saved = await this.db.spydrNode.upsert({
       where: { id },
@@ -88,10 +99,13 @@ export class PrismaSpydrNodeRepository implements ISpydrNodeRepository {
   ): Promise<void> {
     if (orderedIds.length === 0) return;
 
+    const prismaNodeType = asPrismaNodeType(nodeType);
+    if (!prismaNodeType) return;
+
     const rows = await this.db.spydrNode.findMany({
       where: {
         orgId,
-        nodeType,
+        nodeType: prismaNodeType,
         isDeleted: false,
       },
       orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }, { id: "asc" }],
@@ -120,8 +134,11 @@ export class PrismaSpydrNodeRepository implements ISpydrNodeRepository {
   }
 
   async nextSortOrderForOrg(orgId: string, nodeType: SpydrNodeType): Promise<number> {
+    const prismaNodeType = asPrismaNodeType(nodeType);
+    if (!prismaNodeType) return 0;
+
     const result = await this.db.spydrNode.aggregate({
-      where: { orgId, nodeType, isDeleted: false },
+      where: { orgId, nodeType: prismaNodeType, isDeleted: false },
       _max: { sortOrder: true },
     });
 

@@ -58,10 +58,18 @@ export class LegacyListViews {
       isMember: (userId, orgId) => deps.organizations.isMember(userId, orgId),
       getMemberRole: (userId, orgId) =>
         deps.organizations.getMemberRole(userId, orgId),
+      listMembers: (orgId) => deps.organizations.listMembers(orgId),
+      getMemberById: (orgId, memberId) =>
+        deps.organizations.getMemberById(orgId, memberId),
+      getMemberByUserId: (orgId, userId) =>
+        deps.organizations.getMemberByUserId(orgId, userId),
     };
     this.people = {
       listByOrg: (orgId) => deps.people.listByOrg(orgId),
       getById: (orgId, personId) => deps.people.findByIdForOrg(personId, orgId),
+      getByClerkUserId: (clerkUserId) => deps.people.getByClerkUserId(clerkUserId),
+      getByEmailInOrg: (orgId, email) => deps.people.getByEmailInOrg(orgId, email),
+      nextSortOrderForOrg: (orgId) => deps.people.nextSortOrderForOrg(orgId),
     };
     this.projectAreas = {
       listByOrg: (orgId) => deps.projectAreas.listByOrg(orgId),

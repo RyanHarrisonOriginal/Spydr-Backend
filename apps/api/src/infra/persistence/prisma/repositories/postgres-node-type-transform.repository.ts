@@ -635,12 +635,12 @@ export class PostgresNodeTypeTransformRepository
     if (row.taskDetails) {
       details = {
         dueDate: row.taskDetails.dueDate?.toISOString() ?? null,
-        assigneePersonNodeId: row.taskDetails.assigneePersonNodeId,
+        assigneePersonNodeId: row.taskDetails.assigneePersonId,
       };
     } else if (row.projectDetails) {
       details = {
         targetDate: row.projectDetails.targetDate?.toISOString() ?? null,
-        assigneePersonNodeId: row.projectDetails.assigneePersonNodeId,
+        assigneePersonNodeId: row.projectDetails.assigneePersonId,
         riskLevel: row.projectDetails.riskLevel,
       };
     } else if (row.ideaDetails) {

@@ -2,6 +2,7 @@ import type { PrismaClient } from "@prisma/client";
 import type { IResourceRepository } from "../../../../domains/index.js";
 import type { ResourceNode } from "../../../../domains/resources/models/index.js";
 import { PrismaResourceMapper } from "../mappers/prisma-resource.mapper.js";
+import { withNodePersonId } from "../mappers/spydr-node-write.js";
 
 export class PostgresResourceRepository implements IResourceRepository {
   constructor(
@@ -45,7 +46,7 @@ export class PostgresResourceRepository implements IResourceRepository {
   }
 
   async save(entity: ResourceNode): Promise<ResourceNode> {
-    const nodeData = this.mapper.toPersistence(entity);
+    const nodeData = await withNodePersonId(this.db, this.mapper.toPersistence(entity));
     const { id, ...nodeUpdateData } = nodeData;
 
     await this.db.$transaction(async (tx) => {

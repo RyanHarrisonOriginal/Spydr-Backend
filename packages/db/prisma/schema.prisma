@@ -16,7 +16,6 @@ enum SpydrNodeType {
   decision
   resource
   inbox_item
-  person
 
   @@map("spydr_node_type")
 }
@@ -86,6 +85,15 @@ enum OrganizationMemberRole {
   @@map("organization_member_role")
 }
 
+enum OrganizationInviteStatus {
+  pending
+  accepted
+  revoked
+  expired
+
+  @@map("organization_invite_status")
+}
+
 enum SpydrTodoItemSource {
   user
   agent
@@ -100,11 +108,15 @@ model Organization {
   createdAt DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime             @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
   members   OrganizationMember[]
+  invites   OrganizationInvite[]
+  people    SpydrPersonDetails[]         @relation("PersonHomeOrg")
   nodes     SpydrNode[]
   relationships SpydrNodeRelationship[]
   outlookSnapshots SpydrOutlookSnapshot[]
   outlookTemplates SpydrOutlookTemplate[]
   personCollectionSorts SpydrPersonCollectionSort[]
+  personNodeLinks       SpydrPersonNodeLink[]
+  personPersonLinks     SpydrPersonPersonLink[]
   nodeTypeHistory       SpydrNodeTypeHistory[]
   activeNoteSessions    SpydrActiveNoteSession[]
   todoItems             SpydrTodoItem[]
@@ -114,17 +126,39 @@ model Organization {
 }
 
 model OrganizationMember {
-  id             String                 @id(map: "organization_members_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId String                 @map("organization_id") @db.Uuid
-  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade, map: "organization_members_organization_id_fkey")
-  userId         String                 @map("user_id")
+  id             String                   @id(map: "organization_members_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String                   @map("organization_id") @db.Uuid
+  organization   Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade, map: "organization_members_organization_id_fkey")
+  userId         String                   @map("user_id")
+  personId       String                   @map("person_id") @db.Uuid
+  person         SpydrPersonDetails       @relation("OrganizationMemberPerson", fields: [personId], references: [id], onDelete: Restrict, map: "organization_members_person_id_fkey")
   role           OrganizationMemberRole   @default(member)
-  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt      DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@unique([organizationId, userId], map: "organization_members_org_user_key")
   @@index([userId], map: "idx_organization_members_user")
   @@index([organizationId], map: "idx_organization_members_org")
+  @@index([personId], map: "idx_organization_members_person")
   @@map("organization_members")
+}
+
+model OrganizationInvite {
+  id                String                    @id(map: "organization_invites_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId    String                    @map("organization_id") @db.Uuid
+  organization      Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade, map: "organization_invites_organization_id_fkey")
+  email             String
+  role              OrganizationMemberRole    @default(member)
+  invitedByUserId   String                    @map("invited_by_user_id")
+  token             String                    @unique(map: "organization_invites_token_key")
+  status            OrganizationInviteStatus  @default(pending)
+  expiresAt         DateTime                  @map("expires_at") @db.Timestamptz(6)
+  acceptedAt        DateTime?                 @map("accepted_at") @db.Timestamptz(6)
+  acceptedByUserId  String?                   @map("accepted_by_user_id")
+  createdAt         DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                  @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@index([organizationId, status], map: "idx_organization_invites_org_status")
+  @@map("organization_invites")
 }
 
 model SpydrNode {
@@ -132,6 +166,8 @@ model SpydrNode {
   orgId                      String                     @map("org_id") @db.Uuid
   organization               Organization               @relation(fields: [orgId], references: [id], onDelete: Cascade, map: "spydr_nodes_org_id_fkey")
   userId                     String                     @map("user_id")
+  personId                   String                     @map("person_id") @db.Uuid
+  person                     SpydrPersonDetails         @relation("NodeCreatedByPerson", fields: [personId], references: [id], onDelete: Restrict, map: "spydr_nodes_person_id_fkey")
   nodeType                   SpydrNodeType              @map("node_type")
   title                      String
   body                       String                     @default("")
@@ -153,7 +189,8 @@ model SpydrNode {
   sourceRelationships        SpydrNodeRelationship[]    @relation("RelationshipSourceNode")
   targetRelationships        SpydrNodeRelationship[]    @relation("RelationshipTargetNode")
   outlookSnapshotItems       SpydrOutlookSnapshotItem[]
-  personDetails              SpydrPersonDetails?
+  personNodeLinks            SpydrPersonNodeLink[]
+  personCollectionSorts      SpydrPersonCollectionSort[]
   projectDetails             SpydrProjectDetails?
   projectAreaDetails         SpydrProjectAreaDetails?
   resourceDetails            SpydrResourceDetails?
@@ -171,6 +208,8 @@ model SpydrNode {
   @@index([userId, nodeType], map: "idx_spydr_nodes_user_type")
   @@index([userId, nodeType, sortOrder], map: "idx_spydr_nodes_user_type_sort")
   @@index([userId, isDeleted], map: "idx_spydr_nodes_user_deleted")
+  @@index([personId], map: "idx_spydr_nodes_person")
+  @@index([orgId, personId], map: "idx_spydr_nodes_org_person")
   @@map("spydr_nodes")
 }
 
@@ -240,6 +279,8 @@ model SpydrOutlookSnapshotItem {
   snapshot       SpydrOutlookSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade, map: "spydr_outlook_snapshot_items_snapshot_id_fkey")
   nodeId         String?              @map("node_id") @db.Uuid
   node           SpydrNode?           @relation(fields: [nodeId], references: [id], onDelete: SetNull, map: "spydr_outlook_snapshot_items_node_id_fkey")
+  personId       String?              @map("person_id") @db.Uuid
+  person         SpydrPersonDetails?  @relation("OutlookItemPerson", fields: [personId], references: [id], onDelete: SetNull, map: "spydr_outlook_snapshot_items_person_id_fkey")
   nodeType       SpydrNodeType?       @map("node_type")
   section        SpydrOutlookSection
   title          String?
@@ -253,6 +294,7 @@ model SpydrOutlookSnapshotItem {
   createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([nodeId], map: "idx_spydr_outlook_items_node")
+  @@index([personId], map: "idx_spydr_outlook_items_person")
   @@index([snapshotId, section, rank], map: "idx_spydr_outlook_items_snapshot_section")
   @@map("spydr_outlook_snapshot_items")
 }
@@ -299,16 +341,45 @@ model SpydrOutlookTemplate {
 }
 
 model SpydrPersonDetails {
-  nodeId              String    @id(map: "spydr_person_details_pkey") @map("node_id") @db.Uuid
-  node                SpydrNode @relation(fields: [nodeId], references: [id], onDelete: Cascade, map: "spydr_person_details_node_id_fkey")
+  id                  String    @id(map: "spydr_person_details_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId               String    @map("org_id") @db.Uuid
+  homeOrg             Organization @relation("PersonHomeOrg", fields: [orgId], references: [id], onDelete: Cascade, map: "spydr_person_details_org_id_fkey")
+  createdByUserId     String    @map("created_by_user_id")
   fullName            String    @map("full_name")
   email               String?
   title               String?
   organization        String?
   relationshipContext String?   @map("relationship_context")
+  clerkUserId         String?   @unique(map: "spydr_person_details_clerk_user_id_key") @map("clerk_user_id")
+  body                String    @default("")
+  status              SpydrNodeStatus @default(active)
+  priority            SpydrPriority   @default(medium)
+  area                String?
+  tags                String[]  @default([])
+  sortOrder           Int       @default(0) @map("sort_order")
+  archivedAt          DateTime? @map("archived_at") @db.Timestamptz(6)
+  isDeleted           Boolean   @default(false) @map("is_deleted")
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(6)
+  legacyNodeSnapshot  Json?     @map("legacy_node_snapshot") @db.JsonB
   createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime  @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
 
+  memberships           OrganizationMember[]          @relation("OrganizationMemberPerson")
+  nodes                 SpydrNode[]                   @relation("NodeCreatedByPerson")
+  requestedProjects     SpydrProjectDetails[]         @relation("ProjectRequesterPerson")
+  assignedProjects      SpydrProjectDetails[]         @relation("ProjectAssigneePerson")
+  sponsoredProjects     SpydrProjectDetails[]         @relation("ProjectSponsorPerson")
+  reviewedProjects      SpydrProjectDetails[]         @relation("ProjectReviewerPerson")
+  assignedTasks         SpydrTaskDetails[]            @relation("TaskAssigneePerson")
+  collectionSorts       SpydrPersonCollectionSort[]
+  outlookSnapshotItems  SpydrOutlookSnapshotItem[]    @relation("OutlookItemPerson")
+  nodeLinks             SpydrPersonNodeLink[]
+  sourcePersonLinks     SpydrPersonPersonLink[]       @relation("PersonPersonSource")
+  targetPersonLinks     SpydrPersonPersonLink[]       @relation("PersonPersonTarget")
+
+  @@index([orgId], map: "idx_spydr_person_details_org")
+  @@index([orgId, isDeleted], map: "idx_spydr_person_details_org_deleted")
+  @@index([createdByUserId], map: "idx_spydr_person_details_created_by")
   @@map("spydr_person_details")
 }
 
@@ -320,10 +391,14 @@ model SpydrProjectDetails {
   targetDate             DateTime?            @map("target_date") @db.Date
   riskLevel              SpydrPriority        @default(medium) @map("risk_level")
   lastActivityAt         DateTime?            @map("last_activity_at") @db.Timestamptz(6)
-  requesterPersonNodeId  String?              @map("requester_person_node_id") @db.Uuid
-  assigneePersonNodeId   String?              @map("assignee_person_node_id") @db.Uuid
-  sponsorPersonNodeId    String?              @map("sponsor_person_node_id") @db.Uuid
-  reviewerPersonNodeId   String?              @map("reviewer_person_node_id") @db.Uuid
+  requesterPersonId      String?              @map("requester_person_id") @db.Uuid
+  requesterPerson        SpydrPersonDetails?  @relation("ProjectRequesterPerson", fields: [requesterPersonId], references: [id], onDelete: SetNull, map: "spydr_project_details_requester_person_id_fkey")
+  assigneePersonId       String?              @map("assignee_person_id") @db.Uuid
+  assigneePerson         SpydrPersonDetails?  @relation("ProjectAssigneePerson", fields: [assigneePersonId], references: [id], onDelete: SetNull, map: "spydr_project_details_assignee_person_id_fkey")
+  sponsorPersonId        String?              @map("sponsor_person_id") @db.Uuid
+  sponsorPerson          SpydrPersonDetails?  @relation("ProjectSponsorPerson", fields: [sponsorPersonId], references: [id], onDelete: SetNull, map: "spydr_project_details_sponsor_person_id_fkey")
+  reviewerPersonId       String?              @map("reviewer_person_id") @db.Uuid
+  reviewerPerson         SpydrPersonDetails?  @relation("ProjectReviewerPerson", fields: [reviewerPersonId], references: [id], onDelete: SetNull, map: "spydr_project_details_reviewer_person_id_fkey")
   sourceTemplateId       String?              @map("source_template_id") @db.Uuid
   sourceTemplate         SpydrProjectTemplate? @relation("ProjectSpawnedFromTemplate", fields: [sourceTemplateId], references: [id], onDelete: SetNull, map: "spydr_project_details_source_template_id_fkey")
   templateParamValues    Json                 @default("{}") @map("template_param_values")
@@ -367,7 +442,8 @@ model SpydrTaskDetails {
   completedAt          DateTime?               @map("completed_at") @db.Timestamptz(6)
   isBlocked            Boolean                 @default(false) @map("is_blocked")
   estimatedMinutes     Int?                    @map("estimated_minutes")
-  assigneePersonNodeId String?                 @map("assignee_person_node_id") @db.Uuid
+  assigneePersonId     String?                 @map("assignee_person_id") @db.Uuid
+  assigneePerson       SpydrPersonDetails?     @relation("TaskAssigneePerson", fields: [assigneePersonId], references: [id], onDelete: SetNull, map: "spydr_task_details_assignee_person_id_fkey")
   tags                 String[]                @default([]) @map("tag")
   sourceTemplateTaskId String?                 @map("source_template_task_id") @db.Uuid
   sourceTemplateTask   SpydrProjectTemplateTask? @relation("TaskSpawnedFromTemplateTask", fields: [sourceTemplateTaskId], references: [id], onDelete: SetNull, map: "spydr_task_details_source_template_task_id_fkey")
@@ -375,26 +451,65 @@ model SpydrTaskDetails {
   updatedAt            DateTime                @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
 
   @@index([dueDate], map: "idx_spydr_task_due_date")
-  @@index([assigneePersonNodeId], map: "idx_spydr_task_assignee")
+  @@index([assigneePersonId], map: "idx_spydr_task_assignee")
   @@index([sourceTemplateTaskId], map: "idx_spydr_task_details_source_template_task")
   @@map("spydr_task_details")
 }
 
 model SpydrPersonCollectionSort {
-  id           String       @id(map: "spydr_person_collection_sort_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  orgId        String       @map("org_id") @db.Uuid
-  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade, map: "spydr_person_collection_sort_org_id_fkey")
-  personNodeId String       @map("person_node_id") @db.Uuid
-  nodeId       String       @map("node_id") @db.Uuid
-  nodeType     String       @map("node_type")
-  sortOrder    Int          @map("sort_order")
-  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime     @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
+  id           String             @id(map: "spydr_person_collection_sort_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId        String             @map("org_id") @db.Uuid
+  organization Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade, map: "spydr_person_collection_sort_org_id_fkey")
+  personId     String             @map("person_id") @db.Uuid
+  person       SpydrPersonDetails @relation(fields: [personId], references: [id], onDelete: Cascade, map: "spydr_person_collection_sort_person_id_fkey")
+  nodeId       String             @map("node_id") @db.Uuid
+  node         SpydrNode          @relation(fields: [nodeId], references: [id], onDelete: Cascade, map: "spydr_person_collection_sort_node_id_fkey")
+  nodeType     String             @map("node_type")
+  sortOrder    Int                @map("sort_order")
+  createdAt    DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime           @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  @@unique([orgId, personNodeId, nodeId], map: "spydr_person_collection_sort_person_node_uq")
-  @@index([orgId, personNodeId, nodeType, sortOrder], map: "idx_person_collection_sort_list")
+  @@unique([orgId, personId, nodeId], map: "spydr_person_collection_sort_person_node_uq")
+  @@index([orgId, personId, nodeType, sortOrder], map: "idx_person_collection_sort_list")
   @@index([nodeId], map: "idx_person_collection_sort_node")
   @@map("spydr_person_collection_sort")
+}
+
+model SpydrPersonNodeLink {
+  id                String                @id(map: "spydr_person_node_links_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId             String                @map("org_id") @db.Uuid
+  organization      Organization          @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  personId          String                @map("person_id") @db.Uuid
+  person            SpydrPersonDetails    @relation(fields: [personId], references: [id], onDelete: Cascade)
+  nodeId            String                @map("node_id") @db.Uuid
+  node              SpydrNode             @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  relationshipType  SpydrRelationshipType @map("relationship_type")
+  reason            String?
+  createdAt         DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([personId, nodeId, relationshipType], map: "spydr_person_node_links_person_node_type_key")
+  @@index([personId], map: "idx_spydr_person_node_links_person")
+  @@index([nodeId], map: "idx_spydr_person_node_links_node")
+  @@index([orgId], map: "idx_spydr_person_node_links_org")
+  @@map("spydr_person_node_links")
+}
+
+model SpydrPersonPersonLink {
+  id                String                @id(map: "spydr_person_person_links_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgId             String                @map("org_id") @db.Uuid
+  organization      Organization          @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  sourcePersonId    String                @map("source_person_id") @db.Uuid
+  sourcePerson      SpydrPersonDetails    @relation("PersonPersonSource", fields: [sourcePersonId], references: [id], onDelete: Cascade)
+  targetPersonId    String                @map("target_person_id") @db.Uuid
+  targetPerson      SpydrPersonDetails    @relation("PersonPersonTarget", fields: [targetPersonId], references: [id], onDelete: Cascade)
+  relationshipType  SpydrRelationshipType @map("relationship_type")
+  reason            String?
+  createdAt         DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([sourcePersonId, targetPersonId, relationshipType], map: "spydr_person_person_links_source_target_type_key")
+  @@index([sourcePersonId], map: "idx_spydr_person_person_links_source")
+  @@index([targetPersonId], map: "idx_spydr_person_person_links_target")
+  @@map("spydr_person_person_links")
 }
 
 model SpydrNodeTypeHistory {

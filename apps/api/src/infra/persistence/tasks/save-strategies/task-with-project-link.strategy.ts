@@ -5,6 +5,7 @@ import type {
 } from "../../../../domains/tasks/repository.js";
 import type { TaskNode } from "../../../../domains/tasks/models/index.js";
 import { PrismaTaskMapper } from "../../prisma/mappers/prisma-task.mapper.js";
+import { withNodePersonId } from "../../prisma/mappers/spydr-node-write.js";
 
 export class TaskWithProjectLinkSaveStrategy
   implements ISaveStrategy<TaskNode, ITaskWithProjectLinkContext>
@@ -22,7 +23,7 @@ export class TaskWithProjectLinkSaveStrategy
       throw new Error("withProjectLink strategy requires projectId context");
     }
 
-    const nodeData = this.mapper.toPersistence(entity);
+    const nodeData = await withNodePersonId(db, this.mapper.toPersistence(entity));
     const detailsData = entity.details
       ? this.mapper.toTaskDetailsPersistence(entity.id, entity.details)
       : null;

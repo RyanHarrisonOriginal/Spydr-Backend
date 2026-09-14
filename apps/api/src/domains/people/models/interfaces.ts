@@ -6,6 +6,7 @@ export interface IPersonDetailsProps extends ITimestampedDetails {
   title: string | null;
   organization: string | null;
   relationshipContext: string | null;
+  clerkUserId?: string | null;
 }
 
 export interface IPersonNodeProps extends Omit<IDomainNodeProps<"person">, "nodeType"> {
