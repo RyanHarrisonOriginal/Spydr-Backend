@@ -20,6 +20,11 @@ export interface IPersonUpdateInput {
   priority?: SpydrPriority;
 }
 
+export interface IClerkPersonIdentity {
+  email?: string | null;
+  fullName?: string | null;
+}
+
 export class PersonDetails implements IPersonDetailsProps {
   fullName: string;
   email: string | null;
@@ -119,6 +124,33 @@ export class PersonNode extends DomainNode<"person"> {
 
   linkClerkUser(clerkUserId: string): void {
     this.personDetails().linkClerkUser(clerkUserId);
+  }
+
+  syncFromClerk(identity: IClerkPersonIdentity, now = new Date()): boolean {
+    const details = this.personDetails();
+    let changed = false;
+
+    if (identity.email !== undefined) {
+      const email = nullableTrim(identity.email)?.toLowerCase() ?? null;
+      const current = details.email?.trim().toLowerCase() ?? null;
+      if (email && email !== current) {
+        details.setEmail(email);
+        changed = true;
+      }
+    }
+
+    const nextName = identity.fullName?.trim();
+    if (nextName && !details.fullName.trim()) {
+      details.setFullName(nextName);
+      this.title = nextName;
+      changed = true;
+    }
+
+    if (changed) {
+      this.touch(now);
+    }
+
+    return changed;
   }
 
   applyUpdate(input: IPersonUpdateInput, now = new Date()): void {

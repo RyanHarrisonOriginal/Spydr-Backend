@@ -19,6 +19,7 @@ import {
   ListOrganizationMembersQuery,
   ListOrganizationsQuery,
 } from "../../../domains/organizations/queries/index.js";
+import { SyncPersonFromClerkCommand } from "../../../domains/people/commands/index.js";
 import type { Organization } from "../../../domains/organizations/models/index.js";
 import type { OrganizationInvite } from "../../../domains/organizations/models/organization-invite.js";
 import type { IOrganizationMemberView } from "../../../domains/organizations/views.js";
@@ -79,9 +80,18 @@ export class OrganizationsController {
       const userId = getUserId(req, res);
       if (!userId) return;
 
-      const orgs = await this.queryBus.execute<ListOrganizationsQuery, Organization[]>(
-        new ListOrganizationsQuery(userId)
-      );
+      const orgsPromise = this.queryBus.execute<
+        ListOrganizationsQuery,
+        Organization[]
+      >(new ListOrganizationsQuery(userId));
+
+      try {
+        await this.commandBus.execute(new SyncPersonFromClerkCommand(userId));
+      } catch (error) {
+        console.error("Failed to sync person from Clerk", error);
+      }
+
+      const orgs = await orgsPromise;
 
       res.json(orgs.map((org) => this.mapper.toRepresentation(org)));
     } catch (error) {

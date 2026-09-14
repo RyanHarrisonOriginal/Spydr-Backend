@@ -7,6 +7,10 @@ import type {
   IClerkUserDirectory,
   IClerkUserRecord,
 } from "../../domains/organizations/clerk-user-directory.js";
+import type {
+  IClerkProfileReader,
+  IClerkUserProfile,
+} from "../../domains/people/clerk-profile.js";
 
 function getFrontendUrl(): string {
   return (process.env.FRONTEND_URL ?? "http://localhost:5173").replace(/\/$/, "");
@@ -20,6 +24,22 @@ function getClerkClient() {
   return createClerkClient({ secretKey });
 }
 
+function normalizeEmail(value: string | null | undefined): string | null {
+  const trimmed = value?.trim().toLowerCase();
+  return trimmed ? trimmed : null;
+}
+
+function clerkFullName(user: {
+  fullName?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+}): string | null {
+  const fullName =
+    user.fullName?.trim() ||
+    [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
+  return fullName || null;
+}
+
 export async function getClerkUserEmails(userId: string): Promise<string[]> {
   const user = await getClerkClient().users.getUser(userId);
   const emails = user.emailAddresses.map((entry) =>
@@ -30,13 +50,10 @@ export async function getClerkUserEmails(userId: string): Promise<string[]> {
 
 export async function getClerkUserFullName(userId: string): Promise<string | null> {
   const user = await getClerkClient().users.getUser(userId);
-  const fullName =
-    user.fullName?.trim() ||
-    [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
-  return fullName || null;
+  return clerkFullName(user);
 }
 
-export class ClerkUserDirectory implements IClerkUserDirectory {
+export class ClerkUserDirectory implements IClerkUserDirectory, IClerkProfileReader {
   async findByEmail(email: string): Promise<IClerkUserRecord | null> {
     const normalized = email.trim().toLowerCase();
     if (!normalized) return null;
@@ -48,10 +65,23 @@ export class ClerkUserDirectory implements IClerkUserDirectory {
     const user = result.data[0];
     if (!user) return null;
 
-    const fullName =
-      user.fullName?.trim() ||
-      [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
-    return { userId: user.id, fullName: fullName || null };
+    return { userId: user.id, fullName: clerkFullName(user) };
+  }
+
+  async getByUserId(userId: string): Promise<IClerkUserProfile | null> {
+    const user = await getClerkClient().users.getUser(userId);
+    const primaryEmail =
+      normalizeEmail(user.primaryEmailAddress?.emailAddress) ??
+      normalizeEmail(
+        user.emailAddresses.find((entry) => entry.id === user.primaryEmailAddressId)
+          ?.emailAddress
+      ) ??
+      normalizeEmail(user.emailAddresses[0]?.emailAddress);
+
+    return {
+      primaryEmail,
+      fullName: clerkFullName(user),
+    };
   }
 }
 

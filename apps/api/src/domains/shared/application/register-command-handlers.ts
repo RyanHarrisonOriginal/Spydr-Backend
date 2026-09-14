@@ -18,6 +18,7 @@ import {
   CreatePersonCommandHandler,
   DeletePersonCommandHandler,
   ReorderPersonCollectionCommandHandler,
+  SyncPersonFromClerkCommandHandler,
   UpdatePersonCommandHandler,
 } from "../../people/commands/index.js";
 import {
@@ -67,6 +68,8 @@ export function registerCommandHandlers(
   commandBus: ICommandBus,
   repositories: IPersistenceRepositories
 ): void {
+  const clerkUsers = new ClerkUserDirectory();
+
   commandBus.registerMany([
     new CreateProjectAreaCommandHandler(
       repositories.projectAreas,
@@ -119,7 +122,8 @@ export function registerCommandHandlers(
     new UpdateTaskCommandHandler(
       repositories.tasks,
       repositories.people,
-      repositories.taskViews
+      repositories.taskViews,
+      repositories.projects
     ),
     new CompleteTaskCommandHandler(repositories.tasks, repositories.taskViews),
     new DeleteTaskCommandHandler(repositories.tasks),
@@ -162,6 +166,11 @@ export function registerCommandHandlers(
       repositories.personWork,
       repositories.personCollectionSort
     ),
+    new SyncPersonFromClerkCommandHandler(
+      repositories.people,
+      repositories.personViews,
+      clerkUsers
+    ),
   ]);
 
   commandBus.register(
@@ -202,7 +211,7 @@ export function registerCommandHandlers(
       repositories.organizationViews,
       repositories.people,
       repositories.personViews,
-      new ClerkUserDirectory(),
+      clerkUsers,
       commandBus
     )
   );

@@ -15,6 +15,10 @@ import type { NoteNode } from "../../notes/models/index.js";
 import type { ResourceNode } from "../../resources/models/index.js";
 import type { TaskNode } from "../../tasks/models/index.js";
 import type { ProjectChildKind, IUpdateProjectChildInput } from "./child.js";
+import {
+  assertProjectTargetCoversTaskDues,
+  assertTaskDueDateWithinProjectTarget,
+} from "./task-due-invariant.js";
 
 export type { IProjectDetailsProps, IProjectNodeProps } from "./interfaces.js";
 export type { ProjectChildKind, IUpdateProjectChildInput } from "./child.js";
@@ -253,6 +257,7 @@ export class ProjectNode extends DomainNode<"project"> {
   }
 
   addTask(taskNode: TaskNode): void {
+    this.assertTaskDueDateAllowed(taskNode.details?.dueDate ?? null);
     this.addRelationship("related_to", taskNode, "Project task");
     this.tasks.push(taskNode);
   }
@@ -281,7 +286,19 @@ export class ProjectNode extends DomainNode<"project"> {
   }
 
   setTargetDate(targetDate: Date | null): void {
+    this.assertOpenTasksFitTarget(targetDate);
     this.projectDetails().setTargetDate(targetDate);
+  }
+
+  assertTaskDueDateAllowed(dueDate: Date | null): void {
+    assertTaskDueDateWithinProjectTarget(
+      dueDate,
+      this.details?.targetDate ?? null
+    );
+  }
+
+  assertOpenTasksFitTarget(targetDate: Date | null = this.details?.targetDate ?? null): void {
+    assertProjectTargetCoversTaskDues(targetDate, this.tasks);
   }
 
   setRiskLevel(riskLevel: SpydrPriority): void {
@@ -344,6 +361,7 @@ export class ProjectNode extends DomainNode<"project"> {
       details.setStartDate(input.startDate);
     }
     if (input.targetDate !== undefined) {
+      this.assertOpenTasksFitTarget(input.targetDate);
       details.setTargetDate(input.targetDate);
     }
     if (input.riskLevel !== undefined) {
@@ -391,6 +409,7 @@ export class ProjectNode extends DomainNode<"project"> {
           },
           now
         );
+        this.assertTaskDueDateAllowed(task.details?.dueDate ?? null);
         return task;
       }
       case "note": {

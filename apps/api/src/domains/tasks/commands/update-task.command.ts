@@ -1,5 +1,6 @@
 import type { ICommand, ICommandHandler } from "../../shared/application/command.js";
 import type { IPersonRepository } from "../../people/repository.js";
+import type { IProjectRepository } from "../../projects/repository.js";
 import type { ITaskUpdateModelInput } from "../mappers/index.js";
 import type { ITaskUpdateInput } from "../models/index.js";
 import type { ITaskRepository } from "../repository.js";
@@ -65,7 +66,8 @@ export class UpdateTaskCommandHandler
   constructor(
     private readonly tasks: ITaskRepository,
     private readonly people: IPersonRepository,
-    private readonly taskViews: ITaskViews
+    private readonly taskViews: ITaskViews,
+    private readonly projects: IProjectRepository
   ) {}
 
   async execute(command: UpdateTaskCommand): Promise<ITaskListItem | null> {
@@ -87,6 +89,20 @@ export class UpdateTaskCommandHandler
       }
     }
 
+    const dueDateChanging = taskInput.dueDate !== undefined;
+    const projectChanging = projectNodeId !== undefined;
+    if (dueDateChanging || projectChanging) {
+      const nextDueDate = dueDateChanging
+        ? parseTaskDueDate(taskInput.dueDate)
+        : existing.details?.dueDate ?? null;
+      const project = await this.resolveConstraintProject(
+        command.orgId,
+        command.taskId,
+        projectNodeId
+      );
+      project?.assertTaskDueDateAllowed(nextDueDate);
+    }
+
     if (hasTaskFieldUpdates(taskInput)) {
       existing.applyUpdate(toDomainUpdateInput(taskInput));
       await this.tasks.save(existing);
@@ -100,5 +116,19 @@ export class UpdateTaskCommandHandler
     }
 
     return this.taskViews.getListItem(command.orgId, command.taskId);
+  }
+
+  private async resolveConstraintProject(
+    orgId: string,
+    taskId: string,
+    projectNodeId: string | null | undefined
+  ) {
+    const projectId =
+      projectNodeId === undefined
+        ? (await this.taskViews.getListItem(orgId, taskId))?.project?.id ?? null
+        : projectNodeId;
+    if (!projectId) return null;
+
+    return this.projects.get({ id: projectId, orgId });
   }
 }

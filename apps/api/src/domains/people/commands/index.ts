@@ -17,3 +17,7 @@ export {
   ReorderPersonCollectionCommandHandler,
 } from "./reorder-person-collection.command.js";
 export type { IReorderPersonCollectionInput } from "./reorder-person-collection.command.js";
+export {
+  SyncPersonFromClerkCommand,
+  SyncPersonFromClerkCommandHandler,
+} from "./sync-person-from-clerk.command.js";
