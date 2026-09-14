@@ -2,7 +2,6 @@ import type { PrismaClient } from "@prisma/client";
 import type {
   IAddOrganizationMemberContext,
   ICreateOrganizationInput,
-  ILinkMemberPersonContext,
   IOrganizationRepository,
   IRemoveOrganizationMemberContext,
   OrganizationSaveContext,
@@ -61,16 +60,6 @@ export class PostgresOrganizationRepository implements IOrganizationRepository {
         throw new Error("addMember strategy requires an organization");
       }
       return this.addMember(entity, context);
-    }
-    if (strategy === "linkMemberPerson") {
-      const context = options?.context as ILinkMemberPersonContext | undefined;
-      if (!context?.userId || !context.personId) {
-        throw new Error("linkMemberPerson strategy requires userId and personId");
-      }
-      if (!("id" in entity)) {
-        throw new Error("linkMemberPerson strategy requires an organization");
-      }
-      return this.linkMemberPerson(entity, context);
     }
     if (strategy === "removeMember") {
       const context = options?.context as IRemoveOrganizationMemberContext | undefined;
@@ -177,14 +166,16 @@ export class PostgresOrganizationRepository implements IOrganizationRepository {
         data: { name, slug },
       });
 
-      await tx.organizationMember.create({
-        data: {
-          organizationId: organization.id,
-          userId,
-          personId: context.personId ?? null,
-          role: context.role ?? "owner",
-        },
-      });
+      if (context.personId) {
+        await tx.organizationMember.create({
+          data: {
+            organizationId: organization.id,
+            userId,
+            personId: context.personId,
+            role: context.role ?? "owner",
+          },
+        });
+      }
 
       return organization;
     });
@@ -235,22 +226,6 @@ export class PostgresOrganizationRepository implements IOrganizationRepository {
       throw new Error("Member not found");
     }
     return org;
-  }
-
-  private async linkMemberPerson(
-    org: Organization,
-    context: ILinkMemberPersonContext
-  ): Promise<Organization> {
-    await this.db.organizationMember.updateMany({
-      where: {
-        organizationId: org.id,
-        userId: context.userId,
-        personId: null,
-      },
-      data: { personId: context.personId },
-    });
-
-    return this.findByIdForUser(org.id, context.userId) ?? org;
   }
 
   private toMemberView(row: {

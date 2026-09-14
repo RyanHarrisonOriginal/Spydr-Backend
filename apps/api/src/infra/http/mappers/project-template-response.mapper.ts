@@ -29,6 +29,7 @@ export interface IProjectTemplateListItemResponse {
   name: string;
   description: string | null;
   isArchived: boolean;
+  area: string | null;
   parameterCount: number;
   taskCount: number;
   updatedAt: string;
@@ -67,6 +68,7 @@ export class ProjectTemplateResponseMapper
       name: item.name,
       description: item.description,
       isArchived: item.isArchived,
+      area: item.area,
       parameterCount: item.parameterCount,
       taskCount: item.taskCount,
       updatedAt: item.updatedAt.toISOString(),

@@ -3,6 +3,7 @@ import type { Organization } from "../models/index.js";
 import type { ICommand, ICommandHandler } from "../../shared/application/command.js";
 import type { ICommandBus } from "../../shared/application/command-bus.js";
 import { CreatePersonCommand } from "../../people/commands/create-person.command.js";
+import type { PersonNode } from "../../people/models/index.js";
 import type { IPersonViews } from "../../people/views.js";
 
 export interface ICreateOrganizationCreatorInput {
@@ -45,7 +46,7 @@ export class CreateOrganizationCommandHandler
         strategy: "createForUser",
         context: {
           userId: command.userId,
-          personId: existingPerson?.id ?? null,
+          personId: existingPerson?.id,
           role: "owner",
         },
       }
@@ -61,7 +62,7 @@ export class CreateOrganizationCommandHandler
       "Owner";
 
     try {
-      const person = await this.commandBus.execute(
+      const person: PersonNode = await this.commandBus.execute(
         new CreatePersonCommand(command.userId, org.id, {
           fullName,
           email: command.input.creator?.email?.trim() || null,
@@ -71,8 +72,8 @@ export class CreateOrganizationCommandHandler
       );
 
       await this.organizations.save(org, {
-        strategy: "linkMemberPerson",
-        context: { userId: command.userId, personId: person.id },
+        strategy: "addMember",
+        context: { userId: command.userId, personId: person.id, role: "owner" },
       });
     } catch (error) {
       console.error(

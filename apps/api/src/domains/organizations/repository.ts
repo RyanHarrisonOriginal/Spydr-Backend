@@ -7,13 +7,8 @@ export interface ICreateOrganizationInput {
 
 export interface IAddOrganizationMemberContext {
   userId: string;
-  personId?: string | null;
+  personId?: string;
   role?: OrganizationMemberRole;
-}
-
-export interface ILinkMemberPersonContext {
-  userId: string;
-  personId: string;
 }
 
 export interface IRemoveOrganizationMemberContext {
@@ -22,7 +17,6 @@ export interface IRemoveOrganizationMemberContext {
 
 export type OrganizationSaveContext =
   | IAddOrganizationMemberContext
-  | ILinkMemberPersonContext
   | IRemoveOrganizationMemberContext
   | { userId: string };
 

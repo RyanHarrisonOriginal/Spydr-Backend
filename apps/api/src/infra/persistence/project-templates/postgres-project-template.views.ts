@@ -35,6 +35,7 @@ export class PostgresProjectTemplateViews implements IProjectTemplateViews {
       name: row.name,
       description: row.description,
       isArchived: row.isArchived,
+      area: row.area,
       parameterCount: row._count.parameters,
       taskCount: row._count.tasks,
       updatedAt: row.updatedAt,
