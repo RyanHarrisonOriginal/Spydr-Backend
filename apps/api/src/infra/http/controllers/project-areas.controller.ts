@@ -95,7 +95,8 @@ export class ProjectAreasController {
       if (
         error instanceof Error &&
         (error.message === "Nothing to update" ||
-          error.message === "Invalid project area color")
+          error.message === "Invalid project area color" ||
+          error.message === "Project area title is required")
       ) {
         res.status(400).json({ message: error.message });
         return;

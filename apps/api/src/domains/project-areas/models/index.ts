@@ -38,7 +38,24 @@ export class ProjectAreaNode extends DomainNode<"project_area"> {
     this.touch();
   }
 
+  applyTitleUpdate(title: string): void {
+    const trimmed = title.trim();
+    if (!trimmed) {
+      throw new Error("Project area title is required");
+    }
+    this.setTitle(trimmed);
+  }
+
   applyColorUpdate(color: string): void {
     this.setColor(normalizeProjectAreaColor(color));
+  }
+
+  applyUpdate(input: { title?: string; color?: string }): void {
+    if (input.title !== undefined) {
+      this.applyTitleUpdate(input.title);
+    }
+    if (input.color !== undefined) {
+      this.applyColorUpdate(input.color);
+    }
   }
 }

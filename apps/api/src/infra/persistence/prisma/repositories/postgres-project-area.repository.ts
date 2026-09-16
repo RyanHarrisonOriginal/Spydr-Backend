@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@prisma/client";
 import type { IProjectAreaRepository } from "../../../../domains/project-areas/repository.js";
 import type { ProjectAreaNode } from "../../../../domains/project-areas/models/index.js";
 import { PrismaProjectAreaMapper } from "../mappers/prisma-project-area.mapper.js";
@@ -23,7 +23,7 @@ export class PostgresProjectAreaRepository implements IProjectAreaRepository {
     entity: ProjectAreaNode,
     options?: {
       strategy?: string;
-      context?: { orgId?: string; title?: string };
+      context?: { orgId?: string; title?: string; previousTitle?: string };
     }
   ): Promise<ProjectAreaNode> {
     const strategy = options?.strategy ?? "standard";
@@ -36,6 +36,10 @@ export class PostgresProjectAreaRepository implements IProjectAreaRepository {
 
     const nodeData = await withNodePersonId(this.db, this.mapper.toPersistence(entity));
     const { id, ...nodeUpdateData } = nodeData;
+    const previousTitle =
+      strategy === "renameProjectLinks"
+        ? options?.context?.previousTitle
+        : undefined;
 
     await this.db.$transaction(async (tx) => {
       await tx.spydrNode.upsert({
@@ -56,6 +60,10 @@ export class PostgresProjectAreaRepository implements IProjectAreaRepository {
           create: detailsData,
           update: detailsUpdateData,
         });
+      }
+
+      if (previousTitle && previousTitle !== entity.title) {
+        await this.renameAreaTitle(tx, entity.orgId, previousTitle, entity.title);
       }
     });
 
@@ -104,6 +112,35 @@ export class PostgresProjectAreaRepository implements IProjectAreaRepository {
       data: {
         area: null,
         updatedAt: new Date(),
+      },
+    });
+  }
+
+  private async renameAreaTitle(
+    tx: Prisma.TransactionClient,
+    orgId: string,
+    previousTitle: string,
+    nextTitle: string
+  ): Promise<void> {
+    const now = new Date();
+    await tx.spydrNode.updateMany({
+      where: {
+        orgId,
+        nodeType: { not: "project_area" },
+        area: { equals: previousTitle, mode: "insensitive" },
+      },
+      data: {
+        area: nextTitle,
+        updatedAt: now,
+      },
+    });
+    await tx.spydrProjectTemplate.updateMany({
+      where: {
+        orgId,
+        area: { equals: previousTitle, mode: "insensitive" },
+      },
+      data: {
+        area: nextTitle,
       },
     });
   }

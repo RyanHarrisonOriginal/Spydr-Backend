@@ -75,7 +75,10 @@ export function registerCommandHandlers(
       repositories.projectAreas,
       repositories.projectAreaViews
     ),
-    new UpdateProjectAreaCommandHandler(repositories.projectAreas),
+    new UpdateProjectAreaCommandHandler(
+      repositories.projectAreas,
+      repositories.projectAreaViews
+    ),
     new DeleteProjectAreaCommandHandler(repositories.projectAreas),
     new CreatePersonCommandHandler(
       repositories.people,
