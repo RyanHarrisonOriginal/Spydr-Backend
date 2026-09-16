@@ -39,6 +39,10 @@ function isOpenProjectStatus(status: string): boolean {
   return status === "active" || status === "waiting" || status === "blocked";
 }
 
+function isClosedProjectStatus(status: string): boolean {
+  return status === "completed" || status === "archived";
+}
+
 function isBlockedTask(status: string, isBlocked: boolean): boolean {
   return status === "blocked" || isBlocked;
 }
@@ -167,6 +171,9 @@ export class PostgresWorkspaceDashboardRepository
       return personLoads.get(key)!;
     };
 
+    const projectStatusById = new Map(
+      projects.map((project) => [project.id, project.status])
+    );
     const projectStatusCounts: IWorkspaceDashboardStatusCounts = {};
     const taskStatusCounts: IWorkspaceDashboardStatusCounts = {};
 
@@ -242,7 +249,13 @@ export class PostgresWorkspaceDashboardRepository
     let overdueTasks = 0;
 
     for (const task of tasks) {
-      incrementStatusCount(taskStatusCounts, task.status);
+      const parentProjectId = projectByTask.get(task.id);
+      const parentStatus = parentProjectId
+        ? projectStatusById.get(parentProjectId)
+        : undefined;
+      if (!parentStatus || !isClosedProjectStatus(parentStatus)) {
+        incrementStatusCount(taskStatusCounts, task.status);
+      }
       const details = task.taskDetails;
       const open = isOpenTaskStatus(task.status);
       const blocked = isBlockedTask(task.status, details?.isBlocked ?? false);
@@ -258,7 +271,9 @@ export class PostgresWorkspaceDashboardRepository
     }
 
     for (const project of projects) {
-      incrementStatusCount(projectStatusCounts, project.status);
+      if (!isClosedProjectStatus(project.status)) {
+        incrementStatusCount(projectStatusCounts, project.status);
+      }
 
       const areaKey = resolveProjectAreaKey(project.area);
       const areaMeta = resolveProjectAreaMeta(project.area);
