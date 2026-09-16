@@ -14,15 +14,22 @@ loadEnv();
  * schema name as text (`INSERT INTO bullmq.queue`). pg-boss then no-ops
  * migrate when `version` is already current, and `create_queue` fails with
  * parserOpenTable / relation does not exist.
+ *
+ * Only dump ordinary functions (`prokind = 'f'`). `pg_get_functiondef`
+ * throws on aggregates such as `array_agg`.
  */
 async function rewriteLegacyFunctionBodies(client: Client): Promise<void> {
   const { rows } = await client.query<{ def: string }>(
     `
-    SELECT pg_get_functiondef(p.oid) AS def
-    FROM pg_proc p
-    JOIN pg_namespace n ON n.oid = p.pronamespace
-    WHERE n.nspname = $1
-      AND pg_get_functiondef(p.oid) LIKE $2
+    SELECT def
+    FROM (
+      SELECT pg_get_functiondef(p.oid) AS def
+      FROM pg_proc p
+      JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE n.nspname = $1
+        AND p.prokind = 'f'
+    ) funcs
+    WHERE def LIKE $2
     `,
     [PG_BOSS_SCHEMA, `%${PG_BOSS_LEGACY_SCHEMA}%`]
   );
@@ -72,7 +79,6 @@ async function promoteLegacySchema(connectionString: string): Promise<void> {
           `[pg-boss migrate] Both "${PG_BOSS_LEGACY_SCHEMA}" and "${PG_BOSS_SCHEMA}" exist; leaving legacy schema in place for manual cleanup.`
         );
       }
-      await rewriteLegacyFunctionBodies(client);
       return;
     }
 
@@ -83,7 +89,6 @@ async function promoteLegacySchema(connectionString: string): Promise<void> {
       console.info(
         `[pg-boss migrate] Renamed schema "${PG_BOSS_LEGACY_SCHEMA}" → "${PG_BOSS_SCHEMA}".`
       );
-      await rewriteLegacyFunctionBodies(client);
     }
   } finally {
     await client.end();

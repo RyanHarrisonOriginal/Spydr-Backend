@@ -4,7 +4,7 @@ import type { PrismaClient } from "@prisma/client";
 import { prisma as defaultPrisma } from "@spydr/db";
 import { ACTIVE_NOTE_PROMPT_VERSION } from "@spydr/active-notes";
 import {
-  EmbeddingAwareCommandBus,
+  CommandBus,
   registerCommandHandlers,
   type ICommandBus,
 } from "./domains/shared/application/index.js";
@@ -66,9 +66,7 @@ export function createBackend(overrides: IBackendOverrides = {}): IBackend {
   const repositories =
     overrides.repositories ?? createPersistenceRepositories(prisma);
   const services: IBackendServices = {
-    commandBus:
-      overrides.commandBus ??
-      new EmbeddingAwareCommandBus({ repositories, prisma }),
+    commandBus: overrides.commandBus ?? new CommandBus(),
     queryBus: overrides.queryBus ?? new QueryBus(),
     repositories,
     prisma,
