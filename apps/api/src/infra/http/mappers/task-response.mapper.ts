@@ -32,6 +32,7 @@ export interface ITaskResponse {
   project: ITaskProjectResponse | null;
   assignee: IPersonResponse | null;
   details: {
+    emoji: string | null;
     dueDate: string | null;
     completedAt: string | null;
     isBlocked: boolean;
@@ -71,6 +72,7 @@ export class TaskResponseMapper
         : null,
       details: domain.details
         ? {
+            emoji: domain.details.emoji,
             dueDate: this.toDateOnly(domain.details.dueDate),
             completedAt: domain.details.completedAt?.toISOString() ?? null,
             isBlocked: domain.details.isBlocked,

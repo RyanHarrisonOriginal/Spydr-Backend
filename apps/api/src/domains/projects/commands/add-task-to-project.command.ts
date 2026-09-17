@@ -18,6 +18,7 @@ export interface IAddTaskToProjectInput {
   dueDate?: string | null;
   estimatedMinutes?: number | null;
   assigneePersonNodeId?: string | null;
+  emoji?: string | null;
 }
 
 export class AddTaskToProjectCommand implements ICommand<TaskNode | null> {

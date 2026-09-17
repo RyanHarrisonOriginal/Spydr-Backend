@@ -181,6 +181,7 @@ export class PostgresWorkspaceDashboardRepository
       id: string | null;
       name: string;
       color: string;
+      emoji: string | null;
       projects: number;
       activeProjects: number;
       tasks: number;
@@ -194,17 +195,22 @@ export class PostgresWorkspaceDashboardRepository
           id: area.id,
           name: area.title,
           color: area.projectAreaDetails?.color ?? DEFAULT_AREA_COLOR,
+          emoji: area.projectAreaDetails?.emoji ?? null,
         },
       ])
     );
 
     const areaBuckets = new Map<string, AreaBucket>();
-    const ensureAreaBucket = (key: string, meta: { id: string | null; name: string; color: string }) => {
+    const ensureAreaBucket = (
+      key: string,
+      meta: { id: string | null; name: string; color: string; emoji: string | null }
+    ) => {
       if (!areaBuckets.has(key)) {
         areaBuckets.set(key, {
           id: meta.id,
           name: meta.name,
           color: meta.color,
+          emoji: meta.emoji,
           projects: 0,
           activeProjects: 0,
           tasks: 0,
@@ -219,6 +225,7 @@ export class PostgresWorkspaceDashboardRepository
         id: area.id,
         name: area.title,
         color: area.projectAreaDetails?.color ?? DEFAULT_AREA_COLOR,
+        emoji: area.projectAreaDetails?.emoji ?? null,
       });
     }
 
@@ -230,7 +237,12 @@ export class PostgresWorkspaceDashboardRepository
 
     const resolveProjectAreaMeta = (areaTitle: string | null | undefined) => {
       if (!areaTitle?.trim()) {
-        return { id: null, name: "Unassigned", color: UNASSIGNED_AREA_COLOR };
+        return {
+          id: null,
+          name: "Unassigned",
+          color: UNASSIGNED_AREA_COLOR,
+          emoji: null,
+        };
       }
       const match = areaByTitle.get(areaTitle.trim().toLowerCase());
       if (match) return match;
@@ -238,6 +250,7 @@ export class PostgresWorkspaceDashboardRepository
         id: null,
         name: areaTitle.trim(),
         color: DEFAULT_AREA_COLOR,
+        emoji: null,
       };
     };
 

@@ -8,10 +8,6 @@ import type {
 } from "../models/index.js";
 import type { ICommand, ICommandHandler } from "../../shared/application/command.js";
 import { applyTemplateSyncToProject } from "../utils/sync-spawned-project.js";
-import {
-  collectTemplateParamKeys,
-  fillMissingParamValues,
-} from "../utils/interpolate.js";
 
 export class UpdateProjectTemplateCommand implements ICommand<ProjectTemplate> {
   static readonly commandType = "project-templates.update";
@@ -54,7 +50,6 @@ export class UpdateProjectTemplateCommandHandler
 
     template.applyUpdate(command.input);
     const saved = await this.templates.save(template);
-    const keysToFill = collectTemplateParamKeys(saved);
 
     const areaNode = saved.area
       ? await this.projectAreaViews.getByTitle(command.orgId, saved.area)
@@ -72,16 +67,9 @@ export class UpdateProjectTemplateCommandHandler
       });
       if (!project || !project.isOpenForTemplateSync()) continue;
 
-      const additions = fillMissingParamValues(
-        project.details?.templateParamValues ?? {},
-        keysToFill,
-        command.spawnedParamValues[summary.id] ?? {}
-      );
-      if (Object.keys(additions).length > 0) {
-        project.mergeTemplateParamValues(additions);
-      }
-
-      applyTemplateSyncToProject(project, saved);
+      applyTemplateSyncToProject(project, saved, {
+        paramValues: command.spawnedParamValues[summary.id] ?? {},
+      });
       await this.projects.save(project);
       await this.projects.save(project, {
         strategy: "withAreaAssignment",

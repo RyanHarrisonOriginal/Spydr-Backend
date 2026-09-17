@@ -1,4 +1,5 @@
 import { DomainNode, isTaskStatus, normalizeSpydrPriority, type TaskStatus, type SpydrPriority } from "../../shared/models/shared.js";
+import { normalizeEmoji } from "../../shared/utils/emoji.js";
 import type { PersonNode } from "../../people/models/index.js";
 import type { ITaskDetailsProps, ITaskNodeProps } from "./interfaces.js";
 
@@ -9,12 +10,14 @@ export interface ITaskUpdateInput {
   body?: string;
   status?: TaskStatus;
   priority?: SpydrPriority;
+  emoji?: string | null;
   dueDate?: Date | null;
   estimatedMinutes?: number | null;
   assigneePersonNodeId?: string | null;
 }
 
 export class TaskDetails implements ITaskDetailsProps {
+  emoji: string | null;
   dueDate: Date | null;
   completedAt: Date | null;
   isBlocked: boolean;
@@ -26,6 +29,7 @@ export class TaskDetails implements ITaskDetailsProps {
   updatedAt: Date;
 
   constructor(props: ITaskDetailsProps) {
+    this.emoji = normalizeEmoji(props.emoji);
     this.dueDate = props.dueDate;
     this.completedAt = props.completedAt;
     this.isBlocked = props.isBlocked;
@@ -39,6 +43,11 @@ export class TaskDetails implements ITaskDetailsProps {
 
   setDueDate(dueDate: Date | null, now = new Date()): void {
     this.dueDate = dueDate;
+    this.touch(now);
+  }
+
+  setEmoji(emoji: string | null, now = new Date()): void {
+    this.emoji = normalizeEmoji(emoji);
     this.touch(now);
   }
 
@@ -143,6 +152,9 @@ export class TaskNode extends DomainNode<"task"> {
 
     const details = this.ensureDetails(now);
 
+    if (input.emoji !== undefined) {
+      details.setEmoji(input.emoji, now);
+    }
     if (input.dueDate !== undefined) {
       details.setDueDate(input.dueDate, now);
     }
@@ -165,6 +177,7 @@ export class TaskNode extends DomainNode<"task"> {
   private ensureDetails(now = new Date()): TaskDetails {
     if (!this.details) {
       this.details = new TaskDetails({
+        emoji: null,
         dueDate: null,
         completedAt: null,
         isBlocked: false,

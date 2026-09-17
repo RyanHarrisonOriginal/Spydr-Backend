@@ -80,4 +80,13 @@ describe("project template interpolate", () => {
       CONTACT: UNSPECIFIED_PARAM_VALUE,
     });
   });
+
+  it("replaces tokens in later strings after earlier renders", () => {
+    const params = { VAR1: "one", VAR2: "two" };
+    expect(
+      renderTemplate("{{VAR1}} project title is fairly long", params)
+    ).toBe("one project title is fairly long");
+    expect(renderTemplate("{{VAR2}} task", params)).toBe("two task");
+    expect(extractTemplateKeys("{{VAR2}} task")).toEqual(["VAR2"]);
+  });
 });

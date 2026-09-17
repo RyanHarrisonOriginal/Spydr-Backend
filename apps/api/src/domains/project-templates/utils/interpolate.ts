@@ -1,4 +1,6 @@
-const TOKEN_RE = /\{\{([A-Z][A-Z0-9_]*)\}\}/g;
+function tokenPattern(): RegExp {
+  return /\{\{([A-Z][A-Z0-9_]*)\}\}/g;
+}
 
 /** Stored when a spawned project has no value yet for a newly introduced parameter. */
 export const UNSPECIFIED_PARAM_VALUE = "UNSPECIFIED";
@@ -6,11 +8,12 @@ export const UNSPECIFIED_PARAM_VALUE = "UNSPECIFIED";
 /** Extract unique `{{KEY}}` tokens from one or more strings. */
 export function extractTemplateKeys(...texts: Array<string | null | undefined>): string[] {
   const keys = new Set<string>();
+  const tokenRe = tokenPattern();
   for (const text of texts) {
     if (!text) continue;
-    TOKEN_RE.lastIndex = 0;
+    tokenRe.lastIndex = 0;
     let match: RegExpExecArray | null;
-    while ((match = TOKEN_RE.exec(text)) !== null) {
+    while ((match = tokenRe.exec(text)) !== null) {
       keys.add(match[1]);
     }
   }
@@ -22,7 +25,7 @@ export function renderTemplate(
   text: string,
   params: Record<string, string>
 ): string {
-  return text.replace(TOKEN_RE, (_full, key: string) => {
+  return text.replace(tokenPattern(), (_full, key: string) => {
     if (Object.prototype.hasOwnProperty.call(params, key)) {
       return params[key];
     }
@@ -57,14 +60,14 @@ export function collectTemplateParamKeys(template: {
     template.bodyTemplate,
     template.outcomeTemplate,
     ...(template.tags ?? []),
-    ...template.tasks.flatMap((task) => [
+    ...(template.tasks ?? []).flatMap((task) => [
       task.titleTemplate,
       task.bodyTemplate,
       ...(task.tags ?? []),
     ])
   );
   return Array.from(
-    new Set([...template.parameters.map((param) => param.key), ...used])
+    new Set([...(template.parameters ?? []).map((param) => param.key), ...used])
   );
 }
 

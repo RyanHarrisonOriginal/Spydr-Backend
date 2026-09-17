@@ -18,6 +18,7 @@ export interface IProjectAreaCreateModelInput {
   status?: SpydrNodeStatus;
   priority?: SpydrPriority;
   color?: string;
+  emoji?: string | null;
 }
 
 export class ProjectAreaMapper {
@@ -54,6 +55,7 @@ export class ProjectAreaMapper {
       deletedAt: null,
       details: new ProjectAreaDetails({
         color,
+        emoji: input.emoji ?? null,
         createdAt: now,
         updatedAt: now,
       }),

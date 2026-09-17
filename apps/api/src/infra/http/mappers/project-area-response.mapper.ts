@@ -3,6 +3,7 @@ import type { IRepresentationMapper } from "../../../domains/shared/mappers/mapp
 
 export interface IProjectAreaDetailsResponse {
   color: string;
+  emoji: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -43,6 +44,7 @@ export class ProjectAreaResponseMapper
       details: domain.details
         ? {
             color: domain.details.color,
+            emoji: domain.details.emoji,
             createdAt: domain.details.createdAt.toISOString(),
             updatedAt: domain.details.updatedAt.toISOString(),
           }

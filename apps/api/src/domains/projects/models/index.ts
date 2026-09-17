@@ -6,6 +6,7 @@ import {
   type SpydrNodeStatus,
   type TaskStatus,
 } from "../../shared/models/shared.js";
+import { normalizeEmoji } from "../../shared/utils/emoji.js";
 import type { IProjectDetailsProps, IProjectNodeProps } from "./interfaces.js";
 import type { IProjectPersonas } from "./personas.js";
 import { emptyProjectPersonas } from "./personas.js";
@@ -29,6 +30,7 @@ export interface IProjectUpdateInput {
   status?: SpydrNodeStatus;
   priority?: SpydrPriority;
   area?: string | null;
+  emoji?: string | null;
   startDate?: Date | null;
   targetDate?: Date | null;
   riskLevel?: SpydrPriority;
@@ -39,6 +41,7 @@ export interface IProjectUpdateInput {
 }
 
 export class ProjectDetails implements IProjectDetailsProps {
+  emoji: string | null;
   outcome: string | null;
   startDate: Date | null;
   targetDate: Date | null;
@@ -57,6 +60,7 @@ export class ProjectDetails implements IProjectDetailsProps {
   updatedAt: Date;
 
   constructor(props: IProjectDetailsProps) {
+    this.emoji = normalizeEmoji(props.emoji);
     this.outcome = props.outcome;
     this.startDate = props.startDate;
     this.targetDate = props.targetDate;
@@ -77,6 +81,11 @@ export class ProjectDetails implements IProjectDetailsProps {
 
   setOutcome(outcome: string | null): void {
     this.outcome = outcome;
+    this.touch();
+  }
+
+  setEmoji(emoji: string | null): void {
+    this.emoji = normalizeEmoji(emoji);
     this.touch();
   }
 
@@ -370,6 +379,9 @@ export class ProjectNode extends DomainNode<"project"> {
     }
 
     const details = this.projectDetails();
+    if (input.emoji !== undefined) {
+      details.setEmoji(input.emoji);
+    }
     if (input.startDate !== undefined) {
       details.setStartDate(input.startDate);
     }
@@ -413,6 +425,7 @@ export class ProjectNode extends DomainNode<"project"> {
             body: input.body,
             status: input.status as TaskStatus | undefined,
             priority: input.priority as TaskNode["priority"] | undefined,
+            emoji: input.emoji,
             dueDate:
               input.dueDate !== undefined
                 ? parseOptionalDate(input.dueDate, "Invalid task date")

@@ -27,6 +27,7 @@ export interface IProjectCreateModelInput {
   sourceTemplateId?: string | null;
   templateParamValues?: Record<string, string>;
   templateSpawnedAt?: Date | null;
+  emoji?: string | null;
 }
 
 export class ProjectMapper {
@@ -63,6 +64,7 @@ export class ProjectMapper {
       isDeleted: false,
       deletedAt: null,
       details: {
+        emoji: input.emoji ?? null,
         outcome: this.nullableTrim(input.outcome),
         startDate: this.parseDate(input.startDate),
         targetDate: this.parseDate(input.targetDate),

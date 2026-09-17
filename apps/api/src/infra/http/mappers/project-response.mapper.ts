@@ -42,6 +42,7 @@ export interface IProjectResponse {
   isDeleted: boolean;
   deletedAt: string | null;
   details: {
+    emoji: string | null;
     outcome: string | null;
     startDate: string | null;
     targetDate: string | null;
@@ -126,6 +127,7 @@ export class ProjectResponseMapper
       ...nodeLifecycleResponse(domain),
       details: domain.details
         ? {
+            emoji: domain.details.emoji,
             outcome: domain.details.outcome,
             startDate: this.toDateOnly(domain.details.startDate),
             targetDate: this.toDateOnly(domain.details.targetDate),

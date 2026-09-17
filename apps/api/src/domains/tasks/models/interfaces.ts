@@ -2,6 +2,7 @@ import type { IDomainNodeProps, ITimestampedDetails } from "../../shared/models/
 import type { PersonNode } from "../../people/models/index.js";
 
 export interface ITaskDetailsProps extends ITimestampedDetails {
+  emoji?: string | null;
   dueDate: Date | null;
   completedAt: Date | null;
   isBlocked: boolean;

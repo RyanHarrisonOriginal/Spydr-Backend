@@ -18,7 +18,8 @@ function hasTaskFieldUpdates(input: ITaskUpdateModelInput): boolean {
     input.priority !== undefined ||
     input.dueDate !== undefined ||
     input.estimatedMinutes !== undefined ||
-    input.assigneePersonNodeId !== undefined
+    input.assigneePersonNodeId !== undefined ||
+    input.emoji !== undefined
   );
 }
 
@@ -41,6 +42,7 @@ function toDomainUpdateInput(input: ITaskUpdateModelInput): ITaskUpdateInput {
     priority: input.priority,
     estimatedMinutes: input.estimatedMinutes,
     assigneePersonNodeId: input.assigneePersonNodeId,
+    emoji: input.emoji,
     dueDate:
       input.dueDate !== undefined ? parseTaskDueDate(input.dueDate) : undefined,
   };

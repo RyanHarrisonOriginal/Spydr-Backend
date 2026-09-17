@@ -22,6 +22,7 @@ export interface ICreateProjectInput {
   startDate?: string | null;
   targetDate?: string | null;
   riskLevel?: SpydrPriority;
+  emoji?: string | null;
 }
 
 export class CreateProjectCommand implements ICommand<ProjectNode> {

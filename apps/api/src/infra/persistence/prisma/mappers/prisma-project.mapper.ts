@@ -36,6 +36,7 @@ export class PrismaProjectMapper
       ...readNodeLifecycle(persistence),
       details: persistence.projectDetails
         ? new ProjectDetails({
+            emoji: persistence.projectDetails.emoji,
             outcome: persistence.projectDetails.outcome,
             startDate: persistence.projectDetails.startDate,
             targetDate: persistence.projectDetails.targetDate,
@@ -69,6 +70,7 @@ export class PrismaProjectMapper
   ): Prisma.SpydrProjectDetailsUncheckedCreateInput {
     return {
       nodeId,
+      emoji: details.emoji,
       outcome: details.outcome,
       startDate: details.startDate,
       targetDate: details.targetDate,

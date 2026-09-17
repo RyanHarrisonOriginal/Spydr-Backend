@@ -8,6 +8,7 @@ export interface ICreateProjectAreaInput {
   title: string;
   body?: string;
   color?: string;
+  emoji?: string | null;
 }
 
 export class CreateProjectAreaCommand implements ICommand<ProjectAreaNode> {

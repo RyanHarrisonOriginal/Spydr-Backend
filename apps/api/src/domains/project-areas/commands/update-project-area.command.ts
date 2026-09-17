@@ -6,6 +6,7 @@ import type { ICommand, ICommandHandler } from "../../shared/application/command
 export interface IUpdateProjectAreaInput {
   title?: string;
   color?: string;
+  emoji?: string | null;
 }
 
 export class UpdateProjectAreaCommand implements ICommand<ProjectAreaNode> {
@@ -39,7 +40,11 @@ export class UpdateProjectAreaCommandHandler
       throw new Error("Project area not found");
     }
 
-    if (command.input.title === undefined && command.input.color === undefined) {
+    if (
+      command.input.title === undefined &&
+      command.input.color === undefined &&
+      command.input.emoji === undefined
+    ) {
       throw new Error("Nothing to update");
     }
 

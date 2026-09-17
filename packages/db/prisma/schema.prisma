@@ -386,6 +386,7 @@ model SpydrPersonDetails {
 model SpydrProjectDetails {
   nodeId                 String               @id(map: "spydr_project_details_pkey") @map("node_id") @db.Uuid
   node                   SpydrNode            @relation(fields: [nodeId], references: [id], onDelete: Cascade, map: "spydr_project_details_node_id_fkey")
+  emoji                  String?              @db.VarChar(64)
   outcome                String?
   startDate              DateTime?            @map("start_date") @db.Date
   targetDate             DateTime?            @map("target_date") @db.Date
@@ -416,6 +417,7 @@ model SpydrProjectAreaDetails {
   nodeId    String    @id(map: "spydr_project_area_details_pkey") @map("node_id") @db.Uuid
   node      SpydrNode @relation(fields: [nodeId], references: [id], onDelete: Cascade, map: "spydr_project_area_details_node_id_fkey")
   color     String    @default("18 94% 50%") @db.VarChar(32)
+  emoji     String?   @db.VarChar(64)
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime  @updatedAt @default(now()) @map("updated_at") @db.Timestamptz(6)
 
@@ -438,6 +440,7 @@ model SpydrResourceDetails {
 model SpydrTaskDetails {
   nodeId               String                  @id(map: "spydr_task_details_pkey") @map("node_id") @db.Uuid
   node                 SpydrNode               @relation(fields: [nodeId], references: [id], onDelete: Cascade, map: "spydr_task_details_node_id_fkey")
+  emoji                String?                 @db.VarChar(64)
   dueDate              DateTime?               @map("due_date") @db.Date
   completedAt          DateTime?               @map("completed_at") @db.Timestamptz(6)
   isBlocked            Boolean                 @default(false) @map("is_blocked")

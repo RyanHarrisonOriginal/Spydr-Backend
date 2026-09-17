@@ -26,6 +26,7 @@ export class ProjectAreaNode extends DomainNode<"project_area"> {
     if (!this.details) {
       this.details = new ProjectAreaDetails({
         color: DEFAULT_PROJECT_AREA_COLOR,
+        emoji: null,
         createdAt: now,
         updatedAt: now,
       });
@@ -35,6 +36,11 @@ export class ProjectAreaNode extends DomainNode<"project_area"> {
 
   setColor(color: string): void {
     this.ensureDetails().setColor(color);
+    this.touch();
+  }
+
+  setEmoji(emoji: string | null): void {
+    this.ensureDetails().setEmoji(emoji);
     this.touch();
   }
 
@@ -50,12 +56,15 @@ export class ProjectAreaNode extends DomainNode<"project_area"> {
     this.setColor(normalizeProjectAreaColor(color));
   }
 
-  applyUpdate(input: { title?: string; color?: string }): void {
+  applyUpdate(input: { title?: string; color?: string; emoji?: string | null }): void {
     if (input.title !== undefined) {
       this.applyTitleUpdate(input.title);
     }
     if (input.color !== undefined) {
       this.applyColorUpdate(input.color);
+    }
+    if (input.emoji !== undefined) {
+      this.setEmoji(input.emoji);
     }
   }
 }

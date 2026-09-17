@@ -59,6 +59,14 @@ export class ProjectAreasController {
         res.status(400).json({ message: error.message });
         return;
       }
+      if (
+        error instanceof Error &&
+        (error.message === "Invalid project area color" ||
+          error.message === "Invalid emoji")
+      ) {
+        res.status(400).json({ message: error.message });
+        return;
+      }
       if (error instanceof Error && error.message === "Project area already exists") {
         res.status(409).json({ message: error.message });
         return;
@@ -96,6 +104,7 @@ export class ProjectAreasController {
         error instanceof Error &&
         (error.message === "Nothing to update" ||
           error.message === "Invalid project area color" ||
+          error.message === "Invalid emoji" ||
           error.message === "Project area title is required")
       ) {
         res.status(400).json({ message: error.message });

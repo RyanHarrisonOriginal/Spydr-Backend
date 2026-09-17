@@ -28,6 +28,7 @@ export interface IWorkspaceDashboardAreaSummary {
   name: string;
   /** HSL channels, e.g. `18 94% 50%` */
   color: string;
+  emoji: string | null;
   projects: number;
   activeProjects: number;
   tasks: number;

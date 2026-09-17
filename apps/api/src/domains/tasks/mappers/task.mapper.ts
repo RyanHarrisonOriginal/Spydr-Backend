@@ -19,6 +19,7 @@ export interface ITaskUpdateModelInput {
   dueDate?: string | null;
   estimatedMinutes?: number | null;
   assigneePersonNodeId?: string | null;
+  emoji?: string | null;
 }
 
 export interface ITaskCreateModelInput {
@@ -31,6 +32,7 @@ export interface ITaskCreateModelInput {
   assigneePersonNodeId?: string | null;
   sourceTemplateTaskId?: string | null;
   tags?: string[];
+  emoji?: string | null;
 }
 
 export interface ITaskCreateModelContext {
@@ -71,6 +73,7 @@ export class TaskMapper {
       isDeleted: false,
       deletedAt: null,
       details: {
+        emoji: input.emoji ?? null,
         dueDate: this.parseDate(input.dueDate),
         completedAt: this.resolveCompletedAt(null, false, status === "completed", now),
         isBlocked: false,

@@ -12,6 +12,7 @@ export interface IUpdateProjectChildInput {
   impact?: string;
   estimatedMinutes?: number | null;
   assigneePersonNodeId?: string | null;
+  emoji?: string | null;
 }
 
 export type { SpydrNodeStatus, SpydrPriority };

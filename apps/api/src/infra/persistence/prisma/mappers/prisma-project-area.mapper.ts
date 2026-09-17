@@ -39,6 +39,7 @@ export class PrismaProjectAreaMapper
       details: persistence.projectAreaDetails
         ? new ProjectAreaDetails({
             color: persistence.projectAreaDetails.color,
+            emoji: persistence.projectAreaDetails.emoji,
             createdAt: persistence.projectAreaDetails.createdAt,
             updatedAt: persistence.projectAreaDetails.updatedAt,
           })
@@ -57,6 +58,7 @@ export class PrismaProjectAreaMapper
     return {
       nodeId,
       color: details.color,
+      emoji: details.emoji,
       createdAt: details.createdAt,
       updatedAt: details.updatedAt,
     };

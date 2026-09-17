@@ -7,6 +7,7 @@ import type { TaskNode } from "../../tasks/models/index.js";
 import type { IProjectPersonas } from "./personas.js";
 
 export interface IProjectDetailsProps extends ITimestampedDetails {
+  emoji?: string | null;
   outcome: string | null;
   startDate: Date | null;
   targetDate: Date | null;

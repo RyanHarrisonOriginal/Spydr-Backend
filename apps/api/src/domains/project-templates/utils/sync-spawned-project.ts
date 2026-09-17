@@ -4,6 +4,8 @@ import { TaskMapper } from "../../tasks/mappers/index.js";
 import type { TaskStatus } from "../../shared/models/shared.js";
 import {
   assertFullyRendered,
+  collectTemplateParamKeys,
+  fillMissingParamValues,
   renderTemplate,
 } from "./interpolate.js";
 
@@ -18,11 +20,21 @@ export function applyTemplateSyncToProject(
   options?: {
     taskMapper?: TaskMapper;
     now?: Date;
+    paramValues?: Record<string, string>;
   }
 ): void {
   if (!project.isOpenForTemplateSync()) return;
 
-  const params = project.details?.templateParamValues ?? {};
+  const additions = fillMissingParamValues(
+    project.details?.templateParamValues ?? {},
+    collectTemplateParamKeys(template),
+    options?.paramValues ?? {}
+  );
+  if (Object.keys(additions).length > 0) {
+    project.mergeTemplateParamValues(additions);
+  }
+
+  const params = { ...(project.details?.templateParamValues ?? {}) };
   const now = options?.now ?? new Date();
   const taskMapper = options?.taskMapper ?? new TaskMapper();
 

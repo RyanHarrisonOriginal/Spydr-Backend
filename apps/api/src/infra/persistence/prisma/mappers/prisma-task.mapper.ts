@@ -36,6 +36,7 @@ export class PrismaTaskMapper
       ...readNodeLifecycle(persistence),
       details: persistence.taskDetails
         ? new TaskDetails({
+            emoji: persistence.taskDetails.emoji,
             dueDate: persistence.taskDetails.dueDate,
             completedAt: persistence.taskDetails.completedAt,
             isBlocked: persistence.taskDetails.isBlocked,
@@ -60,6 +61,7 @@ export class PrismaTaskMapper
   ): Prisma.SpydrTaskDetailsUncheckedCreateInput {
     return {
       nodeId,
+      emoji: details.emoji,
       dueDate: details.dueDate,
       completedAt: details.completedAt,
       isBlocked: details.isBlocked,
