@@ -8,6 +8,10 @@ import type {
 } from "../models/index.js";
 import type { ICommand, ICommandHandler } from "../../shared/application/command.js";
 import { applyTemplateSyncToProject } from "../utils/sync-spawned-project.js";
+import {
+  collectTemplateParamKeys,
+  fillMissingParamValues,
+} from "../utils/interpolate.js";
 
 export class UpdateProjectTemplateCommand implements ICommand<ProjectTemplate> {
   static readonly commandType = "project-templates.update";
@@ -17,7 +21,8 @@ export class UpdateProjectTemplateCommand implements ICommand<ProjectTemplate> {
     readonly userId: string,
     readonly orgId: string,
     readonly templateId: string,
-    readonly input: IProjectTemplateUpdateInput
+    readonly input: IProjectTemplateUpdateInput,
+    readonly spawnedParamValues: Record<string, Record<string, string>> = {}
   ) {}
 }
 
@@ -49,22 +54,32 @@ export class UpdateProjectTemplateCommandHandler
 
     template.applyUpdate(command.input);
     const saved = await this.templates.save(template);
+    const keysToFill = collectTemplateParamKeys(saved);
 
     const areaNode = saved.area
       ? await this.projectAreaViews.getByTitle(command.orgId, saved.area)
       : null;
 
-    const projectIds = await this.projectViews.listOpenIdsBySourceTemplate(
+    const spawned = await this.projectViews.listOpenBySourceTemplate(
       command.orgId,
       saved.id
     );
 
-    for (const projectId of projectIds) {
+    for (const summary of spawned) {
       const project = await this.projects.get({
-        id: projectId,
+        id: summary.id,
         orgId: command.orgId,
       });
       if (!project || !project.isOpenForTemplateSync()) continue;
+
+      const additions = fillMissingParamValues(
+        project.details?.templateParamValues ?? {},
+        keysToFill,
+        command.spawnedParamValues[summary.id] ?? {}
+      );
+      if (Object.keys(additions).length > 0) {
+        project.mergeTemplateParamValues(additions);
+      }
 
       applyTemplateSyncToProject(project, saved);
       await this.projects.save(project);

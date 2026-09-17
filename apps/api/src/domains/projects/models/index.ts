@@ -128,6 +128,14 @@ export class ProjectDetails implements IProjectDetailsProps {
     this.touch();
   }
 
+  mergeTemplateParamValues(values: Record<string, string>): void {
+    this.templateParamValues = {
+      ...this.templateParamValues,
+      ...values,
+    };
+    this.touch();
+  }
+
   markTemplateSynced(now = new Date()): void {
     this.templateSyncedAt = now;
     this.touch();
@@ -226,6 +234,11 @@ export class ProjectNode extends DomainNode<"project"> {
   }): void {
     this.projectDetails().bindTemplateSpawn(input);
     this.touch(input.templateSpawnedAt);
+  }
+
+  mergeTemplateParamValues(values: Record<string, string>): void {
+    this.projectDetails().mergeTemplateParamValues(values);
+    this.touch();
   }
 
   applyTemplateSyncProjection(

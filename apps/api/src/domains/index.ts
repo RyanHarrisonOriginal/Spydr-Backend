@@ -44,7 +44,7 @@ export type {
   ProjectChildKind,
   IUpdateProjectChildInput,
 } from "./projects/repository.js";
-export type { IProjectViews } from "./projects/views.js";
+export type { IProjectViews, ISourceTemplateProject } from "./projects/views.js";
 export type { IProjectAreaRepository } from "./project-areas/repository.js";
 export type { IProjectAreaViews } from "./project-areas/views.js";
 export type {

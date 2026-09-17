@@ -1,5 +1,8 @@
 const TOKEN_RE = /\{\{([A-Z][A-Z0-9_]*)\}\}/g;
 
+/** Stored when a spawned project has no value yet for a newly introduced parameter. */
+export const UNSPECIFIED_PARAM_VALUE = "UNSPECIFIED";
+
 /** Extract unique `{{KEY}}` tokens from one or more strings. */
 export function extractTemplateKeys(...texts: Array<string | null | undefined>): string[] {
   const keys = new Set<string>();
@@ -34,6 +37,56 @@ export function assertFullyRendered(label: string, text: string): void {
       `Unresolved template tokens in ${label}: ${leftover.join(", ")}`
     );
   }
+}
+
+/** Defined parameter keys plus any `{{KEY}}` tokens used in template text. */
+export function collectTemplateParamKeys(template: {
+  titleTemplate: string;
+  bodyTemplate: string;
+  outcomeTemplate?: string | null;
+  tags?: string[];
+  parameters: Array<{ key: string }>;
+  tasks: Array<{
+    titleTemplate: string;
+    bodyTemplate: string;
+    tags?: string[];
+  }>;
+}): string[] {
+  const used = extractTemplateKeys(
+    template.titleTemplate,
+    template.bodyTemplate,
+    template.outcomeTemplate,
+    ...(template.tags ?? []),
+    ...template.tasks.flatMap((task) => [
+      task.titleTemplate,
+      task.bodyTemplate,
+      ...(task.tags ?? []),
+    ])
+  );
+  return Array.from(
+    new Set([...template.parameters.map((param) => param.key), ...used])
+  );
+}
+
+/**
+ * Values to merge onto a spawned project for keys it does not already store.
+ * Empty provided values fall back to UNSPECIFIED so sync can interpolate.
+ */
+export function fillMissingParamValues(
+  existing: Record<string, string>,
+  keys: string[],
+  provided: Record<string, string> = {}
+): Record<string, string> {
+  const additions: Record<string, string> = {};
+  for (const key of keys) {
+    if (Object.prototype.hasOwnProperty.call(existing, key)) continue;
+    const raw = provided[key];
+    additions[key] =
+      raw !== undefined && raw.trim().length > 0
+        ? raw.trim()
+        : UNSPECIFIED_PARAM_VALUE;
+  }
+  return additions;
 }
 
 export function validateParamValues(

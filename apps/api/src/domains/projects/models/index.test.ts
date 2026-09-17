@@ -95,3 +95,19 @@ describe("ProjectNode task due date invariant", () => {
     );
   });
 });
+
+describe("ProjectNode template param values", () => {
+  it("merges new keys onto existing spawn values", () => {
+    const launch = project(null);
+    launch.bindTemplateSpawn({
+      sourceTemplateId: "template-1",
+      templateParamValues: { NEW_COMPANY_NAME: "Acme" },
+      templateSpawnedAt: now,
+    });
+    launch.mergeTemplateParamValues({ REGION: "UNSPECIFIED" });
+    expect(launch.details?.templateParamValues).toEqual({
+      NEW_COMPANY_NAME: "Acme",
+      REGION: "UNSPECIFIED",
+    });
+  });
+});

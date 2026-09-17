@@ -1,5 +1,8 @@
 import type { PrismaClient } from "@prisma/client";
-import type { IProjectViews } from "../../../domains/projects/views.js";
+import type {
+  IProjectViews,
+  ISourceTemplateProject,
+} from "../../../domains/projects/views.js";
 import type { ProjectNode } from "../../../domains/projects/models/index.js";
 import { PrismaProjectMapper } from "../prisma/mappers/prisma-project.mapper.js";
 import { ProjectGraphLoaders } from "./project-graph-loaders.js";
@@ -36,10 +39,10 @@ export class PostgresProjectViews implements IProjectViews {
     return this.graph.getProject(orgId, projectId);
   }
 
-  async listOpenIdsBySourceTemplate(
+  async listOpenBySourceTemplate(
     orgId: string,
     templateId: string
-  ): Promise<string[]> {
+  ): Promise<ISourceTemplateProject[]> {
     const rows = await this.db.spydrNode.findMany({
       where: {
         orgId,
@@ -51,9 +54,9 @@ export class PostgresProjectViews implements IProjectViews {
           templateSyncEnabled: true,
         },
       },
-      select: { id: true },
+      select: { id: true, title: true },
       orderBy: [{ updatedAt: "desc" }],
     });
-    return rows.map((row) => row.id);
+    return rows.map((row) => ({ id: row.id, title: row.title }));
   }
 }

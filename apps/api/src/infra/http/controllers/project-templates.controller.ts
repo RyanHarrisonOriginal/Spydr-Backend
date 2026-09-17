@@ -18,7 +18,9 @@ import type { IProjectTemplateUpdateInput } from "../../../domains/project-templ
 import {
   GetProjectTemplateQuery,
   ListProjectTemplatesQuery,
+  ListTemplateSpawnedProjectsQuery,
 } from "../../../domains/project-templates/queries/index.js";
+import type { ISourceTemplateProject } from "../../../domains/projects/views.js";
 import type { ProjectTemplate } from "../../../domains/project-templates/models/index.js";
 import type { IProjectTemplateListItem } from "../../../domains/project-templates/views.js";
 import type { ProjectNode } from "../../../domains/projects/models/index.js";
@@ -110,6 +112,36 @@ export class ProjectTemplatesController {
     }
   };
 
+  listSpawnedProjects = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const ctx = getOrgContext(req, res);
+      if (!ctx) return;
+
+      const projects = await this.queryBus.execute<
+        ListTemplateSpawnedProjectsQuery,
+        ISourceTemplateProject[] | null
+      >(
+        new ListTemplateSpawnedProjectsQuery(
+          ctx.userId,
+          ctx.orgId,
+          req.params.templateId
+        )
+      );
+
+      if (!projects) {
+        res.status(404).json({ message: "Project template not found" });
+        return;
+      }
+
+      res.json(projects);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({
+        message: "Failed to list connected projects",
+      });
+    }
+  };
+
   create = async (req: Request, res: Response): Promise<void> => {
     try {
       const ctx = getOrgContext(req, res);
@@ -187,6 +219,11 @@ export class ProjectTemplatesController {
       const ctx = getOrgContext(req, res);
       if (!ctx) return;
 
+      const body = req.body as IProjectTemplateUpdateInput & {
+        spawnedParamValues?: Record<string, Record<string, string>>;
+      };
+      const { spawnedParamValues, ...input } = body;
+
       const template = await this.commandBus.execute<
         UpdateProjectTemplateCommand,
         ProjectTemplate
@@ -195,7 +232,8 @@ export class ProjectTemplatesController {
           ctx.userId,
           ctx.orgId,
           req.params.templateId,
-          req.body as IProjectTemplateUpdateInput
+          input,
+          spawnedParamValues ?? {}
         )
       );
 

@@ -14,6 +14,7 @@ export function createProjectTemplatesRouter(
   router.post("/", controller.create);
   router.post("/from-project", controller.createFromProject);
   router.get("/:templateId", controller.get);
+  router.get("/:templateId/spawned-projects", controller.listSpawnedProjects);
   router.patch("/:templateId", controller.update);
   router.delete("/:templateId", controller.delete);
   router.post("/:templateId/invoke", controller.invoke);

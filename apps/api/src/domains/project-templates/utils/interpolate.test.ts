@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   assertFullyRendered,
+  collectTemplateParamKeys,
   extractTemplateKeys,
+  fillMissingParamValues,
   renderTemplate,
+  UNSPECIFIED_PARAM_VALUE,
   validateParamValues,
 } from "./interpolate.js";
 
@@ -41,5 +44,40 @@ describe("project template interpolate", () => {
         { NEW_COMPANY_NAME: " Acme " }
       )
     ).toEqual({ NEW_COMPANY_NAME: "Acme" });
+  });
+
+  it("collects defined keys and tokens used in template text", () => {
+    expect(
+      collectTemplateParamKeys({
+        titleTemplate: "{{NEW_COMPANY_NAME}} Go Live",
+        bodyTemplate: "region {{REGION}}",
+        outcomeTemplate: null,
+        tags: [],
+        parameters: [
+          { key: "NEW_COMPANY_NAME" },
+          { key: "UNUSED_FLAG" },
+        ],
+        tasks: [
+          {
+            titleTemplate: "email {{CONTACT}}",
+            bodyTemplate: "",
+            tags: ["{{REGION}}"],
+          },
+        ],
+      })
+    ).toEqual(["NEW_COMPANY_NAME", "UNUSED_FLAG", "REGION", "CONTACT"]);
+  });
+
+  it("fills missing spawned param values with UNSPECIFIED", () => {
+    expect(
+      fillMissingParamValues(
+        { NEW_COMPANY_NAME: "Acme" },
+        ["NEW_COMPANY_NAME", "REGION", "CONTACT"],
+        { REGION: "  west  ", CONTACT: "  " }
+      )
+    ).toEqual({
+      REGION: "west",
+      CONTACT: UNSPECIFIED_PARAM_VALUE,
+    });
   });
 });
