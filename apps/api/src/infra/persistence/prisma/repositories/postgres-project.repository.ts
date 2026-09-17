@@ -330,6 +330,7 @@ export class PostgresProjectRepository implements IProjectRepository {
           body: input.body,
           status: input.status as TaskStatus | undefined,
           priority: input.priority as TaskNode["priority"] | undefined,
+          emoji: input.emoji,
           dueDate:
             input.dueDate !== undefined
               ? parseOptionalDate(input.dueDate, "Invalid task date")
