@@ -22,7 +22,7 @@ export class PostgresProjectViews implements IProjectViews {
     });
 
     const projects = rows.map((row) => this.mapper.toDomain(row));
-    return this.graph.attachAssigneesToProjects(orgId, projects);
+    return this.graph.attachPersonasToProjects(orgId, projects);
   }
 
   async listDeletedByOrg(orgId: string): Promise<ProjectNode[]> {

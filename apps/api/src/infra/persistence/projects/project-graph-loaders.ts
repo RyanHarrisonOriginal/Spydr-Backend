@@ -112,23 +112,27 @@ export class ProjectGraphLoaders {
     return new Map(rows.map((row) => [row.id, this.personMapper.toDomain(row)]));
   }
 
-  async attachAssigneesToProjects(
+  async attachPersonasToProjects(
     orgId: string,
     projects: ProjectNode[]
   ): Promise<ProjectNode[]> {
-    const assigneeIds = [
+    const personaIds = [
       ...new Set(
-        projects
-          .map((project) => project.details?.assigneePersonNodeId)
-          .filter((id): id is string => Boolean(id))
+        projects.flatMap((project) => [
+          project.details?.requesterPersonNodeId,
+          project.details?.assigneePersonNodeId,
+          project.details?.sponsorPersonNodeId,
+          project.details?.reviewerPersonNodeId,
+        ]).filter((id): id is string => Boolean(id))
       ),
     ];
 
-    const assigneeById = await this.loadPeopleByIds(orgId, assigneeIds);
+    const byId = await this.loadPeopleByIds(orgId, personaIds);
 
     return projects.map((project) => {
-      const assigneeId = project.details?.assigneePersonNodeId ?? null;
-      const assignee = assigneeId ? assigneeById.get(assigneeId) ?? null : null;
+      const details = project.details;
+      const pick = (id: string | null | undefined) =>
+        id ? byId.get(id) ?? null : null;
 
       return new ProjectNode({
         id: project.id,
@@ -149,8 +153,10 @@ export class ProjectGraphLoaders {
         deletedAt: project.deletedAt,
         details: project.details,
         personas: {
-          ...emptyProjectPersonas(),
-          assignee,
+          requester: pick(details?.requesterPersonNodeId),
+          assignee: pick(details?.assigneePersonNodeId),
+          sponsor: pick(details?.sponsorPersonNodeId),
+          reviewer: pick(details?.reviewerPersonNodeId),
         },
       });
     });
