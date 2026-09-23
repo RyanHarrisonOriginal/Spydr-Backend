@@ -21,6 +21,7 @@ import { createTodosRouter } from "./routes/todos.router.js";
 import { createCollectionsRouter } from "./routes/collections.router.js";
 import { createActiveNotesRouter } from "./routes/active-notes.router.js";
 import { createEntitiesRouter } from "./routes/entities.router.js";
+import { mountSpydrMcpHttp } from "../mcp/http.js";
 
 export interface IHttpAppOptions {
   apiPrefix?: string;
@@ -34,9 +35,18 @@ export function createHttpApp(options: IHttpAppOptions): Express {
   const requireOrgContext = createRequireOrgContext(options.organizationViews);
   const app = express();
 
-  app.use(cors());
+  app.use(
+    cors({
+      exposedHeaders: ["WWW-Authenticate", "Mcp-Session-Id", "Mcp-Protocol-Version"],
+    })
+  );
   app.use(express.json());
   app.use(clerkMiddleware());
+  mountSpydrMcpHttp(app, {
+    commandBus: options.commandBus,
+    queryBus: options.queryBus,
+    organizationViews: options.organizationViews,
+  });
 
   app.use(apiPrefix, requireAuthApi);
   app.use(

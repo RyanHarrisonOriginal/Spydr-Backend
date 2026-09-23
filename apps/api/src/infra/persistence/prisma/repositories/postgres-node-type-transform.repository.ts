@@ -41,6 +41,54 @@ type NodeWithDetails = Prisma.SpydrNodeGetPayload<{
   };
 }>;
 
+function toDomainTaskSource(details: NodeWithDetails["taskDetails"]) {
+  if (!details) return null;
+  return {
+    dueDate: details.dueDate,
+    assigneePersonNodeId: details.assigneePersonId,
+  };
+}
+
+function toDomainProjectSource(details: NodeWithDetails["projectDetails"]) {
+  if (!details) return null;
+  return {
+    outcome: details.outcome,
+    startDate: details.startDate,
+    targetDate: details.targetDate,
+    riskLevel: details.riskLevel,
+    assigneePersonNodeId: details.assigneePersonId,
+  };
+}
+
+function toTaskDetailsPersistence(
+  details: ReturnType<typeof defaultTaskDetailsFromSource>
+): Omit<Prisma.SpydrTaskDetailsUncheckedCreateInput, "nodeId"> {
+  const { assigneePersonNodeId, ...rest } = details;
+  return {
+    ...rest,
+    assigneePersonId: assigneePersonNodeId,
+  };
+}
+
+function toProjectDetailsPersistence(
+  details: ReturnType<typeof defaultProjectDetailsFromSource>
+): Omit<Prisma.SpydrProjectDetailsUncheckedCreateInput, "nodeId"> {
+  const {
+    requesterPersonNodeId,
+    assigneePersonNodeId,
+    sponsorPersonNodeId,
+    reviewerPersonNodeId,
+    ...rest
+  } = details;
+  return {
+    ...rest,
+    requesterPersonId: requesterPersonNodeId,
+    assigneePersonId: assigneePersonNodeId,
+    sponsorPersonId: sponsorPersonNodeId,
+    reviewerPersonId: reviewerPersonNodeId,
+  };
+}
+
 export class PostgresNodeTypeTransformRepository
   implements INodeTypeTransformRepository
 {
@@ -125,7 +173,7 @@ export class PostgresNodeTypeTransformRepository
       ...defaultTaskDetailsFromSource({
         now,
         status: row.status,
-        projectDetails: row.projectDetails,
+        projectDetails: toDomainProjectSource(row.projectDetails),
       }),
       tags: projectAreaTag ? this.appendTag([], projectAreaTag) : [],
     };
@@ -172,7 +220,7 @@ export class PostgresNodeTypeTransformRepository
       await tx.spydrTaskDetails.create({
         data: {
           nodeId: row.id,
-          ...taskDetails,
+          ...toTaskDetailsPersistence(taskDetails),
         },
       });
 
@@ -342,7 +390,7 @@ export class PostgresNodeTypeTransformRepository
     const projectDetails = defaultProjectDetailsFromSource({
       now,
       priority: row.priority,
-      taskDetails: row.taskDetails,
+      taskDetails: toDomainTaskSource(row.taskDetails),
     });
 
     await this.db.$transaction(async (tx) => {
@@ -370,7 +418,7 @@ export class PostgresNodeTypeTransformRepository
       await tx.spydrProjectDetails.create({
         data: {
           nodeId: row.id,
-          ...projectDetails,
+          ...toProjectDetailsPersistence(projectDetails),
         },
       });
 
@@ -430,7 +478,7 @@ export class PostgresNodeTypeTransformRepository
       await tx.spydrTaskDetails.create({
         data: {
           nodeId: row.id,
-          ...taskDetails,
+          ...toTaskDetailsPersistence(taskDetails),
         },
       });
 
@@ -490,7 +538,7 @@ export class PostgresNodeTypeTransformRepository
       await tx.spydrProjectDetails.create({
         data: {
           nodeId: row.id,
-          ...projectDetails,
+          ...toProjectDetailsPersistence(projectDetails),
         },
       });
 
@@ -551,7 +599,7 @@ export class PostgresNodeTypeTransformRepository
       await tx.spydrTaskDetails.create({
         data: {
           nodeId: row.id,
-          ...taskDetails,
+          ...toTaskDetailsPersistence(taskDetails),
         },
       });
 
@@ -613,7 +661,7 @@ export class PostgresNodeTypeTransformRepository
       await tx.spydrProjectDetails.create({
         data: {
           nodeId: row.id,
-          ...projectDetails,
+          ...toProjectDetailsPersistence(projectDetails),
         },
       });
 
