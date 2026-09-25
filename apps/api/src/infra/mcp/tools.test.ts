@@ -7,6 +7,7 @@ import {
   CreateProjectCommand,
   GetMeQuery,
   GetTaskQuery,
+  ListOrganizationsQuery,
   ListPeopleQuery,
   ListProjectAreasQuery,
   ListProjectsQuery,
@@ -21,6 +22,7 @@ import { TaskNode } from "../../domains/tasks/models/index.js";
 import { NoteNode } from "../../domains/notes/models/index.js";
 import { PersonNode } from "../../domains/people/models/index.js";
 import { ProjectAreaNode } from "../../domains/project-areas/models/index.js";
+import { Organization } from "../../domains/organizations/models/index.js";
 import type { SpydrNodeStatus } from "../../domains/shared/models/shared.js";
 import { SpydrMcpTools } from "./tools.js";
 
@@ -460,5 +462,59 @@ describe("SpydrMcpTools", () => {
         priority: expect.arrayContaining(["low", "medium", "high", "critical"]),
       })
     );
+  });
+
+  it("lists organizations the user belongs to", async () => {
+    const { commandBus, queryBus } = mockBuses();
+    vi.mocked(queryBus.execute).mockResolvedValue([
+      new Organization({
+        id: "org-2",
+        name: "Second",
+        slug: "second",
+        role: "member",
+        createdAt: now,
+        updatedAt: now,
+      }),
+    ]);
+    const tools = new SpydrMcpTools({ commandBus, queryBus, context });
+
+    const result = parse(await tools.listOrganizations());
+
+    expect(queryBus.execute).toHaveBeenCalledWith(expect.any(ListOrganizationsQuery));
+    expect(result).toEqual([
+      { id: "org-2", name: "Second", slug: "second", role: "member" },
+    ]);
+  });
+
+  it("uses a requested org after checking membership", async () => {
+    const { commandBus, queryBus } = mockBuses();
+    vi.mocked(queryBus.execute).mockResolvedValue([
+      new Organization({
+        id: "org-2",
+        name: "Second",
+        slug: "second",
+        role: "owner",
+        createdAt: now,
+        updatedAt: now,
+      }),
+    ]);
+    vi.mocked(commandBus.execute).mockResolvedValue(project());
+    const tools = new SpydrMcpTools({ commandBus, queryBus, context });
+
+    await tools.createProject({ title: "Launch", orgId: "org-2" });
+
+    const command = vi.mocked(commandBus.execute).mock.calls[0][0] as CreateProjectCommand;
+    expect(command.orgId).toBe("org-2");
+  });
+
+  it("rejects an org the user does not belong to", async () => {
+    const { commandBus, queryBus } = mockBuses();
+    vi.mocked(queryBus.execute).mockResolvedValue([]);
+    const tools = new SpydrMcpTools({ commandBus, queryBus, context });
+
+    const result = await tools.getProjects({ orgId: "org-unknown" });
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toBe("Not a member of this organization");
   });
 });

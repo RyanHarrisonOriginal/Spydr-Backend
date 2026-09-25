@@ -28,6 +28,13 @@ const nodeStatus = z.enum(spydrNodeStatuses);
 const taskStatus = z.enum(taskStatuses);
 const priority = z.enum(spydrPriorities);
 const optionalId = z.string().min(1).optional();
+const optionalOrgId = z
+  .string()
+  .min(1)
+  .optional()
+  .describe(
+    "Organization id from list_organizations. Omit to use the default organization."
+  );
 const nullablePersonId = z.string().min(1).nullable();
 
 export interface ICreateSpydrMcpServerOptions {
@@ -43,11 +50,24 @@ export function createSpydrMcpServer(
   const server = new McpServer({ name: "spydr", version: "0.1.0" });
 
   server.registerTool(
+    "list_organizations",
+    {
+      title: "List organizations",
+      description:
+        "List organizations the signed-in user belongs to. Pass an id as orgId on other tools.",
+      inputSchema: z.object({}),
+      annotations: { readOnlyHint: true },
+    },
+    bindTool(tools.listOrganizations)
+  );
+
+  server.registerTool(
     "create_project",
     {
       title: "Create project",
-      description: "Create a new project in the current organization.",
+      description: "Create a new project in an organization.",
       inputSchema: z.object({
+        orgId: optionalOrgId,
         title: z.string().min(1).describe("Project title"),
         body: z.string().optional().describe("Project description"),
         status: nodeStatus.optional(),
@@ -72,6 +92,7 @@ export function createSpydrMcpServer(
       title: "Create task",
       description: "Create a task on a project.",
       inputSchema: z.object({
+        orgId: optionalOrgId,
         projectId: z.string().min(1).describe("Project to add the task to"),
         title: z.string().min(1).describe("Task title"),
         body: z.string().optional(),
@@ -93,6 +114,7 @@ export function createSpydrMcpServer(
       title: "Add note to project",
       description: "Add a note to a project. Optionally link it to a task.",
       inputSchema: z.object({
+        orgId: optionalOrgId,
         projectId: z.string().min(1),
         title: z.string().optional(),
         body: z.string().optional(),
@@ -111,6 +133,7 @@ export function createSpydrMcpServer(
       title: "Add note to task",
       description: "Add a note linked to a task (and its parent project).",
       inputSchema: z.object({
+        orgId: optionalOrgId,
         taskId: z.string().min(1),
         title: z.string().optional(),
         body: z.string().optional(),
@@ -124,8 +147,9 @@ export function createSpydrMcpServer(
     "create_person",
     {
       title: "Create person",
-      description: "Create a person record in the current organization.",
+      description: "Create a person record in an organization.",
       inputSchema: z.object({
+        orgId: optionalOrgId,
         fullName: z.string().min(1).describe("Person full name"),
         body: z.string().optional(),
         email: z.string().nullable().optional(),
@@ -147,6 +171,7 @@ export function createSpydrMcpServer(
       description:
         "Set or clear the requester on a project. Pass null to unassign.",
       inputSchema: z.object({
+        orgId: optionalOrgId,
         projectId: z.string().min(1),
         personNodeId: nullablePersonId.describe(
           "Person node id, or null to clear the requester"
@@ -164,6 +189,7 @@ export function createSpydrMcpServer(
       description:
         "Set or clear the assignee on a project. Pass null to unassign.",
       inputSchema: z.object({
+        orgId: optionalOrgId,
         projectId: z.string().min(1),
         personNodeId: nullablePersonId.describe(
           "Person node id, or null to clear the assignee"
@@ -181,6 +207,7 @@ export function createSpydrMcpServer(
       description:
         "Set or clear a project's target (due) date. Pass null to clear. Use YYYY-MM-DD.",
       inputSchema: z.object({
+        orgId: optionalOrgId,
         projectId: z.string().min(1),
         targetDate: z
           .string()
@@ -199,6 +226,7 @@ export function createSpydrMcpServer(
       description:
         "Set a project's status. Use list_statuses for valid project values.",
       inputSchema: z.object({
+        orgId: optionalOrgId,
         projectId: z.string().min(1),
         status: nodeStatus,
       }),
@@ -213,6 +241,7 @@ export function createSpydrMcpServer(
       title: "Modify project priority",
       description: "Set a project's priority.",
       inputSchema: z.object({
+        orgId: optionalOrgId,
         projectId: z.string().min(1),
         priority,
       }),
@@ -228,6 +257,7 @@ export function createSpydrMcpServer(
       description:
         "Set or clear the assignee on a task. Pass null to unassign.",
       inputSchema: z.object({
+        orgId: optionalOrgId,
         taskId: z.string().min(1),
         personNodeId: nullablePersonId.describe(
           "Person node id, or null to clear the assignee"
@@ -245,6 +275,7 @@ export function createSpydrMcpServer(
       description:
         "Set a task's status. Use list_statuses for valid task values.",
       inputSchema: z.object({
+        orgId: optionalOrgId,
         taskId: z.string().min(1),
         status: taskStatus,
       }),
@@ -259,6 +290,7 @@ export function createSpydrMcpServer(
       title: "Mark task complete",
       description: "Mark a task as completed.",
       inputSchema: z.object({
+        orgId: optionalOrgId,
         taskId: z.string().min(1),
       }),
       annotations: {
@@ -277,6 +309,7 @@ export function createSpydrMcpServer(
       description:
         "Demote a project into a task nested under a different project. The source project becomes a task; its movable children move with it.",
       inputSchema: z.object({
+        orgId: optionalOrgId,
         projectId: z
           .string()
           .min(1)
@@ -298,6 +331,7 @@ export function createSpydrMcpServer(
       description:
         "Promote a task into an independent project. The task is detached from its parent project.",
       inputSchema: z.object({
+        orgId: optionalOrgId,
         taskId: z.string().min(1).describe("Task to promote into a project"),
       }),
       annotations: { readOnlyHint: false, destructiveHint: true },
@@ -311,6 +345,7 @@ export function createSpydrMcpServer(
       title: "Mark project completed",
       description: "Mark a project as completed.",
       inputSchema: z.object({
+        orgId: optionalOrgId,
         projectId: z.string().min(1),
       }),
       annotations: {
@@ -327,8 +362,9 @@ export function createSpydrMcpServer(
     {
       title: "Get projects",
       description:
-        "List projects in the organization, or fetch one project by id.",
+        "List projects in an organization, or fetch one project by id.",
       inputSchema: z.object({
+        orgId: optionalOrgId,
         id: optionalId.describe("When set, return this project with its children"),
       }),
       annotations: { readOnlyHint: true },
@@ -340,8 +376,9 @@ export function createSpydrMcpServer(
     "get_tasks",
     {
       title: "Get tasks",
-      description: "List tasks in the organization, or fetch one task by id.",
+      description: "List tasks in an organization, or fetch one task by id.",
       inputSchema: z.object({
+        orgId: optionalOrgId,
         id: optionalId.describe("When set, return this task"),
       }),
       annotations: { readOnlyHint: true },
@@ -353,8 +390,9 @@ export function createSpydrMcpServer(
     "get_notes",
     {
       title: "Get notes",
-      description: "List notes in the organization, or fetch one note by id.",
+      description: "List notes in an organization, or fetch one note by id.",
       inputSchema: z.object({
+        orgId: optionalOrgId,
         id: optionalId.describe("When set, return this note"),
       }),
       annotations: { readOnlyHint: true },
@@ -366,8 +404,10 @@ export function createSpydrMcpServer(
     "list_people",
     {
       title: "List people",
-      description: "List people in the current organization.",
-      inputSchema: z.object({}),
+      description: "List people in an organization.",
+      inputSchema: z.object({
+        orgId: optionalOrgId,
+      }),
       annotations: { readOnlyHint: true },
     },
     bindTool(tools.listPeople)
@@ -378,8 +418,10 @@ export function createSpydrMcpServer(
     {
       title: "Get me",
       description:
-        "Get the logged-in user's membership and person record in the current organization.",
-      inputSchema: z.object({}),
+        "Get the logged-in user's membership and person record in an organization.",
+      inputSchema: z.object({
+        orgId: optionalOrgId,
+      }),
       annotations: { readOnlyHint: true },
     },
     bindTool(tools.getMe)
@@ -389,8 +431,10 @@ export function createSpydrMcpServer(
     "list_project_areas",
     {
       title: "List project areas",
-      description: "List project areas in the current organization.",
-      inputSchema: z.object({}),
+      description: "List project areas in an organization.",
+      inputSchema: z.object({
+        orgId: optionalOrgId,
+      }),
       annotations: { readOnlyHint: true },
     },
     bindTool(tools.listProjectAreas)
