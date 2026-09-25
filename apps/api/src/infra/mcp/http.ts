@@ -26,6 +26,13 @@ import {
 import { createSpydrMcpServer } from "./create-mcp-server.js";
 
 const MCP_SCOPES = ["openid", "profile", "email"] as const;
+const MCP_CLIENT_ORIGINS = [
+  "claude.ai",
+  "www.claude.ai",
+  "claude.com",
+  "chatgpt.com",
+  "chat.openai.com",
+] as const;
 
 type McpRequest = Request & { auth?: AuthInfo };
 
@@ -52,7 +59,7 @@ function hostGuards(resourceUrl: URL): {
   const names = [resourceUrl.hostname, "localhost", "127.0.0.1", "[::1]"];
   return {
     host: hostHeaderValidation(names),
-    origin: originValidation(names),
+    origin: originValidation([...names, ...MCP_CLIENT_ORIGINS]),
   };
 }
 
@@ -148,6 +155,8 @@ export function mountSpydrMcpHttp(
       });
       next();
     } catch (error) {
+      const message = error instanceof Error ? error.message : "invalid_token";
+      console.warn("MCP bearer verification failed", message);
       await sendWebResponse(
         res,
         bearerAuthChallengeResponse(error, { resourceMetadataUrl })
@@ -167,6 +176,7 @@ export function mountSpydrMcpHttp(
       getOrgIdHeader(req)
     );
     if (!resolved.ok) {
+      console.warn("MCP org resolution failed", resolved.status, resolved.message);
       res.status(resolved.status).json({ message: resolved.message });
       return;
     }

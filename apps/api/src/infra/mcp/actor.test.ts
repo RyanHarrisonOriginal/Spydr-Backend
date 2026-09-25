@@ -77,7 +77,7 @@ describe("resolveMcpOrgId", () => {
     });
   });
 
-  it("requires an org header when the user has several memberships", async () => {
+  it("selects the first membership when the client omitted an org", async () => {
     await expect(
       resolveMcpOrgId(
         {
@@ -89,7 +89,7 @@ describe("resolveMcpOrgId", () => {
         "user-1",
         null
       )
-    ).resolves.toMatchObject({ ok: false, status: 400 });
+    ).resolves.toEqual({ ok: true, orgId: "org-1" });
   });
 });
 

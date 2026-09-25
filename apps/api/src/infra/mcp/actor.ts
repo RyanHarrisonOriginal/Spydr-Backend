@@ -67,15 +67,8 @@ export async function resolveMcpOrgId(
   }
 
   const memberships = await organizations.listForUser(userId);
-  if (memberships.length === 1) {
-    return { ok: true, orgId: memberships[0]!.id };
-  }
   if (memberships.length === 0) {
     return { ok: false, status: 403, message: "No organization membership" };
   }
-  return {
-    ok: false,
-    status: 400,
-    message: "X-Org-Id header is required when the user belongs to more than one organization",
-  };
+  return { ok: true, orgId: memberships[0]!.id };
 }

@@ -49,13 +49,8 @@ export async function verifyClerkOAuthAccessToken(
     throw new OAuthError(OAuthErrorCode.InvalidToken, "Expected a Clerk OAuth access token");
   }
 
-  const expiresAt = readJwtExpiresAt(token);
-  if (expiresAt === undefined) {
-    throw new OAuthError(
-      OAuthErrorCode.InvalidToken,
-      "OAuth access token must be a JWT with an exp claim"
-    );
-  }
+  const expiresAt =
+    readJwtExpiresAt(token) ?? Math.floor(Date.now() / 1000) + 60 * 60 * 24;
 
   return {
     token,
