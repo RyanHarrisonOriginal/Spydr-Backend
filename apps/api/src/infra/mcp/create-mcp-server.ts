@@ -251,6 +251,36 @@ export function createSpydrMcpServer(
   );
 
   server.registerTool(
+    "modify_project_emoji",
+    {
+      title: "Modify project emoji",
+      description: "Set or clear a project's emoji. Pass null to clear.",
+      inputSchema: z.object({
+        orgId: optionalOrgId,
+        projectId: z.string().min(1),
+        emoji: z.string().nullable().describe("Single emoji, or null to clear"),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    },
+    bindTool(tools.modifyProjectEmoji)
+  );
+
+  server.registerTool(
+    "modify_project_name",
+    {
+      title: "Modify project name",
+      description: "Rename an existing project.",
+      inputSchema: z.object({
+        orgId: optionalOrgId,
+        projectId: z.string().min(1),
+        title: z.string().min(1).describe("New project name"),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    },
+    bindTool(tools.modifyProjectName)
+  );
+
+  server.registerTool(
     "modify_task_assignee",
     {
       title: "Modify task assignee",
@@ -282,6 +312,36 @@ export function createSpydrMcpServer(
       annotations: { readOnlyHint: false, destructiveHint: false },
     },
     bindTool(tools.modifyTaskStatus)
+  );
+
+  server.registerTool(
+    "modify_task_emoji",
+    {
+      title: "Modify task emoji",
+      description: "Set or clear a task's emoji. Pass null to clear.",
+      inputSchema: z.object({
+        orgId: optionalOrgId,
+        taskId: z.string().min(1),
+        emoji: z.string().nullable().describe("Single emoji, or null to clear"),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    },
+    bindTool(tools.modifyTaskEmoji)
+  );
+
+  server.registerTool(
+    "modify_task_name",
+    {
+      title: "Modify task name",
+      description: "Rename an existing task.",
+      inputSchema: z.object({
+        orgId: optionalOrgId,
+        taskId: z.string().min(1),
+        title: z.string().min(1).describe("New task name"),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    },
+    bindTool(tools.modifyTaskName)
   );
 
   server.registerTool(

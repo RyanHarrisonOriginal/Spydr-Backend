@@ -223,6 +223,20 @@ export class SpydrMcpTools {
   }): Promise<IMcpToolResult> =>
     this.updateProject(input.projectId, { priority: input.priority }, input.orgId);
 
+  modifyProjectEmoji = (input: {
+    projectId: string;
+    emoji: string | null;
+    orgId?: string;
+  }): Promise<IMcpToolResult> =>
+    this.updateProject(input.projectId, { emoji: input.emoji }, input.orgId);
+
+  modifyProjectName = (input: {
+    projectId: string;
+    title: string;
+    orgId?: string;
+  }): Promise<IMcpToolResult> =>
+    this.updateProject(input.projectId, { title: input.title }, input.orgId);
+
   modifyTaskAssignee = (input: {
     taskId: string;
     personNodeId: string | null;
@@ -236,6 +250,20 @@ export class SpydrMcpTools {
     orgId?: string;
   }): Promise<IMcpToolResult> =>
     this.updateTask(input.taskId, { status: input.status }, input.orgId);
+
+  modifyTaskEmoji = (input: {
+    taskId: string;
+    emoji: string | null;
+    orgId?: string;
+  }): Promise<IMcpToolResult> =>
+    this.updateTask(input.taskId, { emoji: input.emoji }, input.orgId);
+
+  modifyTaskName = (input: {
+    taskId: string;
+    title: string;
+    orgId?: string;
+  }): Promise<IMcpToolResult> =>
+    this.updateTask(input.taskId, { title: input.title }, input.orgId);
 
   markTaskComplete = (input: {
     taskId: string;
