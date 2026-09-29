@@ -7,6 +7,7 @@ import {
   CreatePersonCommand,
   CreateProjectCommand,
   CreateProjectTemplateCommand,
+  InvokeProjectTemplateCommand,
   GetMeQuery,
   GetTaskQuery,
   ListOrganizationsQuery,
@@ -266,6 +267,32 @@ describe("SpydrMcpTools", () => {
       name: "Launch",
       titleTemplate: "Launch {{CLIENT}}",
     });
+  });
+
+  it("creates a project from a template", async () => {
+    const { commandBus, queryBus } = mockBuses();
+    vi.mocked(commandBus.execute).mockResolvedValue(project());
+    const tools = new SpydrMcpTools({ commandBus, queryBus, context });
+
+    const result = parse(
+      await tools.createProjectFromTemplate({
+        templateId: "template-1",
+        parameters: { CLIENT: "Acme" },
+        areaNodeId: "area-1",
+      })
+    );
+
+    const command = vi.mocked(commandBus.execute).mock
+      .calls[0][0] as InvokeProjectTemplateCommand;
+    expect(command).toBeInstanceOf(InvokeProjectTemplateCommand);
+    expect(command.userId).toBe("user-1");
+    expect(command.orgId).toBe("org-1");
+    expect(command.templateId).toBe("template-1");
+    expect(command.input).toEqual({
+      parameters: { CLIENT: "Acme" },
+      areaNodeId: "area-1",
+    });
+    expect(result).toMatchObject({ id: "project-1", title: "Launch" });
   });
 
   it("creates a task on a project", async () => {

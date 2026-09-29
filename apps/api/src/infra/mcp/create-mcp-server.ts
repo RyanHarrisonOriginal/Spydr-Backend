@@ -140,6 +140,33 @@ export function createSpydrMcpServer(
   );
 
   server.registerTool(
+    "create_project_from_template",
+    {
+      title: "Create project from template",
+      description:
+        "Create a project by invoking a project template. Pass values for the template's {{PARAMETER_KEY}} placeholders.",
+      inputSchema: z.object({
+        orgId: optionalOrgId,
+        templateId: z.string().min(1).describe("Project template id"),
+        parameters: z
+          .record(z.string(), z.string())
+          .optional()
+          .describe(
+            "Values keyed by parameter key, for example { CLIENT: \"Acme\" }. Omit when the template has no parameters."
+          ),
+        areaNodeId: z
+          .string()
+          .min(1)
+          .nullable()
+          .optional()
+          .describe("Project area to assign. Omit to use the template area."),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    },
+    bindTool(tools.createProjectFromTemplate)
+  );
+
+  server.registerTool(
     "create_task",
     {
       title: "Create task",

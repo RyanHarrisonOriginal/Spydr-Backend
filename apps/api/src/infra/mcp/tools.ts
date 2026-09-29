@@ -7,6 +7,7 @@ import {
   CreatePersonCommand,
   CreateProjectCommand,
   CreateProjectTemplateCommand,
+  InvokeProjectTemplateCommand,
   CompleteTaskCommand,
   GetNoteQuery,
   GetMeQuery,
@@ -28,6 +29,7 @@ import {
   type IAddTaskToProjectInput,
   type ICreatePersonInput,
   type ICreateProjectInput,
+  type IInvokeProjectTemplateInput,
   type IMeView,
   type IUpdateNodeInput,
   type IUpdateProjectInput,
@@ -123,6 +125,33 @@ export class SpydrMcpTools {
         new CreateProjectTemplateCommand(this.userId, orgId, templateInput)
       );
       return this.projectTemplateMapper.toRepresentation(template);
+    });
+
+  createProjectFromTemplate = (
+    input: Omit<IInvokeProjectTemplateInput, "parameters"> & {
+      templateId: string;
+      orgId?: string;
+      parameters?: Record<string, string>;
+    }
+  ): Promise<IMcpToolResult> =>
+    this.run(async () => {
+      const {
+        templateId,
+        orgId: requestedOrgId,
+        parameters,
+        areaNodeId,
+      } = input;
+      const orgId = await this.resolveOrgId(requestedOrgId);
+      const project = await this.deps.commandBus.execute<
+        InvokeProjectTemplateCommand,
+        ProjectNode
+      >(
+        new InvokeProjectTemplateCommand(this.userId, orgId, templateId, {
+          parameters: parameters ?? {},
+          areaNodeId,
+        })
+      );
+      return this.projectMapper.toRepresentation(project);
     });
 
   createTask = (
