@@ -6,6 +6,7 @@ import {
   CompleteTaskCommand,
   CreatePersonCommand,
   CreateProjectCommand,
+  CreateProjectTemplateCommand,
   GetMeQuery,
   GetTaskQuery,
   ListOrganizationsQuery,
@@ -28,6 +29,7 @@ import { DomainNode } from "../../domains/shared/models/shared.js";
 import { PersonNode } from "../../domains/people/models/index.js";
 import { ProjectAreaNode } from "../../domains/project-areas/models/index.js";
 import { Organization } from "../../domains/organizations/models/index.js";
+import { ProjectTemplate } from "../../domains/project-templates/models/index.js";
 import type { SpydrNodeStatus } from "../../domains/shared/models/shared.js";
 import { SpydrMcpTools } from "./tools.js";
 
@@ -62,6 +64,28 @@ function project(status: SpydrNodeStatus = "active") {
     updatedAt: now,
     archivedAt: null,
     details: null,
+  });
+}
+
+function template() {
+  return new ProjectTemplate({
+    id: "template-1",
+    orgId: "org-1",
+    createdByUserId: "user-1",
+    name: "Launch",
+    description: null,
+    titleTemplate: "Launch {{CLIENT}}",
+    bodyTemplate: "",
+    outcomeTemplate: null,
+    status: "active",
+    priority: "medium",
+    riskLevel: "medium",
+    area: null,
+    tags: [],
+    sourceProjectNodeId: null,
+    isArchived: false,
+    createdAt: now,
+    updatedAt: now,
   });
 }
 
@@ -211,6 +235,37 @@ describe("SpydrMcpTools", () => {
     expect(command.orgId).toBe("org-1");
     expect(command.input.title).toBe("Launch");
     expect(result).toMatchObject({ id: "project-1", title: "Launch" });
+  });
+
+  it("creates a project template", async () => {
+    const { commandBus, queryBus } = mockBuses();
+    vi.mocked(commandBus.execute).mockResolvedValue(template());
+    const tools = new SpydrMcpTools({ commandBus, queryBus, context });
+
+    const result = parse(
+      await tools.createProjectTemplate({
+        name: "Launch",
+        titleTemplate: "Launch {{CLIENT}}",
+        parameters: [{ key: "CLIENT" }],
+        tasks: [{ titleTemplate: "Kickoff with {{CLIENT}}" }],
+      })
+    );
+
+    const command = vi.mocked(commandBus.execute).mock.calls[0][0] as CreateProjectTemplateCommand;
+    expect(command).toBeInstanceOf(CreateProjectTemplateCommand);
+    expect(command.userId).toBe("user-1");
+    expect(command.orgId).toBe("org-1");
+    expect(command.input).toEqual({
+      name: "Launch",
+      titleTemplate: "Launch {{CLIENT}}",
+      parameters: [{ key: "CLIENT" }],
+      tasks: [{ titleTemplate: "Kickoff with {{CLIENT}}" }],
+    });
+    expect(result).toMatchObject({
+      id: "template-1",
+      name: "Launch",
+      titleTemplate: "Launch {{CLIENT}}",
+    });
   });
 
   it("creates a task on a project", async () => {

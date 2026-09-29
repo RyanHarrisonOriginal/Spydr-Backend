@@ -87,6 +87,59 @@ export function createSpydrMcpServer(
   );
 
   server.registerTool(
+    "create_project_template",
+    {
+      title: "Create project template",
+      description:
+        "Create a project template. Use {{PARAMETER_KEY}} placeholders in the title, body, outcome, tags, and task templates.",
+      inputSchema: z.object({
+        orgId: optionalOrgId,
+        name: z.string().min(1).describe("Template name"),
+        description: z.string().nullable().optional(),
+        titleTemplate: z
+          .string()
+          .min(1)
+          .describe("Project title template, for example Launch {{CLIENT}}"),
+        bodyTemplate: z.string().optional(),
+        outcomeTemplate: z.string().nullable().optional(),
+        status: nodeStatus.optional(),
+        priority: priority.optional(),
+        riskLevel: priority.optional(),
+        area: z.string().nullable().optional(),
+        tags: z.array(z.string()).optional(),
+        parameters: z
+          .array(
+            z.object({
+              key: z
+                .string()
+                .min(1)
+                .describe("Parameter key, stored as UPPER_SNAKE_CASE"),
+              label: z.string().optional(),
+              required: z.boolean().optional(),
+              defaultValue: z.string().nullable().optional(),
+            })
+          )
+          .optional(),
+        tasks: z
+          .array(
+            z.object({
+              titleTemplate: z.string().min(1),
+              bodyTemplate: z.string().optional(),
+              status: nodeStatus.optional(),
+              priority: priority.optional(),
+              dueOffsetDays: z.number().int().nullable().optional(),
+              estimatedMinutes: z.number().int().nullable().optional(),
+              tags: z.array(z.string()).optional(),
+            })
+          )
+          .optional(),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    },
+    bindTool(tools.createProjectTemplate)
+  );
+
+  server.registerTool(
     "create_task",
     {
       title: "Create task",

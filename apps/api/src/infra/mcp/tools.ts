@@ -6,6 +6,7 @@ import {
   AddTaskToProjectCommand,
   CreatePersonCommand,
   CreateProjectCommand,
+  CreateProjectTemplateCommand,
   CompleteTaskCommand,
   GetNoteQuery,
   GetMeQuery,
@@ -39,6 +40,8 @@ import type { TaskNode } from "../../domains/tasks/models/index.js";
 import type { DomainNode } from "../../domains/shared/models/shared.js";
 import type { PersonNode } from "../../domains/people/models/index.js";
 import type { ProjectAreaNode } from "../../domains/project-areas/models/index.js";
+import type { ProjectTemplate } from "../../domains/project-templates/models/index.js";
+import type { ICreateProjectTemplateInput } from "../../domains/project-templates/mappers/index.js";
 import type { Organization } from "../../domains/organizations/models/index.js";
 import type { INoteListItem } from "../../domains/notes/views.js";
 import type { INodeTypeTransformResult } from "../../domains/node-type-transform/index.js";
@@ -58,6 +61,7 @@ import { NoteResponseMapper } from "../http/mappers/note-response.mapper.js";
 import { PersonResponseMapper } from "../http/mappers/person-response.mapper.js";
 import { ProjectAreaResponseMapper } from "../http/mappers/project-area-response.mapper.js";
 import { ProjectResponseMapper } from "../http/mappers/project-response.mapper.js";
+import { ProjectTemplateResponseMapper } from "../http/mappers/project-template-response.mapper.js";
 import { TaskResponseMapper } from "../http/mappers/task-response.mapper.js";
 import type { IMcpActorContext } from "./context.js";
 import { runTool, type IMcpToolResult } from "./result.js";
@@ -76,7 +80,8 @@ export class SpydrMcpTools {
     private readonly noteMapper = new NoteResponseMapper(),
     private readonly ideaMapper = new IdeaResponseMapper(),
     private readonly personMapper = new PersonResponseMapper(),
-    private readonly projectAreaMapper = new ProjectAreaResponseMapper()
+    private readonly projectAreaMapper = new ProjectAreaResponseMapper(),
+    private readonly projectTemplateMapper = new ProjectTemplateResponseMapper()
   ) {}
 
   listOrganizations = (
@@ -103,6 +108,21 @@ export class SpydrMcpTools {
         ProjectNode
       >(new CreateProjectCommand(this.userId, orgId, projectInput));
       return this.projectMapper.toRepresentation(project);
+    });
+
+  createProjectTemplate = (
+    input: ICreateProjectTemplateInput & { orgId?: string }
+  ): Promise<IMcpToolResult> =>
+    this.run(async () => {
+      const { orgId: requestedOrgId, ...templateInput } = input;
+      const orgId = await this.resolveOrgId(requestedOrgId);
+      const template = await this.deps.commandBus.execute<
+        CreateProjectTemplateCommand,
+        ProjectTemplate
+      >(
+        new CreateProjectTemplateCommand(this.userId, orgId, templateInput)
+      );
+      return this.projectTemplateMapper.toRepresentation(template);
     });
 
   createTask = (
