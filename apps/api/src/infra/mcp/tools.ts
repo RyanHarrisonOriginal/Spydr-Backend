@@ -4,6 +4,7 @@ import {
   AddIdeaToProjectCommand,
   AddNoteToProjectCommand,
   AddTaskToProjectCommand,
+  AddTasksToProjectCommand,
   CreatePersonCommand,
   CreateProjectCommand,
   CreateProjectTemplateCommand,
@@ -168,6 +169,28 @@ export class SpydrMcpTools {
       );
       if (!task) return null;
       return this.taskMapper.toRepresentation(task, { id: projectId, title: "" });
+    });
+
+  createTasks = (
+    input: {
+      projectId: string;
+      tasks: IAddTaskToProjectInput[];
+      orgId?: string;
+    }
+  ): Promise<IMcpToolResult> =>
+    this.run(async () => {
+      const { projectId, tasks, orgId: requestedOrgId } = input;
+      const orgId = await this.resolveOrgId(requestedOrgId);
+      const created = await this.deps.commandBus.execute<
+        AddTasksToProjectCommand,
+        TaskNode[] | null
+      >(
+        new AddTasksToProjectCommand(this.userId, orgId, projectId, tasks)
+      );
+      if (!created) return null;
+      return created.map((task) =>
+        this.taskMapper.toRepresentation(task, { id: projectId, title: "" })
+      );
     });
 
   addNoteToProject = (

@@ -26,6 +26,7 @@ import {
   AddIdeaToProjectCommandHandler,
   AddNoteToProjectCommandHandler,
   AddTaskToProjectCommandHandler,
+  AddTasksToProjectCommandHandler,
   CreateProjectCommandHandler,
   DeleteProjectChildCommandHandler,
   DeleteProjectCommandHandler,
@@ -106,6 +107,11 @@ export function registerCommandHandlers(
     new DeleteProjectCommandHandler(repositories.projects),
     new RestoreProjectCommandHandler(repositories.projects),
     new AddTaskToProjectCommandHandler(
+      repositories.projects,
+      repositories.people,
+      repositories.spydrNodeViews
+    ),
+    new AddTasksToProjectCommandHandler(
       repositories.projects,
       repositories.people,
       repositories.spydrNodeViews

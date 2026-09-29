@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { CreateProjectCommand } from "../commands/create-project.command.js";
 import { UpdateProjectCommand } from "../commands/update-project.command.js";
 import { AddTaskToProjectCommand } from "../commands/add-task-to-project.command.js";
+import { AddTasksToProjectCommand } from "../commands/add-tasks-to-project.command.js";
 import { UpdateProjectChildCommand } from "../commands/project-child.commands.js";
 import { DeleteProjectChildCommand } from "../commands/project-child.commands.js";
 import { UpdateTaskCommand } from "../../tasks/commands/update-task.command.js";
@@ -141,6 +142,10 @@ describe("resolveProjectEmbeddingRefreshIds", () => {
     const createTask = new AddTaskToProjectCommand(USER_ID, ORG_ID, PROJECT_ID, {
       title: "Task",
     });
+    const createTasks = new AddTasksToProjectCommand(USER_ID, ORG_ID, PROJECT_ID, [
+      { title: "Task" },
+      { title: "Follow up" },
+    ]);
     const updateTask = new UpdateProjectChildCommand(
       USER_ID,
       ORG_ID,
@@ -161,6 +166,15 @@ describe("resolveProjectEmbeddingRefreshIds", () => {
       resolveProjectEmbeddingRefreshIds({
         command: createTask,
         result: {},
+        repositories: createRepositories(),
+        prisma: {} as never,
+      })
+    ).resolves.toEqual([PROJECT_ID]);
+
+    await expect(
+      resolveProjectEmbeddingRefreshIds({
+        command: createTasks,
+        result: [{}, {}],
         repositories: createRepositories(),
         prisma: {} as never,
       })

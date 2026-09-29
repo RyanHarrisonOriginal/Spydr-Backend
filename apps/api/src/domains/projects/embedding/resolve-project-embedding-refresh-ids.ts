@@ -12,6 +12,7 @@ import {
   AddIdeaToProjectCommand,
   AddNoteToProjectCommand,
   AddTaskToProjectCommand,
+  AddTasksToProjectCommand,
 } from "../commands/index.js";
 import { InvokeProjectTemplateCommand } from "../../project-templates/commands/index.js";
 import {
@@ -139,6 +140,7 @@ export async function resolveProjectEmbeddingRefreshIds(
 
   if (
     command instanceof AddTaskToProjectCommand ||
+    command instanceof AddTasksToProjectCommand ||
     command instanceof AddNoteToProjectCommand ||
     command instanceof AddDecisionToProjectCommand ||
     command instanceof AddIdeaToProjectCommand
@@ -233,6 +235,7 @@ export function isProjectEmbeddingTrackedCommand(
     command instanceof InvokeProjectTemplateCommand ||
     command instanceof UpdateProjectCommand ||
     command instanceof AddTaskToProjectCommand ||
+    command instanceof AddTasksToProjectCommand ||
     command instanceof AddNoteToProjectCommand ||
     command instanceof AddDecisionToProjectCommand ||
     command instanceof AddIdeaToProjectCommand ||

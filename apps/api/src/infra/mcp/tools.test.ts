@@ -3,6 +3,7 @@ import {
   AddIdeaToProjectCommand,
   AddNoteToProjectCommand,
   AddTaskToProjectCommand,
+  AddTasksToProjectCommand,
   CompleteTaskCommand,
   CreatePersonCommand,
   CreateProjectCommand,
@@ -309,6 +310,35 @@ describe("SpydrMcpTools", () => {
     expect(command.projectId).toBe("project-1");
     expect(command.input.title).toBe("Write brief");
     expect(result).toMatchObject({ id: "task-1", title: "Write brief" });
+  });
+
+  it("creates multiple tasks on a project", async () => {
+    const { commandBus, queryBus } = mockBuses();
+    vi.mocked(commandBus.execute).mockResolvedValue([
+      task(),
+      task(),
+    ]);
+    const tools = new SpydrMcpTools({ commandBus, queryBus, context });
+
+    const result = parse(
+      await tools.createTasks({
+        projectId: "project-1",
+        tasks: [{ title: "Write brief" }, { title: "Review brief", dueDate: "2026-10-01" }],
+      })
+    );
+
+    const command = vi.mocked(commandBus.execute).mock.calls[0][0] as AddTasksToProjectCommand;
+    expect(command).toBeInstanceOf(AddTasksToProjectCommand);
+    expect(command.projectId).toBe("project-1");
+    expect(command.orgId).toBe("org-1");
+    expect(command.tasks).toEqual([
+      { title: "Write brief" },
+      { title: "Review brief", dueDate: "2026-10-01" },
+    ]);
+    expect(result).toEqual([
+      expect.objectContaining({ id: "task-1", title: "Write brief" }),
+      expect.objectContaining({ id: "task-1", title: "Write brief" }),
+    ]);
   });
 
   it("adds a note linked to a task via the parent project", async () => {

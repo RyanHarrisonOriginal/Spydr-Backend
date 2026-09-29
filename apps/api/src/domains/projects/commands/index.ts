@@ -9,6 +9,10 @@ export {
 } from "./add-task-to-project.command.js";
 export type { IAddTaskToProjectInput } from "./add-task-to-project.command.js";
 export {
+  AddTasksToProjectCommand,
+  AddTasksToProjectCommandHandler,
+} from "./add-tasks-to-project.command.js";
+export {
   AddNoteToProjectCommand,
   AddNoteToProjectCommandHandler,
 } from "./add-note-to-project.command.js";

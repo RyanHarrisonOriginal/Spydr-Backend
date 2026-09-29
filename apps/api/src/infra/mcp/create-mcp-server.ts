@@ -36,6 +36,16 @@ const optionalOrgId = z
     "Organization id from list_organizations. Omit to use the default organization."
   );
 const nullablePersonId = z.string().min(1).nullable();
+const taskFields = {
+  title: z.string().min(1).describe("Task title"),
+  body: z.string().optional(),
+  status: taskStatus.optional(),
+  priority: priority.optional(),
+  dueDate: z.string().nullable().optional().describe("ISO date YYYY-MM-DD"),
+  estimatedMinutes: z.number().int().nullable().optional(),
+  assigneePersonNodeId: z.string().min(1).nullable().optional(),
+  emoji: z.string().nullable().optional(),
+};
 
 export interface ICreateSpydrMcpServerOptions {
   commandBus: ICommandBus;
@@ -174,18 +184,31 @@ export function createSpydrMcpServer(
       inputSchema: z.object({
         orgId: optionalOrgId,
         projectId: z.string().min(1).describe("Project to add the task to"),
-        title: z.string().min(1).describe("Task title"),
-        body: z.string().optional(),
-        status: taskStatus.optional(),
-        priority: priority.optional(),
-        dueDate: z.string().nullable().optional().describe("ISO date YYYY-MM-DD"),
-        estimatedMinutes: z.number().int().nullable().optional(),
-        assigneePersonNodeId: z.string().min(1).nullable().optional(),
-        emoji: z.string().nullable().optional(),
+        ...taskFields,
       }),
       annotations: { readOnlyHint: false, destructiveHint: false },
     },
     bindTool(tools.createTask)
+  );
+
+  server.registerTool(
+    "create_tasks",
+    {
+      title: "Create tasks",
+      description:
+        "Create multiple tasks on a project in one call. Tasks are added in the order given.",
+      inputSchema: z.object({
+        orgId: optionalOrgId,
+        projectId: z.string().min(1).describe("Project to add the tasks to"),
+        tasks: z
+          .array(z.object(taskFields))
+          .min(1)
+          .max(50)
+          .describe("Tasks to create, up to 50"),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    },
+    bindTool(tools.createTasks)
   );
 
   server.registerTool(
