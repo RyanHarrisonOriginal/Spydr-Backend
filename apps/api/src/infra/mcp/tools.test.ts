@@ -458,7 +458,7 @@ describe("SpydrMcpTools", () => {
     );
   });
 
-  it("modifies task assignee, status, emoji, and name", async () => {
+  it("modifies task assignee, status, emoji, name, and due date", async () => {
     const { commandBus, queryBus } = mockBuses();
     vi.mocked(commandBus.execute).mockResolvedValue({
       task: task(),
@@ -470,17 +470,20 @@ describe("SpydrMcpTools", () => {
     await tools.modifyTaskStatus({ taskId: "task-1", status: "waiting" });
     await tools.modifyTaskEmoji({ taskId: "task-1", emoji: "🚀" });
     await tools.modifyTaskName({ taskId: "task-1", title: "Write launch brief" });
+    await tools.modifyTaskDueDate({ taskId: "task-1", dueDate: "2026-10-01" });
 
     const assignee = vi.mocked(commandBus.execute).mock
       .calls[0][0] as UpdateTaskCommand;
     const status = vi.mocked(commandBus.execute).mock.calls[1][0] as UpdateTaskCommand;
     const emoji = vi.mocked(commandBus.execute).mock.calls[2][0] as UpdateTaskCommand;
     const name = vi.mocked(commandBus.execute).mock.calls[3][0] as UpdateTaskCommand;
+    const dueDate = vi.mocked(commandBus.execute).mock.calls[4][0] as UpdateTaskCommand;
     expect(assignee).toBeInstanceOf(UpdateTaskCommand);
     expect(assignee.input.assigneePersonNodeId).toBe("person-1");
     expect(status.input.status).toBe("waiting");
     expect(emoji.input.emoji).toBe("🚀");
     expect(name.input.title).toBe("Write launch brief");
+    expect(dueDate.input.dueDate).toBe("2026-10-01");
   });
 
   it("modifies project body and outcome", async () => {

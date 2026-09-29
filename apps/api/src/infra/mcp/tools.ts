@@ -404,6 +404,13 @@ export class SpydrMcpTools {
   }): Promise<IMcpToolResult> =>
     this.updateTask(input.taskId, { title: input.title }, input.orgId);
 
+  modifyTaskDueDate = (input: {
+    taskId: string;
+    dueDate: string | null;
+    orgId?: string;
+  }): Promise<IMcpToolResult> =>
+    this.updateTask(input.taskId, { dueDate: input.dueDate }, input.orgId);
+
   markTaskComplete = (input: {
     taskId: string;
     orgId?: string;

@@ -514,6 +514,25 @@ export function createSpydrMcpServer(
   );
 
   server.registerTool(
+    "modify_task_due_date",
+    {
+      title: "Modify task due date",
+      description:
+        "Set or clear a task's due date. Pass null to clear. Use YYYY-MM-DD.",
+      inputSchema: z.object({
+        orgId: optionalOrgId,
+        taskId: z.string().min(1),
+        dueDate: z
+          .string()
+          .nullable()
+          .describe("ISO date YYYY-MM-DD, or null to clear"),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    },
+    bindTool(tools.modifyTaskDueDate)
+  );
+
+  server.registerTool(
     "mark_task_complete",
     {
       title: "Mark task complete",
