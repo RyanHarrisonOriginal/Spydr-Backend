@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  AddIdeaToProjectCommand,
   AddNoteToProjectCommand,
   AddTaskToProjectCommand,
   CompleteTaskCommand,
@@ -12,6 +13,8 @@ import {
   ListProjectAreasQuery,
   ListProjectsQuery,
   TransformNodeTypeCommand,
+  UpdateNodeCommand,
+  UpdateProjectChildCommand,
   UpdateProjectCommand,
   UpdateTaskCommand,
 } from "../../domains/shared/application/index.js";
@@ -20,6 +23,8 @@ import type { IQueryBus } from "../../domains/shared/application/index.js";
 import { ProjectNode } from "../../domains/projects/models/index.js";
 import { TaskNode } from "../../domains/tasks/models/index.js";
 import { NoteNode } from "../../domains/notes/models/index.js";
+import { IdeaNode } from "../../domains/ideas/models/index.js";
+import { DomainNode } from "../../domains/shared/models/shared.js";
 import { PersonNode } from "../../domains/people/models/index.js";
 import { ProjectAreaNode } from "../../domains/project-areas/models/index.js";
 import { Organization } from "../../domains/organizations/models/index.js";
@@ -93,6 +98,48 @@ function note() {
     updatedAt: now,
     archivedAt: null,
     details: null,
+  });
+}
+
+function idea() {
+  return new IdeaNode({
+    id: "idea-1",
+    orgId: "org-1",
+    userId: "user-1",
+    title: "Ship a beta",
+    body: "Invite ten users",
+    status: "active",
+    priority: "medium",
+    area: null,
+    tags: [],
+    createdAt: now,
+    updatedAt: now,
+    archivedAt: null,
+    details: {
+      confidence: null,
+      potentialValue: "medium",
+      promotedToProjectNodeId: null,
+      createdAt: now,
+      updatedAt: now,
+    },
+  });
+}
+
+function domainNode() {
+  return new DomainNode({
+    id: "note-1",
+    orgId: "org-1",
+    userId: "user-1",
+    nodeType: "note",
+    title: "Kickoff",
+    body: "Notes",
+    status: "active",
+    priority: "medium",
+    area: null,
+    tags: [],
+    createdAt: now,
+    updatedAt: now,
+    archivedAt: null,
   });
 }
 
@@ -352,6 +399,115 @@ describe("SpydrMcpTools", () => {
     expect(status.input.status).toBe("waiting");
     expect(emoji.input.emoji).toBe("🚀");
     expect(name.input.title).toBe("Write launch brief");
+  });
+
+  it("modifies project body and outcome", async () => {
+    const { commandBus, queryBus } = mockBuses();
+    vi.mocked(commandBus.execute).mockResolvedValue(project());
+    const tools = new SpydrMcpTools({ commandBus, queryBus, context });
+
+    await tools.modifyProjectBody({
+      projectId: "project-1",
+      body: "What done looks like",
+    });
+    await tools.modifyProjectOutcome({
+      projectId: "project-1",
+      outcome: null,
+    });
+
+    const body = vi.mocked(commandBus.execute).mock.calls[0][0] as UpdateProjectCommand;
+    const outcome = vi.mocked(commandBus.execute).mock.calls[1][0] as UpdateProjectCommand;
+    expect(body.input.body).toBe("What done looks like");
+    expect(outcome.input.outcome).toBeNull();
+  });
+
+  it("creates an idea on a project", async () => {
+    const { commandBus, queryBus } = mockBuses();
+    vi.mocked(commandBus.execute).mockResolvedValue(idea());
+    const tools = new SpydrMcpTools({ commandBus, queryBus, context });
+
+    const result = parse(
+      await tools.createIdea({ projectId: "project-1", title: "Ship a beta" })
+    );
+
+    const command = vi.mocked(commandBus.execute).mock.calls[0][0] as AddIdeaToProjectCommand;
+    expect(command).toBeInstanceOf(AddIdeaToProjectCommand);
+    expect(command.projectId).toBe("project-1");
+    expect(command.input.title).toBe("Ship a beta");
+    expect(result).toMatchObject({ id: "idea-1", title: "Ship a beta" });
+  });
+
+  it("modifies an idea title and body", async () => {
+    const { commandBus, queryBus } = mockBuses();
+    const launch = project();
+    launch.addIdea(idea());
+    vi.mocked(commandBus.execute).mockResolvedValue(launch);
+    const tools = new SpydrMcpTools({ commandBus, queryBus, context });
+
+    const result = parse(
+      await tools.modifyIdea({
+        projectId: "project-1",
+        ideaId: "idea-1",
+        title: "Ship a private beta",
+        body: "Invite ten design partners",
+      })
+    );
+
+    const command = vi.mocked(commandBus.execute).mock.calls[0][0] as UpdateProjectChildCommand;
+    expect(command).toBeInstanceOf(UpdateProjectChildCommand);
+    expect(command.kind).toBe("idea");
+    expect(command.childId).toBe("idea-1");
+    expect(command.input).toEqual({
+      title: "Ship a private beta",
+      body: "Invite ten design partners",
+    });
+    expect(result).toMatchObject({ id: "idea-1", title: "Ship a beta" });
+  });
+
+  it("requires a title or body when modifying an idea", async () => {
+    const { commandBus, queryBus } = mockBuses();
+    const tools = new SpydrMcpTools({ commandBus, queryBus, context });
+
+    const result = await tools.modifyIdea({
+      projectId: "project-1",
+      ideaId: "idea-1",
+    });
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toBe("Provide a title or body");
+    expect(commandBus.execute).not.toHaveBeenCalled();
+  });
+
+  it("modifies a node's title and body", async () => {
+    const { commandBus, queryBus } = mockBuses();
+    vi.mocked(commandBus.execute).mockResolvedValue(domainNode());
+    const tools = new SpydrMcpTools({ commandBus, queryBus, context });
+
+    const result = parse(
+      await tools.modifyNode({ nodeId: "note-1", title: "Kickoff", body: "Notes" })
+    );
+
+    const command = vi.mocked(commandBus.execute).mock.calls[0][0] as UpdateNodeCommand;
+    expect(command).toBeInstanceOf(UpdateNodeCommand);
+    expect(command.nodeId).toBe("note-1");
+    expect(command.input).toEqual({ title: "Kickoff", body: "Notes" });
+    expect(result).toMatchObject({
+      id: "note-1",
+      nodeType: "note",
+      title: "Kickoff",
+      body: "Notes",
+    });
+  });
+
+  it("requires a field when modifying a node", async () => {
+    const { commandBus, queryBus } = mockBuses();
+    const tools = new SpydrMcpTools({ commandBus, queryBus, context });
+
+    const result = await tools.modifyNode({ nodeId: "note-1" });
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toBe("Provide a title, body, status, or priority");
+    expect(commandBus.execute).not.toHaveBeenCalled();
   });
 
   it("modifies project target, status, priority, emoji, and name", async () => {

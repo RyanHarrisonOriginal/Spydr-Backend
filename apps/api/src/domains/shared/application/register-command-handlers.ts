@@ -57,7 +57,10 @@ import {
 } from "../../notes/commands/index.js";
 import { DeleteIdeaCommandHandler } from "../../ideas/commands/index.js";
 import { DeleteDecisionCommandHandler } from "../../decisions/commands/index.js";
-import { ReorderNodesCommandHandler } from "../../nodes/commands/index.js";
+import {
+  ReorderNodesCommandHandler,
+  UpdateNodeCommandHandler,
+} from "../../nodes/commands/index.js";
 import { TransformNodeTypeCommandHandler } from "../../node-type-transform/commands/index.js";
 import {
   ClerkInvitationSender,
@@ -164,6 +167,7 @@ export function registerCommandHandlers(
     new DeleteIdeaCommandHandler(repositories.ideas),
     new DeleteDecisionCommandHandler(repositories.decisions),
     new ReorderNodesCommandHandler(repositories.spydrNodes, repositories.people),
+    new UpdateNodeCommandHandler(repositories.spydrNodes, repositories.tasks),
     new ReorderPersonCollectionCommandHandler(
       repositories.people,
       repositories.personWork,

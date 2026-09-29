@@ -20,6 +20,7 @@ export interface IUpdateProjectInput {
   sponsorPersonNodeId?: string | null;
   reviewerPersonNodeId?: string | null;
   emoji?: string | null;
+  outcome?: string | null;
 }
 
 function parseProjectDate(value: string | null | undefined): Date | null {
@@ -99,6 +100,7 @@ export class UpdateProjectCommandHandler
       priority: input.priority,
       riskLevel: input.riskLevel,
       emoji: input.emoji,
+      outcome: input.outcome,
     };
 
     if (input.startDate !== undefined) {

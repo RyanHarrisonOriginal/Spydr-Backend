@@ -9,6 +9,8 @@ import { DeleteTaskCommand } from "../../tasks/commands/delete-task.command.js";
 import { UpdateNoteCommand } from "../../notes/commands/update-note.command.js";
 import { DeleteNoteCommand } from "../../notes/commands/delete-note.command.js";
 import { DeleteIdeaCommand } from "../../ideas/commands/delete-idea.command.js";
+import { UpdateNodeCommand } from "../../nodes/commands/update-node.command.js";
+import { DomainNode } from "../../shared/models/shared.js";
 import { ProjectNode } from "../models/index.js";
 import {
   collectPreMutationProjectIds,
@@ -74,6 +76,50 @@ describe("resolveProjectEmbeddingRefreshIds", () => {
         prisma: {} as never,
       })
     ).resolves.toEqual([PROJECT_ID]);
+  });
+
+  it("returns the project id when a project node's description changes", async () => {
+    const command = new UpdateNodeCommand(USER_ID, ORG_ID, PROJECT_ID, {
+      body: "Updated description",
+    });
+
+    await expect(
+      resolveProjectEmbeddingRefreshIds({
+        command,
+        result: new DomainNode({
+          id: PROJECT_ID,
+          orgId: ORG_ID,
+          userId: USER_ID,
+          nodeType: "project",
+          title: "Launch",
+          body: "Updated description",
+          status: "active",
+          priority: "medium",
+          area: null,
+          tags: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          archivedAt: null,
+        }),
+        repositories: createRepositories(),
+        prisma: {} as never,
+      })
+    ).resolves.toEqual([PROJECT_ID]);
+  });
+
+  it("skips node updates that do not change title or body", async () => {
+    const command = new UpdateNodeCommand(USER_ID, ORG_ID, PROJECT_ID, {
+      status: "archived",
+    });
+
+    await expect(
+      resolveProjectEmbeddingRefreshIds({
+        command,
+        result: { id: PROJECT_ID, nodeType: "project" },
+        repositories: createRepositories(),
+        prisma: {} as never,
+      })
+    ).resolves.toEqual([]);
   });
 
   it("skips project updates that do not affect retrieval context", async () => {

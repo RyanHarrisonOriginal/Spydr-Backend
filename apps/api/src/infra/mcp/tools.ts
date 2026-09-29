@@ -1,6 +1,7 @@
 import type { ICommandBus } from "../../domains/shared/application/index.js";
 import type { IQueryBus } from "../../domains/shared/application/index.js";
 import {
+  AddIdeaToProjectCommand,
   AddNoteToProjectCommand,
   AddTaskToProjectCommand,
   CreatePersonCommand,
@@ -17,19 +18,25 @@ import {
   ListProjectsQuery,
   ListTasksQuery,
   TransformNodeTypeCommand,
+  UpdateNodeCommand,
+  UpdateProjectChildCommand,
   UpdateProjectCommand,
   UpdateTaskCommand,
+  type IAddIdeaToProjectInput,
   type IAddNoteToProjectInput,
   type IAddTaskToProjectInput,
   type ICreatePersonInput,
   type ICreateProjectInput,
   type IMeView,
+  type IUpdateNodeInput,
   type IUpdateProjectInput,
   type IUpdateTaskInput,
 } from "../../domains/shared/application/index.js";
 import type { ProjectNode } from "../../domains/projects/models/index.js";
 import type { NoteNode } from "../../domains/notes/models/index.js";
+import type { IdeaNode } from "../../domains/ideas/models/index.js";
 import type { TaskNode } from "../../domains/tasks/models/index.js";
+import type { DomainNode } from "../../domains/shared/models/shared.js";
 import type { PersonNode } from "../../domains/people/models/index.js";
 import type { ProjectAreaNode } from "../../domains/project-areas/models/index.js";
 import type { Organization } from "../../domains/organizations/models/index.js";
@@ -46,6 +53,7 @@ import {
   spydrPriorities,
   taskStatuses,
 } from "../../domains/shared/models/shared.js";
+import { IdeaResponseMapper } from "../http/mappers/idea-response.mapper.js";
 import { NoteResponseMapper } from "../http/mappers/note-response.mapper.js";
 import { PersonResponseMapper } from "../http/mappers/person-response.mapper.js";
 import { ProjectAreaResponseMapper } from "../http/mappers/project-area-response.mapper.js";
@@ -66,6 +74,7 @@ export class SpydrMcpTools {
     private readonly projectMapper = new ProjectResponseMapper(),
     private readonly taskMapper = new TaskResponseMapper(),
     private readonly noteMapper = new NoteResponseMapper(),
+    private readonly ideaMapper = new IdeaResponseMapper(),
     private readonly personMapper = new PersonResponseMapper(),
     private readonly projectAreaMapper = new ProjectAreaResponseMapper()
   ) {}
@@ -236,6 +245,87 @@ export class SpydrMcpTools {
     orgId?: string;
   }): Promise<IMcpToolResult> =>
     this.updateProject(input.projectId, { title: input.title }, input.orgId);
+
+  modifyProjectBody = (input: {
+    projectId: string;
+    body: string;
+    orgId?: string;
+  }): Promise<IMcpToolResult> =>
+    this.updateProject(input.projectId, { body: input.body }, input.orgId);
+
+  modifyProjectOutcome = (input: {
+    projectId: string;
+    outcome: string | null;
+    orgId?: string;
+  }): Promise<IMcpToolResult> =>
+    this.updateProject(input.projectId, { outcome: input.outcome }, input.orgId);
+
+  createIdea = (
+    input: IAddIdeaToProjectInput & { projectId: string; orgId?: string }
+  ): Promise<IMcpToolResult> =>
+    this.run(async () => {
+      const { projectId, orgId: requestedOrgId, ...ideaInput } = input;
+      const orgId = await this.resolveOrgId(requestedOrgId);
+      const idea = await this.deps.commandBus.execute<
+        AddIdeaToProjectCommand,
+        IdeaNode | null
+      >(new AddIdeaToProjectCommand(this.userId, orgId, projectId, ideaInput));
+      if (!idea) return null;
+      return this.ideaMapper.toRepresentation(idea);
+    });
+
+  modifyIdea = (input: {
+    projectId: string;
+    ideaId: string;
+    title?: string;
+    body?: string;
+    orgId?: string;
+  }): Promise<IMcpToolResult> =>
+    this.run(async () => {
+      if (input.title === undefined && input.body === undefined) {
+        throw new Error("Provide a title or body");
+      }
+      const orgId = await this.resolveOrgId(input.orgId);
+      const project = await this.deps.commandBus.execute<
+        UpdateProjectChildCommand,
+        ProjectNode | null
+      >(
+        new UpdateProjectChildCommand(
+          this.userId,
+          orgId,
+          input.projectId,
+          input.ideaId,
+          "idea",
+          { title: input.title, body: input.body }
+        )
+      );
+      if (!project) return null;
+      const idea = project.ideas.find((entry) => entry.id === input.ideaId);
+      if (!idea) return null;
+      return this.ideaMapper.toRepresentation(idea);
+    });
+
+  modifyNode = (
+    input: IUpdateNodeInput & { nodeId: string; orgId?: string }
+  ): Promise<IMcpToolResult> =>
+    this.run(async () => {
+      if (
+        input.title === undefined &&
+        input.body === undefined &&
+        input.status === undefined &&
+        input.priority === undefined
+      ) {
+        throw new Error("Provide a title, body, status, or priority");
+      }
+      const { nodeId, orgId: requestedOrgId, ...nodeInput } = input;
+      const orgId = await this.resolveOrgId(requestedOrgId);
+      const node = await this.deps.commandBus.execute<
+        UpdateNodeCommand,
+        DomainNode | null
+      >(new UpdateNodeCommand(this.userId, orgId, nodeId, nodeInput));
+      if (!node) return null;
+      return this.nodeSummary(node);
+    });
 
   modifyTaskAssignee = (input: {
     taskId: string;
@@ -501,6 +591,20 @@ export class SpydrMcpTools {
       if (!item) return null;
       return this.taskMapper.toListRepresentation(item);
     });
+  }
+
+  private nodeSummary(node: DomainNode) {
+    return {
+      id: node.id,
+      nodeType: node.nodeType,
+      title: node.title,
+      body: node.body,
+      status: node.status,
+      priority: node.priority,
+      area: node.area,
+      tags: node.tags,
+      updatedAt: node.updatedAt.toISOString(),
+    };
   }
 
   private projectSummary(project: ProjectNode) {

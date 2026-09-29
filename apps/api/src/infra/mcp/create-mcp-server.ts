@@ -128,6 +128,62 @@ export function createSpydrMcpServer(
   );
 
   server.registerTool(
+    "create_idea",
+    {
+      title: "Create idea",
+      description: "Create an idea on a project.",
+      inputSchema: z.object({
+        orgId: optionalOrgId,
+        projectId: z.string().min(1).describe("Project to add the idea to"),
+        title: z.string().min(1).describe("Idea title"),
+        body: z.string().optional(),
+        confidence: z.number().nullable().optional(),
+        potentialValue: priority.optional(),
+        status: nodeStatus.optional(),
+        priority: priority.optional(),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    },
+    bindTool(tools.createIdea)
+  );
+
+  server.registerTool(
+    "modify_idea",
+    {
+      title: "Modify idea",
+      description: "Update an idea's title or body.",
+      inputSchema: z.object({
+        orgId: optionalOrgId,
+        projectId: z.string().min(1),
+        ideaId: z.string().min(1),
+        title: z.string().min(1).optional().describe("New idea title"),
+        body: z.string().optional().describe("New idea body"),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    },
+    bindTool(tools.modifyIdea)
+  );
+
+  server.registerTool(
+    "modify_node",
+    {
+      title: "Modify node",
+      description:
+        "Update a node's title, body, status, or priority. Provide at least one field. To mark a task complete, use mark_task_complete so its completion time is recorded.",
+      inputSchema: z.object({
+        orgId: optionalOrgId,
+        nodeId: z.string().min(1),
+        title: z.string().min(1).optional(),
+        body: z.string().optional(),
+        status: nodeStatus.optional(),
+        priority: priority.optional(),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    },
+    bindTool(tools.modifyNode)
+  );
+
+  server.registerTool(
     "add_note_to_task",
     {
       title: "Add note to task",
@@ -278,6 +334,39 @@ export function createSpydrMcpServer(
       annotations: { readOnlyHint: false, destructiveHint: false },
     },
     bindTool(tools.modifyProjectName)
+  );
+
+  server.registerTool(
+    "modify_project_body",
+    {
+      title: "Modify project body",
+      description: "Replace a project's body.",
+      inputSchema: z.object({
+        orgId: optionalOrgId,
+        projectId: z.string().min(1),
+        body: z.string().describe("New project body. Pass an empty string to clear."),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    },
+    bindTool(tools.modifyProjectBody)
+  );
+
+  server.registerTool(
+    "modify_project_outcome",
+    {
+      title: "Modify project outcome",
+      description: "Set or clear a project's outcome. Pass null to clear.",
+      inputSchema: z.object({
+        orgId: optionalOrgId,
+        projectId: z.string().min(1),
+        outcome: z
+          .string()
+          .nullable()
+          .describe("Outcome text, or null to clear"),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    },
+    bindTool(tools.modifyProjectOutcome)
   );
 
   server.registerTool(

@@ -23,12 +23,14 @@ import { UpdateTaskCommand } from "../../tasks/commands/update-task.command.js";
 import { CompleteTaskCommand } from "../../tasks/commands/complete-task.command.js";
 import { DeleteTaskCommand } from "../../tasks/commands/delete-task.command.js";
 import { UpdateNoteCommand } from "../../notes/commands/update-note.command.js";
+import { UpdateNodeCommand } from "../../nodes/commands/update-node.command.js";
 import { DeleteNoteCommand } from "../../notes/commands/delete-note.command.js";
 import { DeleteIdeaCommand } from "../../ideas/commands/delete-idea.command.js";
 import { DeleteDecisionCommand } from "../../decisions/commands/delete-decision.command.js";
 import type { ITaskListItem } from "../../tasks/views.js";
 import type { INoteListItem } from "../../notes/views.js";
 import type { ProjectNode } from "../models/index.js";
+import type { DomainNode } from "../../shared/models/shared.js";
 
 const RETRIEVAL_CHILD_KINDS = new Set<ProjectChildKind>([
   "task",
@@ -185,6 +187,28 @@ export async function resolveProjectEmbeddingRefreshIds(
     return uniqueProjectIds([item.project?.id]);
   }
 
+  if (command instanceof UpdateNodeCommand) {
+    if (result === null) return [];
+    if (command.input.title === undefined && command.input.body === undefined) {
+      return [];
+    }
+
+    const node = result as DomainNode;
+    if (node.nodeType === "project") {
+      return uniqueProjectIds([node.id]);
+    }
+    if (!RETRIEVAL_CHILD_KINDS.has(node.nodeType as ProjectChildKind)) {
+      return [];
+    }
+
+    const projectId = await findProjectIdForChildNode(
+      prisma,
+      command.orgId,
+      node.id
+    );
+    return uniqueProjectIds([projectId]);
+  }
+
   if (
     command instanceof DeleteTaskCommand ||
     command instanceof DeleteNoteCommand ||
@@ -218,6 +242,7 @@ export function isProjectEmbeddingTrackedCommand(
     command instanceof CompleteTaskCommand ||
     command instanceof DeleteTaskCommand ||
     command instanceof UpdateNoteCommand ||
+    command instanceof UpdateNodeCommand ||
     command instanceof DeleteNoteCommand ||
     command instanceof DeleteIdeaCommand ||
     command instanceof DeleteDecisionCommand

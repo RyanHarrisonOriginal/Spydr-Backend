@@ -31,6 +31,7 @@ export interface IProjectUpdateInput {
   priority?: SpydrPriority;
   area?: string | null;
   emoji?: string | null;
+  outcome?: string | null;
   startDate?: Date | null;
   targetDate?: Date | null;
   riskLevel?: SpydrPriority;
@@ -381,6 +382,10 @@ export class ProjectNode extends DomainNode<"project"> {
     const details = this.projectDetails();
     if (input.emoji !== undefined) {
       details.setEmoji(input.emoji);
+    }
+    if (input.outcome !== undefined) {
+      const outcome = input.outcome?.trim() ?? "";
+      details.setOutcome(outcome.length > 0 ? outcome : null);
     }
     if (input.startDate !== undefined) {
       details.setStartDate(input.startDate);

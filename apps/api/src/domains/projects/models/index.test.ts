@@ -96,6 +96,21 @@ describe("ProjectNode task due date invariant", () => {
   });
 });
 
+describe("ProjectNode outcome", () => {
+  it("sets and clears the outcome", () => {
+    const launch = project(null);
+    launch.applyUpdate({ outcome: "  Shipped  " });
+    expect(launch.details?.outcome).toBe("Shipped");
+
+    launch.applyUpdate({ outcome: "   " });
+    expect(launch.details?.outcome).toBeNull();
+
+    launch.applyUpdate({ outcome: "Launched" });
+    launch.applyUpdate({ outcome: null });
+    expect(launch.details?.outcome).toBeNull();
+  });
+});
+
 describe("ProjectNode template param values", () => {
   it("merges new keys onto existing spawn values", () => {
     const launch = project(null);
