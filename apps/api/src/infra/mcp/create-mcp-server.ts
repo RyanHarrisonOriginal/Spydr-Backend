@@ -8,6 +8,10 @@ import {
 import type { ICommandBus } from "../../domains/shared/application/index.js";
 import type { IQueryBus } from "../../domains/shared/application/index.js";
 import { SPYDR_LIST_VIEW_RESOURCE_URI } from "./app/list-view-contract.js";
+import {
+  getProjectsInputSchema,
+  getTasksInputSchema,
+} from "./app/list-view-input.js";
 import { mcpAppsEnabled } from "./app/mcp-apps-enabled.js";
 import { readListViewHtml } from "./app/read-list-view-html.js";
 import {
@@ -640,45 +644,12 @@ export function createSpydrMcpServer(
     bindTool(tools.markProjectCompleted)
   );
 
-  const listViewFilters = {
-    status: z
-      .string()
-      .min(1)
-      .optional()
-      .describe("Filter by status (exact match, e.g. active, completed)"),
-    assignee: z
-      .string()
-      .min(1)
-      .optional()
-      .describe(
-        'Filter by assignee display name (substring). Use "unassigned" for tasks/projects with no assignee.'
-      ),
-    limit: z
-      .number()
-      .int()
-      .min(1)
-      .max(100)
-      .optional()
-      .describe("Max rows to return (default 50, max 100). Page with offset."),
-    offset: z
-      .number()
-      .int()
-      .min(0)
-      .optional()
-      .describe("Rows to skip before returning results (default 0)."),
-  };
-
   const listProjectsConfig = {
     title: "Get projects",
     description:
       "List projects in an organization, or fetch one project by id. Supports status/assignee filters and limit/offset pagination (default page size 50). Returns a concise text summary plus structured list data.",
-    inputSchema: z.object({
-      orgId: optionalOrgId,
-      id: optionalId.describe(
-        "When set, return this project as a single list-view row (no embedded children; use get_tasks for tasks)"
-      ),
-      ...listViewFilters,
-    }),
+    // Same Zod object the handler validates — SDK advertises tools/list from it.
+    inputSchema: getProjectsInputSchema,
     annotations: { readOnlyHint: true },
   };
 
@@ -686,11 +657,8 @@ export function createSpydrMcpServer(
     title: "Get tasks",
     description:
       "List tasks in an organization, or fetch one task by id. Supports status/assignee filters and limit/offset pagination (default page size 50). Prefer filters over dumping the full org list.",
-    inputSchema: z.object({
-      orgId: optionalOrgId,
-      id: optionalId.describe("When set, return this task"),
-      ...listViewFilters,
-    }),
+    // Same Zod object the handler validates — SDK advertises tools/list from it.
+    inputSchema: getTasksInputSchema,
     annotations: { readOnlyHint: true },
   };
 

@@ -67,6 +67,10 @@ import { ProjectResponseMapper } from "../http/mappers/project-response.mapper.j
 import { ProjectTemplateResponseMapper } from "../http/mappers/project-template-response.mapper.js";
 import { TaskResponseMapper } from "../http/mappers/task-response.mapper.js";
 import type { IMcpActorContext } from "./context.js";
+import type {
+  GetProjectsInput,
+  GetTasksInput,
+} from "./app/list-view-input.js";
 import {
   filterAndPageListView,
   toProjectsListView,
@@ -493,14 +497,7 @@ export class SpydrMcpTools {
       return this.projectSummary(project);
     });
 
-  getProjects = (input: {
-    id?: string;
-    orgId?: string;
-    status?: string;
-    assignee?: string;
-    limit?: number;
-    offset?: number;
-  } = {}): Promise<IMcpToolResult> =>
+  getProjects = (input: GetProjectsInput = {}): Promise<IMcpToolResult> =>
     runListViewTool(async () => {
       const orgId = await this.resolveOrgId(input.orgId);
       if (input.id) {
@@ -528,14 +525,7 @@ export class SpydrMcpTools {
       );
     });
 
-  getTasks = (input: {
-    id?: string;
-    orgId?: string;
-    status?: string;
-    assignee?: string;
-    limit?: number;
-    offset?: number;
-  } = {}): Promise<IMcpToolResult> =>
+  getTasks = (input: GetTasksInput = {}): Promise<IMcpToolResult> =>
     runListViewTool(async () => {
       const orgId = await this.resolveOrgId(input.orgId);
       if (input.id) {
