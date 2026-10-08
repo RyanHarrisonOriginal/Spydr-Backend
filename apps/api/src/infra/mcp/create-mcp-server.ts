@@ -8,6 +8,7 @@ import {
 import type { ICommandBus } from "../../domains/shared/application/index.js";
 import type { IQueryBus } from "../../domains/shared/application/index.js";
 import { SPYDR_LIST_VIEW_RESOURCE_URI } from "./app/list-view-contract.js";
+import { mcpAppsEnabled } from "./app/mcp-apps-enabled.js";
 import { readListViewHtml } from "./app/read-list-view-html.js";
 import {
   registerSpydrAppResource,
@@ -667,65 +668,86 @@ export function createSpydrMcpServer(
       .describe("Rows to skip before returning results (default 0)."),
   };
 
-  registerSpydrAppTool(
-    server,
-    "get_projects",
-    {
-      title: "Get projects",
-      description:
-        "List projects in an organization, or fetch one project by id. Supports status/assignee filters and limit/offset pagination (default page size 50). Returns a concise text summary plus structured list-view data for inline UI.",
-      inputSchema: z.object({
-        orgId: optionalOrgId,
-        id: optionalId.describe(
-          "When set, return this project as a single list-view row (no embedded children; use get_tasks for tasks)"
-        ),
-        ...listViewFilters,
-      }),
-      annotations: { readOnlyHint: true },
-      _meta: { ui: { resourceUri: SPYDR_LIST_VIEW_RESOURCE_URI } },
-    },
-    bindTool(tools.getProjects)
-  );
+  const listProjectsConfig = {
+    title: "Get projects",
+    description:
+      "List projects in an organization, or fetch one project by id. Supports status/assignee filters and limit/offset pagination (default page size 50). Returns a concise text summary plus structured list data.",
+    inputSchema: z.object({
+      orgId: optionalOrgId,
+      id: optionalId.describe(
+        "When set, return this project as a single list-view row (no embedded children; use get_tasks for tasks)"
+      ),
+      ...listViewFilters,
+    }),
+    annotations: { readOnlyHint: true },
+  };
 
-  registerSpydrAppTool(
-    server,
-    "get_tasks",
-    {
-      title: "Get tasks",
-      description:
-        "List tasks in an organization, or fetch one task by id. Supports status/assignee filters and limit/offset pagination (default page size 50). Prefer filters over dumping the full org list — large unfiltered results break inline UI hosts.",
-      inputSchema: z.object({
-        orgId: optionalOrgId,
-        id: optionalId.describe("When set, return this task"),
-        ...listViewFilters,
-      }),
-      annotations: { readOnlyHint: true },
-      _meta: { ui: { resourceUri: SPYDR_LIST_VIEW_RESOURCE_URI } },
-    },
-    bindTool(tools.getTasks)
-  );
+  const listTasksConfig = {
+    title: "Get tasks",
+    description:
+      "List tasks in an organization, or fetch one task by id. Supports status/assignee filters and limit/offset pagination (default page size 50). Prefer filters over dumping the full org list.",
+    inputSchema: z.object({
+      orgId: optionalOrgId,
+      id: optionalId.describe("When set, return this task"),
+      ...listViewFilters,
+    }),
+    annotations: { readOnlyHint: true },
+  };
 
-  registerSpydrAppResource(
-    server,
-    "Spydr list view",
-    SPYDR_LIST_VIEW_RESOURCE_URI,
-    {
-      description: "Interactive Spydr-styled project and task list",
-      mimeType: RESOURCE_MIME_TYPE,
-    },
-    async () => {
-      const html = await readListViewHtml();
-      return {
-        contents: [
-          {
-            uri: SPYDR_LIST_VIEW_RESOURCE_URI,
-            mimeType: RESOURCE_MIME_TYPE,
-            text: html,
-          },
-        ],
-      };
-    }
-  );
+  // Plan B: do not advertise MCP Apps UI unless MCP_APPS_ENABLED=true.
+  // Claude currently shows a broken "Unable to reach Spydr" chip for our HTTP Apps.
+  if (mcpAppsEnabled()) {
+    registerSpydrAppTool(
+      server,
+      "get_projects",
+      {
+        ...listProjectsConfig,
+        _meta: { ui: { resourceUri: SPYDR_LIST_VIEW_RESOURCE_URI } },
+      },
+      bindTool(tools.getProjects)
+    );
+    registerSpydrAppTool(
+      server,
+      "get_tasks",
+      {
+        ...listTasksConfig,
+        _meta: { ui: { resourceUri: SPYDR_LIST_VIEW_RESOURCE_URI } },
+      },
+      bindTool(tools.getTasks)
+    );
+    registerSpydrAppResource(
+      server,
+      "Spydr list view",
+      SPYDR_LIST_VIEW_RESOURCE_URI,
+      {
+        description: "Interactive Spydr-styled project and task list",
+        mimeType: RESOURCE_MIME_TYPE,
+      },
+      async () => {
+        const html = await readListViewHtml();
+        return {
+          contents: [
+            {
+              uri: SPYDR_LIST_VIEW_RESOURCE_URI,
+              mimeType: RESOURCE_MIME_TYPE,
+              text: html,
+            },
+          ],
+        };
+      }
+    );
+  } else {
+    server.registerTool(
+      "get_projects",
+      listProjectsConfig,
+      bindTool(tools.getProjects)
+    );
+    server.registerTool(
+      "get_tasks",
+      listTasksConfig,
+      bindTool(tools.getTasks)
+    );
+  }
 
   server.registerTool(
     "get_notes",
