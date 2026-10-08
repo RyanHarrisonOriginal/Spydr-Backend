@@ -644,6 +644,44 @@ export function createSpydrMcpServer(
     bindTool(tools.markProjectCompleted)
   );
 
+  server.registerTool(
+    "delete_project",
+    {
+      title: "Delete project",
+      description:
+        "Soft-delete a project (sets isDeleted). The project leaves active lists but can be restored in the Spydr app.",
+      inputSchema: z.object({
+        orgId: optionalOrgId,
+        projectId: z.string().min(1),
+      }),
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: true,
+      },
+    },
+    bindTool(tools.deleteProject)
+  );
+
+  server.registerTool(
+    "delete_task",
+    {
+      title: "Delete task",
+      description:
+        "Soft-delete a task (sets isDeleted). The task leaves active lists but can be restored in the Spydr app.",
+      inputSchema: z.object({
+        orgId: optionalOrgId,
+        taskId: z.string().min(1),
+      }),
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: true,
+      },
+    },
+    bindTool(tools.deleteTask)
+  );
+
   const listProjectsConfig = {
     title: "Get projects",
     description:

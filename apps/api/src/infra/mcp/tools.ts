@@ -10,6 +10,8 @@ import {
   CreateProjectTemplateCommand,
   InvokeProjectTemplateCommand,
   CompleteTaskCommand,
+  DeleteProjectCommand,
+  DeleteTaskCommand,
   GetNoteQuery,
   GetMeQuery,
   GetProjectQuery,
@@ -495,6 +497,34 @@ export class SpydrMcpTools {
       );
       if (!project) return null;
       return this.projectSummary(project);
+    });
+
+  deleteProject = (input: {
+    projectId: string;
+    orgId?: string;
+  }): Promise<IMcpToolResult> =>
+    this.run(async () => {
+      const orgId = await this.resolveOrgId(input.orgId);
+      const deleted = await this.deps.commandBus.execute<
+        DeleteProjectCommand,
+        boolean
+      >(new DeleteProjectCommand(this.userId, orgId, input.projectId));
+      if (!deleted) return null;
+      return { id: input.projectId, deleted: true };
+    });
+
+  deleteTask = (input: {
+    taskId: string;
+    orgId?: string;
+  }): Promise<IMcpToolResult> =>
+    this.run(async () => {
+      const orgId = await this.resolveOrgId(input.orgId);
+      const deleted = await this.deps.commandBus.execute<
+        DeleteTaskCommand,
+        boolean
+      >(new DeleteTaskCommand(this.userId, orgId, input.taskId));
+      if (!deleted) return null;
+      return { id: input.taskId, deleted: true };
     });
 
   getProjects = (input: GetProjectsInput = {}): Promise<IMcpToolResult> =>

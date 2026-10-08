@@ -8,6 +8,8 @@ import {
   CreatePersonCommand,
   CreateProjectCommand,
   CreateProjectTemplateCommand,
+  DeleteProjectCommand,
+  DeleteTaskCommand,
   InvokeProjectTemplateCommand,
   GetMeQuery,
   GetTaskQuery,
@@ -425,6 +427,44 @@ describe("SpydrMcpTools", () => {
     );
     const update = vi.mocked(commandBus.execute).mock.calls[1][0] as UpdateProjectCommand;
     expect(update.input.status).toBe("completed");
+  });
+
+  it("soft-deletes a project and a task", async () => {
+    const { commandBus, queryBus } = mockBuses();
+    vi.mocked(commandBus.execute)
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(true);
+    const tools = new SpydrMcpTools({ commandBus, queryBus, context });
+
+    expect(parse(await tools.deleteProject({ projectId: "project-1" }))).toEqual({
+      id: "project-1",
+      deleted: true,
+    });
+    expect(parse(await tools.deleteTask({ taskId: "task-1" }))).toEqual({
+      id: "task-1",
+      deleted: true,
+    });
+
+    expect(vi.mocked(commandBus.execute).mock.calls[0][0]).toBeInstanceOf(
+      DeleteProjectCommand
+    );
+    expect(vi.mocked(commandBus.execute).mock.calls[1][0]).toBeInstanceOf(
+      DeleteTaskCommand
+    );
+  });
+
+  it("returns not found when soft-delete misses", async () => {
+    const { commandBus, queryBus } = mockBuses();
+    vi.mocked(commandBus.execute).mockResolvedValue(false);
+    const tools = new SpydrMcpTools({ commandBus, queryBus, context });
+
+    const projectResult = await tools.deleteProject({ projectId: "missing" });
+    const taskResult = await tools.deleteTask({ taskId: "missing" });
+
+    expect(projectResult.isError).toBe(true);
+    expect(projectResult.content[0].text).toBe("Not found");
+    expect(taskResult.isError).toBe(true);
+    expect(taskResult.content[0].text).toBe("Not found");
   });
 
   it("lists projects as list-view structuredContent with a text summary", async () => {
