@@ -7,5 +7,13 @@
     "declarationMap": false
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "src/routes", "src/**/*.test.ts"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/routes",
+    "src/**/*.test.ts",
+    "src/infra/mcp/app/ui",
+    "src/infra/mcp/app/ui-dist",
+    "src/infra/mcp/app/vite.config.ts"
+  ]
 }

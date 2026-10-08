@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node --max-old-space-size=4096 ../../node_modules/typescript/bin/tsc",
+    "build:mcp-app": "vite build --config src/infra/mcp/app/vite.config.ts",
+    "build": "npm run build:mcp-app && node --max-old-space-size=4096 ../../node_modules/typescript/bin/tsc",
     "dev": "tsx watch src/index.ts",
     "mcp": "tsx src/mcp.ts",
     "start": "node dist/index.js",
@@ -15,6 +16,8 @@
   "dependencies": {
     "@clerk/backend": "^3.2.0",
     "@clerk/express": "^2.0.4",
+    "@modelcontextprotocol/client": "^2.3.1",
+    "@modelcontextprotocol/ext-apps": "^1.7.5",
     "@modelcontextprotocol/node": "^2.0.0",
     "@modelcontextprotocol/server": "^2.0.0",
     "@spydr/active-notes": "*",
@@ -35,6 +38,8 @@
     "@types/node": "^22.10.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
+    "vite": "^8.3.3",
+    "vite-plugin-singlefile": "^2.3.3",
     "vitest": "^4.1.10"
   }
 }

@@ -4,6 +4,7 @@ node_modules/
 # Build
 dist/
 build/
+apps/api/src/infra/mcp/app/ui-dist/
 
 
 # Migrations
