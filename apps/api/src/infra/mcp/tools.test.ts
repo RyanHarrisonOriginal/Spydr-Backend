@@ -437,6 +437,7 @@ describe("SpydrMcpTools", () => {
     expect(queryBus.execute).toHaveBeenCalledWith(expect.any(ListProjectsQuery));
     expect(result.isError).toBeFalsy();
     expect(result.content[0].text).toContain("1 project:");
+    expect(result.content[0].text).toContain("id project-1");
     expect(result.content[0].text).toContain("Launch");
     expect(result.structuredContent).toEqual({
       version: 1,

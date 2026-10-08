@@ -129,7 +129,9 @@ describe("summarizeListView", () => {
     });
     expect(summary).toContain("1 project:");
     expect(summary).toContain("By status (all matched): active=1");
-    expect(summary).toContain("🚀 Launch · active · high · target 2026-06-01");
+    expect(summary).toContain(
+      "id p1 · 🚀 Launch · active · high · target 2026-06-01"
+    );
   });
 
   it("calls out pagination when truncated", () => {
@@ -144,7 +146,7 @@ describe("summarizeListView", () => {
           priority: "low",
           assignee: "Ada",
           dueDate: null,
-          project: null,
+          project: { id: "p1", name: "Launch" },
           emoji: null,
           target: null,
         },
@@ -155,6 +157,8 @@ describe("summarizeListView", () => {
     });
     expect(summary).toContain("Showing 1 of 315 tasks");
     expect(summary).toContain("status/assignee filters");
+    expect(summary).toContain("id t1 · One · active · low · assignee Ada");
+    expect(summary).toContain("project Launch (id p1)");
   });
 });
 

@@ -2,11 +2,14 @@ import type { SpydrListViewItem, SpydrListViewResult } from "./list-view-contrac
 
 function formatItemLine(item: SpydrListViewItem, kind: SpydrListViewResult["kind"]): string {
   const emoji = item.emoji ? `${item.emoji} ` : "";
-  const parts = [`${emoji}${item.name}`, item.status, item.priority];
+  // Ids first so text-only hosts (Claude without Apps UI) can call write tools.
+  const parts = [`id ${item.id}`, `${emoji}${item.name}`.trim(), item.status, item.priority];
   if (item.assignee) parts.push(`assignee ${item.assignee}`);
   if (kind === "projects" && item.target) parts.push(`target ${item.target}`);
   if (kind === "tasks") {
-    if (item.project) parts.push(`project ${item.project.name}`);
+    if (item.project) {
+      parts.push(`project ${item.project.name} (id ${item.project.id})`);
+    }
     if (item.dueDate) parts.push(`due ${item.dueDate}`);
   }
   return `- ${parts.join(" · ")}`;
