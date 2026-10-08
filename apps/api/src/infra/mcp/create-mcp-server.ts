@@ -638,18 +638,47 @@ export function createSpydrMcpServer(
     bindTool(tools.markProjectCompleted)
   );
 
+  const listViewFilters = {
+    status: z
+      .string()
+      .min(1)
+      .optional()
+      .describe("Filter by status (exact match, e.g. active, completed)"),
+    assignee: z
+      .string()
+      .min(1)
+      .optional()
+      .describe(
+        'Filter by assignee display name (substring). Use "unassigned" for tasks/projects with no assignee.'
+      ),
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .optional()
+      .describe("Max rows to return (default 50, max 100). Page with offset."),
+    offset: z
+      .number()
+      .int()
+      .min(0)
+      .optional()
+      .describe("Rows to skip before returning results (default 0)."),
+  };
+
   registerSpydrAppTool(
     server,
     "get_projects",
     {
       title: "Get projects",
       description:
-        "List projects in an organization, or fetch one project by id. Returns a concise text summary plus structured list-view data for inline UI.",
+        "List projects in an organization, or fetch one project by id. Supports status/assignee filters and limit/offset pagination (default page size 50). Returns a concise text summary plus structured list-view data for inline UI.",
       inputSchema: z.object({
         orgId: optionalOrgId,
         id: optionalId.describe(
           "When set, return this project as a single list-view row (no embedded children; use get_tasks for tasks)"
         ),
+        ...listViewFilters,
       }),
       annotations: { readOnlyHint: true },
       _meta: { ui: { resourceUri: SPYDR_LIST_VIEW_RESOURCE_URI } },
@@ -663,10 +692,11 @@ export function createSpydrMcpServer(
     {
       title: "Get tasks",
       description:
-        "List tasks in an organization, or fetch one task by id. Returns a concise text summary plus structured list-view data for inline UI.",
+        "List tasks in an organization, or fetch one task by id. Supports status/assignee filters and limit/offset pagination (default page size 50). Prefer filters over dumping the full org list — large unfiltered results break inline UI hosts.",
       inputSchema: z.object({
         orgId: optionalOrgId,
         id: optionalId.describe("When set, return this task"),
+        ...listViewFilters,
       }),
       annotations: { readOnlyHint: true },
       _meta: { ui: { resourceUri: SPYDR_LIST_VIEW_RESOURCE_URI } },

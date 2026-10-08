@@ -68,6 +68,7 @@ import { ProjectTemplateResponseMapper } from "../http/mappers/project-template-
 import { TaskResponseMapper } from "../http/mappers/task-response.mapper.js";
 import type { IMcpActorContext } from "./context.js";
 import {
+  filterAndPageListView,
   toProjectsListView,
   toTasksListView,
 } from "./app/list-view-mapper.js";
@@ -492,7 +493,14 @@ export class SpydrMcpTools {
       return this.projectSummary(project);
     });
 
-  getProjects = (input: { id?: string; orgId?: string } = {}): Promise<IMcpToolResult> =>
+  getProjects = (input: {
+    id?: string;
+    orgId?: string;
+    status?: string;
+    assignee?: string;
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<IMcpToolResult> =>
     runListViewTool(async () => {
       const orgId = await this.resolveOrgId(input.orgId);
       if (input.id) {
@@ -509,10 +517,25 @@ export class SpydrMcpTools {
         ListProjectsQuery,
         ProjectNode[]
       >(new ListProjectsQuery(this.userId, orgId));
-      return toProjectsListView(projects.map((project) => this.projectSummary(project)));
+      return filterAndPageListView(
+        toProjectsListView(projects.map((project) => this.projectSummary(project))),
+        {
+          status: input.status,
+          assignee: input.assignee,
+          limit: input.limit,
+          offset: input.offset,
+        }
+      );
     });
 
-  getTasks = (input: { id?: string; orgId?: string } = {}): Promise<IMcpToolResult> =>
+  getTasks = (input: {
+    id?: string;
+    orgId?: string;
+    status?: string;
+    assignee?: string;
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<IMcpToolResult> =>
     runListViewTool(async () => {
       const orgId = await this.resolveOrgId(input.orgId);
       if (input.id) {
@@ -528,8 +551,16 @@ export class SpydrMcpTools {
         ListTasksQuery,
         ITaskListItem[]
       >(new ListTasksQuery(this.userId, orgId));
-      return toTasksListView(
-        items.map((item) => this.taskMapper.toListRepresentation(item))
+      return filterAndPageListView(
+        toTasksListView(
+          items.map((item) => this.taskMapper.toListRepresentation(item))
+        ),
+        {
+          status: input.status,
+          assignee: input.assignee,
+          limit: input.limit,
+          offset: input.offset,
+        }
       );
     });
 

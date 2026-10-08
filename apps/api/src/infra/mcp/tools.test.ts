@@ -449,6 +449,9 @@ describe("SpydrMcpTools", () => {
           priority: "medium",
         }),
       ],
+      totalMatched: 1,
+      limit: 50,
+      offset: 0,
     });
   });
 

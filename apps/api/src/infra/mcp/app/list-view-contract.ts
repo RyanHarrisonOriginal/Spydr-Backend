@@ -44,6 +44,12 @@ export interface SpydrListViewResult {
   version: typeof SPYDR_LIST_VIEW_CONTRACT_VERSION;
   kind: SpydrListViewKind;
   items: SpydrListViewItem[];
+  /** Total rows matching filters before limit/offset (optional; v1 additive). */
+  totalMatched?: number;
+  /** Page size applied when building this result. */
+  limit?: number;
+  /** Page offset applied when building this result. */
+  offset?: number;
 }
 
 export function isSpydrListViewResult(
