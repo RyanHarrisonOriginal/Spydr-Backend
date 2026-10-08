@@ -427,18 +427,29 @@ describe("SpydrMcpTools", () => {
     expect(update.input.status).toBe("completed");
   });
 
-  it("lists projects", async () => {
+  it("lists projects as list-view structuredContent with a text summary", async () => {
     const { commandBus, queryBus } = mockBuses();
     vi.mocked(queryBus.execute).mockResolvedValue([project()]);
     const tools = new SpydrMcpTools({ commandBus, queryBus, context });
 
-    const result = parse(await tools.getProjects());
+    const result = await tools.getProjects();
 
     expect(queryBus.execute).toHaveBeenCalledWith(expect.any(ListProjectsQuery));
-    expect(result).toEqual([
-      expect.objectContaining({ id: "project-1", title: "Launch" }),
-    ]);
-    expect(Array.isArray(result) ? result[0] : result).not.toHaveProperty("tasks");
+    expect(result.isError).toBeFalsy();
+    expect(result.content[0].text).toContain("1 project:");
+    expect(result.content[0].text).toContain("Launch");
+    expect(result.structuredContent).toEqual({
+      version: 1,
+      kind: "projects",
+      items: [
+        expect.objectContaining({
+          id: "project-1",
+          name: "Launch",
+          status: "active",
+          priority: "medium",
+        }),
+      ],
+    });
   });
 
   it("returns not found when a get-by-id lookup misses", async () => {

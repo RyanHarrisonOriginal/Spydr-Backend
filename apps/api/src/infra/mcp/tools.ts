@@ -67,7 +67,11 @@ import { ProjectResponseMapper } from "../http/mappers/project-response.mapper.j
 import { ProjectTemplateResponseMapper } from "../http/mappers/project-template-response.mapper.js";
 import { TaskResponseMapper } from "../http/mappers/task-response.mapper.js";
 import type { IMcpActorContext } from "./context.js";
-import { runTool, type IMcpToolResult } from "./result.js";
+import {
+  toProjectsListView,
+  toTasksListView,
+} from "./app/list-view-mapper.js";
+import { runListViewTool, runTool, type IMcpToolResult } from "./result.js";
 
 export interface ISpydrMcpToolsDeps {
   commandBus: ICommandBus;
@@ -489,7 +493,7 @@ export class SpydrMcpTools {
     });
 
   getProjects = (input: { id?: string; orgId?: string } = {}): Promise<IMcpToolResult> =>
-    this.run(async () => {
+    runListViewTool(async () => {
       const orgId = await this.resolveOrgId(input.orgId);
       if (input.id) {
         const project = await this.deps.queryBus.execute<
@@ -497,18 +501,19 @@ export class SpydrMcpTools {
           ProjectNode | null
         >(new GetProjectQuery(this.userId, orgId, input.id));
         if (!project) return null;
-        return this.projectMapper.toRepresentation(project);
+        // List-view contract (no embedded children). Use get_tasks for tasks.
+        return toProjectsListView([this.projectSummary(project)]);
       }
 
       const projects = await this.deps.queryBus.execute<
         ListProjectsQuery,
         ProjectNode[]
       >(new ListProjectsQuery(this.userId, orgId));
-      return projects.map((project) => this.projectSummary(project));
+      return toProjectsListView(projects.map((project) => this.projectSummary(project)));
     });
 
   getTasks = (input: { id?: string; orgId?: string } = {}): Promise<IMcpToolResult> =>
-    this.run(async () => {
+    runListViewTool(async () => {
       const orgId = await this.resolveOrgId(input.orgId);
       if (input.id) {
         const item = await this.deps.queryBus.execute<
@@ -516,14 +521,16 @@ export class SpydrMcpTools {
           ITaskListItem | null
         >(new GetTaskQuery(this.userId, orgId, input.id));
         if (!item) return null;
-        return this.taskMapper.toListRepresentation(item);
+        return toTasksListView([this.taskMapper.toListRepresentation(item)]);
       }
 
       const items = await this.deps.queryBus.execute<
         ListTasksQuery,
         ITaskListItem[]
       >(new ListTasksQuery(this.userId, orgId));
-      return items.map((item) => this.taskMapper.toListRepresentation(item));
+      return toTasksListView(
+        items.map((item) => this.taskMapper.toListRepresentation(item))
+      );
     });
 
   getNotes = (input: { id?: string; orgId?: string } = {}): Promise<IMcpToolResult> =>

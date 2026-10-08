@@ -19,6 +19,9 @@ function bindTool<T>(fn: (input: T) => Promise<IMcpToolResult>) {
         type: "text" as const,
         text: block.text,
       })),
+      ...(result.structuredContent
+        ? { structuredContent: result.structuredContent }
+        : {}),
       isError: result.isError,
     };
   };
