@@ -30,6 +30,7 @@ const MCP_CLIENT_ORIGINS = [
   "claude.ai",
   "www.claude.ai",
   "claude.com",
+  "api.anthropic.com",
   "chatgpt.com",
   "chat.openai.com",
 ] as const;
@@ -187,7 +188,39 @@ export function mountSpydrMcpHttp(
     next();
   };
 
+  /**
+   * Claude Apps capability refresh probes GET /mcp for an optional SSE stream.
+   * createMcpHandler in legacy-stateless mode answers GET with 405, which Claude
+   * treats as fatal ("Unable to reach Spydr" on the widget) even when POSTs
+   * succeed. Serve a comment-only SSE keepalive — no auth required (no data).
+   */
+  app.get("/mcp", (req, res) => {
+    if (!guards.host(req, res) || !guards.origin(req, res)) return;
+    res.status(200);
+    res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders?.();
+    res.write(": spydr-mcp-sse\n\n");
+    const timer = setInterval(() => {
+      if (!res.writableEnded) {
+        res.write(": keepalive\n\n");
+      }
+    }, 15_000);
+    const stop = () => clearInterval(timer);
+    req.on("close", stop);
+    res.on("close", stop);
+  });
+
   app.all("/mcp", (req, res, next) => {
+    if (req.method === "GET") {
+      res.status(405).json({
+        jsonrpc: "2.0",
+        error: { code: -32000, message: "Method not allowed." },
+        id: null,
+      });
+      return;
+    }
     if (!guards.host(req, res) || !guards.origin(req, res)) return;
     next();
   }, requireClerkOAuth, requireMcpOrg, (req, res) => {

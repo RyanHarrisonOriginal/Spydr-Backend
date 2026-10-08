@@ -1,14 +1,12 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { EMBEDDED_LIST_VIEW_HTML } from "./list-view-html.generated.js";
 
 /**
  * Resolve the Vite singlefile bundle for `ui://spydr/list-view`.
- *
- * Candidates cover:
- * - tsx from src/
- * - compiled dist/ with ui-dist copied beside the JS (production)
- * - full checkout where ui-dist still lives under src/
+ * Prefer on-disk ui-dist when present; fall back to the build-time embed so
+ * production never fails resources/read because the HTML file was omitted.
  */
 export async function readListViewHtml(): Promise<string> {
   const moduleDir = path.dirname(fileURLToPath(import.meta.url));
@@ -21,18 +19,19 @@ export async function readListViewHtml(): Promise<string> {
     path.resolve(process.cwd(), "apps/api/dist/infra/mcp/app/ui-dist/index.html"),
   ];
 
-  const errors: string[] = [];
   for (const candidate of candidates) {
     try {
       return await fs.readFile(candidate, "utf-8");
-    } catch (error) {
-      errors.push(
-        `${candidate}: ${error instanceof Error ? error.message : String(error)}`
-      );
+    } catch {
+      // try next
     }
   }
 
+  if (EMBEDDED_LIST_VIEW_HTML.length > 0) {
+    return EMBEDDED_LIST_VIEW_HTML;
+  }
+
   throw new Error(
-    `MCP list-view HTML not found. Run \`npm run build:mcp-app -w @spydr/api\` (and full api build for production copy).\n${errors.join("\n")}`
+    "MCP list-view HTML not found. Run `npm run build:mcp-app -w @spydr/api`."
   );
 }

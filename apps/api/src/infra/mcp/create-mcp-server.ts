@@ -29,6 +29,7 @@ function bindTool<T>(fn: (input: T) => Promise<IMcpToolResult>) {
       ...(result.structuredContent
         ? { structuredContent: result.structuredContent }
         : {}),
+      ...(result._meta ? { _meta: result._meta } : {}),
       isError: result.isError,
     };
   };

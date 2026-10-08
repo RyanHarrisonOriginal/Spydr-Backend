@@ -1,9 +1,13 @@
-import type { SpydrListViewResult } from "./app/list-view-contract.js";
+import {
+  SPYDR_LIST_VIEW_RESOURCE_URI,
+  type SpydrListViewResult,
+} from "./app/list-view-contract.js";
 import { summarizeListView } from "./app/summarize-list-view.js";
 
 export interface IMcpToolResult {
   content: Array<{ type: "text"; text: string }>;
   structuredContent?: Record<string, unknown>;
+  _meta?: Record<string, unknown>;
   isError?: boolean;
 }
 
@@ -17,6 +21,11 @@ export function listViewResult(data: SpydrListViewResult): IMcpToolResult {
   return {
     content: [{ type: "text", text: summarizeListView(data) }],
     structuredContent: data as unknown as Record<string, unknown>,
+    // Some Claude builds look for UI linkage on the tool *result*, not only tools/list.
+    _meta: {
+      ui: { resourceUri: SPYDR_LIST_VIEW_RESOURCE_URI },
+      "ui/resourceUri": SPYDR_LIST_VIEW_RESOURCE_URI,
+    },
   };
 }
 
