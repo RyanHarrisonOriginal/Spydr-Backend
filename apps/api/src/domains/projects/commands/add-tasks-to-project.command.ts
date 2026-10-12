@@ -2,6 +2,8 @@ import type { IProjectRepository } from "../../projects/repository.js";
 import type { IPersonRepository } from "../../people/repository.js";
 import type { PersonNode } from "../../people/models/index.js";
 import type { ISpydrNodeViews } from "../../nodes/views.js";
+import { assertBlockingTask } from "../../tasks/commands/update-task.command.js";
+import type { ITaskRepository } from "../../tasks/repository.js";
 import { TaskMapper } from "../../tasks/mappers/index.js";
 import type { TaskNode } from "../../tasks/models/index.js";
 import { nextCollectionSortOrder } from "../../shared/utils/collection-sort-order.js";
@@ -29,6 +31,7 @@ export class AddTasksToProjectCommandHandler
     private readonly projects: IProjectRepository,
     private readonly people: IPersonRepository,
     private readonly nodeViews: ISpydrNodeViews,
+    private readonly tasks: ITaskRepository,
     private readonly mapper = new TaskMapper()
   ) {}
 
@@ -57,12 +60,19 @@ export class AddTasksToProjectCommandHandler
         input.assigneePersonNodeId,
         assignees
       );
+      await assertBlockingTask(
+        this.tasks,
+        command.orgId,
+        null,
+        input.blockedByNodeId
+      );
       const task = this.mapper.toModel(input, {
         userId: command.userId,
         orgId: command.orgId,
         area: project.area,
         sortOrder,
       });
+      task.assertInitialStatusContext();
       project.addTask(task);
       created.push(assignee ? task.withAssignee(assignee) : task);
       sortOrder += 1000;

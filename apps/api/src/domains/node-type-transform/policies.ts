@@ -94,6 +94,9 @@ export function defaultTaskDetailsFromSource(input: {
   taskDetails?: {
     dueDate?: Date | null;
     assigneePersonNodeId?: string | null;
+    blockedByNodeId?: string | null;
+    followUpAt?: Date | null;
+    waitingNote?: string | null;
   } | null;
 }) {
   const { now, projectDetails, taskDetails } = input;
@@ -101,7 +104,10 @@ export function defaultTaskDetailsFromSource(input: {
   return {
     dueDate: taskDetails?.dueDate ?? projectDetails?.targetDate ?? null,
     completedAt: (status === "completed" ? now : null) as Date | null,
-    isBlocked: false,
+    isBlocked: status === "blocked",
+    blockedByNodeId: status === "blocked" ? (taskDetails?.blockedByNodeId ?? null) : null,
+    followUpAt: status === "waiting" ? (taskDetails?.followUpAt ?? null) : null,
+    waitingNote: status === "waiting" ? (taskDetails?.waitingNote ?? null) : null,
     estimatedMinutes: null as number | null,
     assigneePersonNodeId:
       taskDetails?.assigneePersonNodeId ?? projectDetails?.assigneePersonNodeId ?? null,

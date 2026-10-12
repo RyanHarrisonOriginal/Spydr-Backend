@@ -20,6 +20,7 @@ import { PrismaIdeaMapper } from "../prisma/mappers/prisma-idea.mapper.js";
 import { PrismaNoteMapper } from "../prisma/mappers/prisma-note.mapper.js";
 import { PrismaResourceMapper } from "../prisma/mappers/prisma-resource.mapper.js";
 import { PrismaTaskMapper } from "../prisma/mappers/prisma-task.mapper.js";
+import { attachBlockedBy } from "../tasks/postgres-task.views.js";
 
 export interface IProjectRelatedNodes {
   tasks: TaskNode[];
@@ -259,9 +260,13 @@ export class ProjectGraphLoaders {
     const noteRows = rows.filter((row) => row.nodeType === "note");
     const resourceRows = rows.filter((row) => row.nodeType === "resource");
 
-    const taskNodes = await this.attachAssigneesToTasks(
+    const taskNodes = await attachBlockedBy(
+      this.db,
       orgId,
-      taskRows.map((row) => this.taskMapper.toDomain(row))
+      await this.attachAssigneesToTasks(
+        orgId,
+        taskRows.map((row) => this.taskMapper.toDomain(row))
+      )
     );
     const decisionNodes = decisionRows.map((row) => this.decisionMapper.toDomain(row));
     const ideaNodes = ideaRows.map((row) => this.ideaMapper.toDomain(row));

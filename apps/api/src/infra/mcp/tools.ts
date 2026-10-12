@@ -422,8 +422,46 @@ export class SpydrMcpTools {
     taskId: string;
     status: TaskStatus;
     orgId?: string;
+  }): Promise<IMcpToolResult> => {
+    if (input.status === "blocked") {
+      return this.run(async () => {
+        throw new Error("Use set_task_blocked and provide blockedByTaskId");
+      });
+    }
+    if (input.status === "waiting") {
+      return this.run(async () => {
+        throw new Error("Use set_task_waiting and provide followUpAt");
+      });
+    }
+    return this.updateTask(input.taskId, { status: input.status }, input.orgId);
+  };
+
+  setTaskBlocked = (input: {
+    taskId: string;
+    blockedByTaskId: string;
+    orgId?: string;
   }): Promise<IMcpToolResult> =>
-    this.updateTask(input.taskId, { status: input.status }, input.orgId);
+    this.updateTask(
+      input.taskId,
+      { status: "blocked", blockedByNodeId: input.blockedByTaskId },
+      input.orgId
+    );
+
+  setTaskWaiting = (input: {
+    taskId: string;
+    followUpAt: string;
+    waitingNote?: string | null;
+    orgId?: string;
+  }): Promise<IMcpToolResult> =>
+    this.updateTask(
+      input.taskId,
+      {
+        status: "waiting",
+        followUpAt: input.followUpAt,
+        ...(input.waitingNote !== undefined ? { waitingNote: input.waitingNote } : {}),
+      },
+      input.orgId
+    );
 
   modifyTaskEmoji = (input: {
     taskId: string;

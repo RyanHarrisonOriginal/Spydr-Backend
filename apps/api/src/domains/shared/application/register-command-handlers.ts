@@ -109,12 +109,14 @@ export function registerCommandHandlers(
     new AddTaskToProjectCommandHandler(
       repositories.projects,
       repositories.people,
-      repositories.spydrNodeViews
+      repositories.spydrNodeViews,
+      repositories.tasks
     ),
     new AddTasksToProjectCommandHandler(
       repositories.projects,
       repositories.people,
-      repositories.spydrNodeViews
+      repositories.spydrNodeViews,
+      repositories.tasks
     ),
     new AddNoteToProjectCommandHandler(
       repositories.projects,
@@ -128,7 +130,7 @@ export function registerCommandHandlers(
       repositories.projects,
       repositories.spydrNodeViews
     ),
-    new UpdateProjectChildCommandHandler(repositories.projects),
+    new UpdateProjectChildCommandHandler(repositories.projects, repositories.tasks),
     new DeleteProjectChildCommandHandler(repositories.projects),
     new RestoreProjectChildCommandHandler(repositories.projects),
     new UpdateTaskCommandHandler(

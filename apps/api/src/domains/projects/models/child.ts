@@ -13,6 +13,9 @@ export interface IUpdateProjectChildInput {
   estimatedMinutes?: number | null;
   assigneePersonNodeId?: string | null;
   emoji?: string | null;
+  blockedByNodeId?: string | null;
+  followUpAt?: string | null;
+  waitingNote?: string | null;
 }
 
 export type { SpydrNodeStatus, SpydrPriority };

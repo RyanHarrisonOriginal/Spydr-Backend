@@ -5,7 +5,7 @@ import type { IdeaNode } from "../../../../domains/ideas/models/index.js";
 import type { NoteNode } from "../../../../domains/notes/models/index.js";
 import type { ResourceNode } from "../../../../domains/resources/models/index.js";
 import type { TaskStatus } from "../../../../domains/shared/models/shared.js";
-import type { TaskNode } from "../../../../domains/tasks/models/index.js";
+import { parseTaskFollowUpAt, type TaskNode } from "../../../../domains/tasks/models/index.js";
 import { ProjectNode } from "../../../../domains/projects/models/index.js";
 import { withNodePersonId } from "../mappers/spydr-node-write.js";
 import { personVisibleInOrgWhere } from "../mappers/prisma-person.mapper.js";
@@ -337,6 +337,12 @@ export class PostgresProjectRepository implements IProjectRepository {
               : undefined,
           estimatedMinutes: input.estimatedMinutes,
           assigneePersonNodeId: input.assigneePersonNodeId,
+          blockedByNodeId: input.blockedByNodeId,
+          waitingNote: input.waitingNote,
+          followUpAt:
+            input.followUpAt !== undefined
+              ? parseTaskFollowUpAt(input.followUpAt)
+              : undefined,
         },
         now
       );

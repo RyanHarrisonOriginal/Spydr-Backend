@@ -1,9 +1,9 @@
 import { DomainNode, isTaskStatus, normalizeSpydrPriority, type TaskStatus, type SpydrPriority } from "../../shared/models/shared.js";
 import { normalizeEmoji } from "../../shared/utils/emoji.js";
 import type { PersonNode } from "../../people/models/index.js";
-import type { ITaskDetailsProps, ITaskNodeProps } from "./interfaces.js";
+import type { ITaskBlockerRef, ITaskDetailsProps, ITaskNodeProps } from "./interfaces.js";
 
-export type { ITaskDetailsProps, ITaskNodeProps } from "./interfaces.js";
+export type { ITaskBlockerRef, ITaskDetailsProps, ITaskNodeProps } from "./interfaces.js";
 
 export interface ITaskUpdateInput {
   title?: string;
@@ -14,6 +14,23 @@ export interface ITaskUpdateInput {
   dueDate?: Date | null;
   estimatedMinutes?: number | null;
   assigneePersonNodeId?: string | null;
+  blockedByNodeId?: string | null;
+  followUpAt?: Date | null;
+  waitingNote?: string | null;
+}
+
+export function parseTaskFollowUpAt(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("Invalid follow-up time");
+  }
+  return date;
+}
+
+export function normalizeWaitingNote(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? "";
+  return trimmed.length > 0 ? trimmed : null;
 }
 
 export class TaskDetails implements ITaskDetailsProps {
@@ -21,6 +38,9 @@ export class TaskDetails implements ITaskDetailsProps {
   dueDate: Date | null;
   completedAt: Date | null;
   isBlocked: boolean;
+  blockedByNodeId: string | null;
+  followUpAt: Date | null;
+  waitingNote: string | null;
   estimatedMinutes: number | null;
   assigneePersonNodeId: string | null;
   tags: string[];
@@ -33,6 +53,9 @@ export class TaskDetails implements ITaskDetailsProps {
     this.dueDate = props.dueDate;
     this.completedAt = props.completedAt;
     this.isBlocked = props.isBlocked;
+    this.blockedByNodeId = props.blockedByNodeId;
+    this.followUpAt = props.followUpAt;
+    this.waitingNote = normalizeWaitingNote(props.waitingNote);
     this.estimatedMinutes = props.estimatedMinutes;
     this.assigneePersonNodeId = props.assigneePersonNodeId;
     this.tags = [...props.tags];
@@ -66,6 +89,26 @@ export class TaskDetails implements ITaskDetailsProps {
     this.touch(now);
   }
 
+  setIsBlocked(isBlocked: boolean, now = new Date()): void {
+    this.isBlocked = isBlocked;
+    this.touch(now);
+  }
+
+  setBlockedByNodeId(blockedByNodeId: string | null, now = new Date()): void {
+    this.blockedByNodeId = blockedByNodeId;
+    this.touch(now);
+  }
+
+  setFollowUpAt(followUpAt: Date | null, now = new Date()): void {
+    this.followUpAt = followUpAt;
+    this.touch(now);
+  }
+
+  setWaitingNote(waitingNote: string | null, now = new Date()): void {
+    this.waitingNote = normalizeWaitingNote(waitingNote);
+    this.touch(now);
+  }
+
   setSourceTemplateTaskId(sourceTemplateTaskId: string | null, now = new Date()): void {
     this.sourceTemplateTaskId = sourceTemplateTaskId;
     this.touch(now);
@@ -84,15 +127,17 @@ export class TaskDetails implements ITaskDetailsProps {
 export class TaskNode extends DomainNode<"task"> {
   details: TaskDetails | null;
   readonly assignee: PersonNode | null;
+  readonly blockedBy: ITaskBlockerRef | null;
 
   constructor(props: ITaskNodeProps) {
     super({ ...props, nodeType: "task" });
     this.details = props.details ? new TaskDetails(props.details) : null;
     this.assignee = props.assignee ?? null;
+    this.blockedBy = props.blockedBy ?? null;
   }
 
-  withAssignee(assignee: PersonNode | null): TaskNode {
-    return new TaskNode({
+  private cloneProps(overrides: Partial<ITaskNodeProps> = {}): ITaskNodeProps {
+    return {
       id: this.id,
       orgId: this.orgId,
       userId: this.userId,
@@ -110,8 +155,18 @@ export class TaskNode extends DomainNode<"task"> {
       isDeleted: this.isDeleted,
       deletedAt: this.deletedAt,
       details: this.details,
-      assignee,
-    });
+      assignee: this.assignee,
+      blockedBy: this.blockedBy,
+      ...overrides,
+    };
+  }
+
+  withAssignee(assignee: PersonNode | null): TaskNode {
+    return new TaskNode(this.cloneProps({ assignee }));
+  }
+
+  withBlockedBy(blockedBy: ITaskBlockerRef | null): TaskNode {
+    return new TaskNode(this.cloneProps({ blockedBy }));
   }
 
   isOpenForTemplateSync(): boolean {
@@ -129,8 +184,21 @@ export class TaskNode extends DomainNode<"task"> {
     this.ensureDetails(now).setCompletedAt(now, now);
   }
 
+  assertInitialStatusContext(): void {
+    if (this.status === "blocked" && !this.details?.blockedByNodeId) {
+      throw new Error("Invalid task status: a blocking task is required");
+    }
+    if (this.details?.blockedByNodeId === this.id) {
+      throw new Error("Invalid task status: a task cannot block itself");
+    }
+    if (this.status === "waiting" && !this.details?.followUpAt) {
+      throw new Error("Invalid task status: a follow-up time is required");
+    }
+  }
+
   applyUpdate(input: ITaskUpdateInput, now = new Date()): void {
-    const wasCompleted = this.status === "completed";
+    const previousStatus = this.status;
+    const wasCompleted = previousStatus === "completed";
     const existingCompletedAt = this.details?.completedAt ?? null;
 
     if (input.title !== undefined) {
@@ -165,6 +233,8 @@ export class TaskNode extends DomainNode<"task"> {
       details.setAssigneePersonNodeId(input.assigneePersonNodeId, now);
     }
 
+    this.reconcileStatusContext(input, previousStatus, now);
+
     const isCompleted = this.status === "completed";
     details.setCompletedAt(
       this.resolveCompletedAt(existingCompletedAt, wasCompleted, isCompleted, now),
@@ -181,6 +251,9 @@ export class TaskNode extends DomainNode<"task"> {
         dueDate: null,
         completedAt: null,
         isBlocked: false,
+        blockedByNodeId: null,
+        followUpAt: null,
+        waitingNote: null,
         estimatedMinutes: null,
         assigneePersonNodeId: null,
         tags: [],
@@ -190,6 +263,50 @@ export class TaskNode extends DomainNode<"task"> {
       });
     }
     return this.details;
+  }
+
+  private reconcileStatusContext(
+    input: ITaskUpdateInput,
+    previousStatus: TaskStatus | string,
+    now: Date
+  ): void {
+    const details = this.ensureDetails(now);
+    const enteredBlocked = this.status === "blocked" && previousStatus !== "blocked";
+
+    if (this.status === "blocked") {
+      details.setIsBlocked(true, now);
+      if (enteredBlocked || input.blockedByNodeId !== undefined) {
+        const blockerId = input.blockedByNodeId ?? null;
+        if (!blockerId) {
+          throw new Error("Invalid task status: a blocking task is required");
+        }
+        if (blockerId === this.id) {
+          throw new Error("Invalid task status: a task cannot block itself");
+        }
+        details.setBlockedByNodeId(blockerId, now);
+      }
+    } else {
+      details.setIsBlocked(false, now);
+      details.setBlockedByNodeId(null, now);
+    }
+
+    const enteredWaiting = this.status === "waiting" && previousStatus !== "waiting";
+    if (this.status === "waiting") {
+      if (enteredWaiting || input.followUpAt !== undefined) {
+        const followUpAt =
+          input.followUpAt !== undefined ? input.followUpAt : details.followUpAt;
+        if (!followUpAt) {
+          throw new Error("Invalid task status: a follow-up time is required");
+        }
+        details.setFollowUpAt(followUpAt, now);
+      }
+      if (enteredWaiting || input.waitingNote !== undefined) {
+        details.setWaitingNote(input.waitingNote ?? null, now);
+      }
+    } else if (previousStatus === "waiting") {
+      details.setFollowUpAt(null, now);
+      details.setWaitingNote(null, now);
+    }
   }
 
   private resolveCompletedAt(

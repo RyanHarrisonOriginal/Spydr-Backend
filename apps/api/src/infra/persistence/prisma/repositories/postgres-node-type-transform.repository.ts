@@ -46,6 +46,9 @@ function toDomainTaskSource(details: NodeWithDetails["taskDetails"]) {
   return {
     dueDate: details.dueDate,
     assigneePersonNodeId: details.assigneePersonId,
+    blockedByNodeId: details.blockedByNodeId,
+    followUpAt: details.followUpAt,
+    waitingNote: details.waitingNote,
   };
 }
 

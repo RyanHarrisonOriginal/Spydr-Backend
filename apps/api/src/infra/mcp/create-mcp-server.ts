@@ -288,7 +288,7 @@ export function createSpydrMcpServer(
     {
       title: "Modify node",
       description:
-        "Update a node's title, body, status, or priority. Provide at least one field. To mark a task complete, use mark_task_complete so its completion time is recorded.",
+        "Update a node's title, body, status, or priority. Provide at least one field. To mark a task complete, use mark_task_complete. To block a task, use set_task_blocked. To mark a task waiting, use set_task_waiting.",
       inputSchema: z.object({
         orgId: optionalOrgId,
         nodeId: z.string().min(1),
@@ -511,7 +511,7 @@ export function createSpydrMcpServer(
     {
       title: "Modify task status",
       description:
-        "Set a task's status. Use list_statuses for valid task values.",
+        "Set a task's status to active or completed. Use set_task_blocked to block a task, set_task_waiting to mark it waiting, and mark_task_complete to record completion.",
       inputSchema: z.object({
         orgId: optionalOrgId,
         taskId: z.string().min(1),
@@ -520,6 +520,49 @@ export function createSpydrMcpServer(
       annotations: { readOnlyHint: false, destructiveHint: false },
     },
     bindTool(tools.modifyTaskStatus)
+  );
+
+  server.registerTool(
+    "set_task_blocked",
+    {
+      title: "Set task blocked",
+      description:
+        "Mark a task as blocked by another task. blockedByTaskId is required and must be a different task.",
+      inputSchema: z.object({
+        orgId: optionalOrgId,
+        taskId: z.string().min(1),
+        blockedByTaskId: z
+          .string()
+          .min(1)
+          .describe("Id of the task that blocks this one"),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    },
+    bindTool(tools.setTaskBlocked)
+  );
+
+  server.registerTool(
+    "set_task_waiting",
+    {
+      title: "Set task waiting",
+      description:
+        "Mark a task as waiting. followUpAt is required. waitingNote is an optional note attached to the waiting status.",
+      inputSchema: z.object({
+        orgId: optionalOrgId,
+        taskId: z.string().min(1),
+        followUpAt: z
+          .string()
+          .min(1)
+          .describe("ISO-8601 follow-up time, for example 2026-10-12T15:00:00.000Z"),
+        waitingNote: z
+          .string()
+          .nullable()
+          .optional()
+          .describe("Optional note attached to the waiting status. Pass null to clear it."),
+      }),
+      annotations: { readOnlyHint: false, destructiveHint: false },
+    },
+    bindTool(tools.setTaskWaiting)
   );
 
   server.registerTool(

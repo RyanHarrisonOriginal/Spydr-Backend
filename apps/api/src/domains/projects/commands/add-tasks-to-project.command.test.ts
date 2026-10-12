@@ -37,7 +37,8 @@ describe("AddTasksToProjectCommandHandler", () => {
     const handler = new AddTasksToProjectCommandHandler(
       projects as never,
       people as never,
-      nodeViews as never
+      nodeViews as never,
+      { get: vi.fn() } as never
     );
 
     const created = await handler.execute(
@@ -64,7 +65,8 @@ describe("AddTasksToProjectCommandHandler", () => {
     const handler = new AddTasksToProjectCommandHandler(
       projects as never,
       { get: vi.fn() } as never,
-      { nextSortOrderForOrg: vi.fn() } as never
+      { nextSortOrderForOrg: vi.fn() } as never,
+      { get: vi.fn() } as never
     );
 
     await expect(

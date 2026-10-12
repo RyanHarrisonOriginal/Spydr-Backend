@@ -195,6 +195,7 @@ model SpydrNode {
   projectAreaDetails         SpydrProjectAreaDetails?
   resourceDetails            SpydrResourceDetails?
   taskDetails                SpydrTaskDetails?
+  blockingTaskDetails        SpydrTaskDetails[]         @relation("TaskBlockedBy")
   typeHistory                SpydrNodeTypeHistory[]     @relation("NodeTypeHistory")
   todoItems                  SpydrTodoItem[]
   projectTemplatesAsSource   SpydrProjectTemplate[]     @relation("ProjectTemplateSourceProject")
@@ -444,6 +445,10 @@ model SpydrTaskDetails {
   dueDate              DateTime?               @map("due_date") @db.Date
   completedAt          DateTime?               @map("completed_at") @db.Timestamptz(6)
   isBlocked            Boolean                 @default(false) @map("is_blocked")
+  blockedByNodeId      String?                 @map("blocked_by_node_id") @db.Uuid
+  blockedByNode        SpydrNode?              @relation("TaskBlockedBy", fields: [blockedByNodeId], references: [id], onDelete: SetNull, map: "spydr_task_details_blocked_by_node_id_fkey")
+  followUpAt           DateTime?               @map("follow_up_at") @db.Timestamptz(6)
+  waitingNote          String?                 @map("waiting_note")
   estimatedMinutes     Int?                    @map("estimated_minutes")
   assigneePersonId     String?                 @map("assignee_person_id") @db.Uuid
   assigneePerson       SpydrPersonDetails?     @relation("TaskAssigneePerson", fields: [assigneePersonId], references: [id], onDelete: SetNull, map: "spydr_task_details_assignee_person_id_fkey")
@@ -455,6 +460,7 @@ model SpydrTaskDetails {
 
   @@index([dueDate], map: "idx_spydr_task_due_date")
   @@index([assigneePersonId], map: "idx_spydr_task_assignee")
+  @@index([blockedByNodeId], map: "idx_spydr_task_blocked_by")
   @@index([sourceTemplateTaskId], map: "idx_spydr_task_details_source_template_task")
   @@map("spydr_task_details")
 }

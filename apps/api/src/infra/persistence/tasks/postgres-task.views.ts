@@ -4,7 +4,7 @@ import type {
   ITaskProjectRef,
   ITaskViews,
 } from "../../../domains/tasks/views.js";
-import type { TaskNode } from "../../../domains/tasks/models/index.js";
+import { type TaskNode } from "../../../domains/tasks/models/index.js";
 import type { PersonNode } from "../../../domains/people/models/index.js";
 import { PrismaTaskMapper } from "../prisma/mappers/prisma-task.mapper.js";
 import {
@@ -28,9 +28,13 @@ export class PostgresTaskViews implements ITaskViews {
 
     if (rows.length === 0) return [];
 
-    const tasks = await this.attachAssignees(
+    const tasks = await attachBlockedBy(
+      this.db,
       orgId,
-      rows.map((row) => this.mapper.toDomain(row))
+      await this.attachAssignees(
+        orgId,
+        rows.map((row) => this.mapper.toDomain(row))
+      )
     );
     const taskIds = tasks.map((task) => task.id);
     const relationships = await this.db.spydrNodeRelationship.findMany({
@@ -89,7 +93,10 @@ export class PostgresTaskViews implements ITaskViews {
     });
     if (!row) return null;
 
-    const task = await this.attachAssignee(orgId, this.mapper.toDomain(row));
+    const [task] = await attachBlockedBy(this.db, orgId, [
+      await this.attachAssignee(orgId, this.mapper.toDomain(row)),
+    ]);
+    if (!task) return null;
     return {
       task,
       project: await this.findProjectForTask(orgId, taskId),
@@ -164,4 +171,36 @@ export class PostgresTaskViews implements ITaskViews {
 
     return project ? { id: project.id, title: project.title } : null;
   }
+}
+
+export async function attachBlockedBy(
+  db: PrismaClient,
+  orgId: string,
+  tasks: TaskNode[]
+): Promise<TaskNode[]> {
+  const blockerIds = [
+    ...new Set(
+      tasks
+        .map((task) => task.details?.blockedByNodeId)
+        .filter((id): id is string => Boolean(id))
+    ),
+  ];
+  if (blockerIds.length === 0) return tasks;
+
+  const rows = await db.spydrNode.findMany({
+    where: {
+      orgId,
+      id: { in: blockerIds },
+      nodeType: "task",
+      isDeleted: false,
+    },
+    select: { id: true, title: true },
+  });
+  const blockerById = new Map(rows.map((row) => [row.id, { id: row.id, title: row.title }]));
+
+  return tasks.map((task) => {
+    const blockerId = task.details?.blockedByNodeId;
+    if (!blockerId) return task;
+    return task.withBlockedBy(blockerById.get(blockerId) ?? null);
+  });
 }

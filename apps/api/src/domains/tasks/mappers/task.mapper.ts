@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { IDomainMapper } from "../../shared/mappers/mapper.js";
-import { TaskNode } from "../models/index.js";
+import { normalizeWaitingNote, parseTaskFollowUpAt, TaskNode } from "../models/index.js";
 import {
   spydrPriorities,
   type TaskStatus,
@@ -20,6 +20,9 @@ export interface ITaskUpdateModelInput {
   estimatedMinutes?: number | null;
   assigneePersonNodeId?: string | null;
   emoji?: string | null;
+  blockedByNodeId?: string | null;
+  followUpAt?: string | null;
+  waitingNote?: string | null;
 }
 
 export interface ITaskCreateModelInput {
@@ -30,6 +33,9 @@ export interface ITaskCreateModelInput {
   dueDate?: string | null;
   estimatedMinutes?: number | null;
   assigneePersonNodeId?: string | null;
+  blockedByNodeId?: string | null;
+  followUpAt?: string | null;
+  waitingNote?: string | null;
   sourceTemplateTaskId?: string | null;
   tags?: string[];
   emoji?: string | null;
@@ -76,7 +82,10 @@ export class TaskMapper {
         emoji: input.emoji ?? null,
         dueDate: this.parseDate(input.dueDate),
         completedAt: this.resolveCompletedAt(null, false, status === "completed", now),
-        isBlocked: false,
+        isBlocked: status === "blocked",
+        blockedByNodeId: status === "blocked" ? (input.blockedByNodeId ?? null) : null,
+        followUpAt: status === "waiting" ? parseTaskFollowUpAt(input.followUpAt) : null,
+        waitingNote: status === "waiting" ? normalizeWaitingNote(input.waitingNote) : null,
         estimatedMinutes: input.estimatedMinutes ?? null,
         assigneePersonNodeId: input.assigneePersonNodeId ?? null,
         tags,

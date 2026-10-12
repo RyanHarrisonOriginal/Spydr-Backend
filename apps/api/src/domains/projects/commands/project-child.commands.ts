@@ -1,3 +1,5 @@
+import { assertBlockingTask } from "../../tasks/commands/update-task.command.js";
+import type { ITaskRepository } from "../../tasks/repository.js";
 import type { IProjectRepository } from "../repository.js";
 import type { ProjectNode } from "../models/index.js";
 import type {
@@ -27,7 +29,10 @@ export class UpdateProjectChildCommandHandler
 {
   readonly commandType = UpdateProjectChildCommand.commandType;
 
-  constructor(private readonly projects: IProjectRepository) {}
+  constructor(
+    private readonly projects: IProjectRepository,
+    private readonly tasks: ITaskRepository
+  ) {}
 
   async execute(
     command: UpdateProjectChildCommand
@@ -37,6 +42,15 @@ export class UpdateProjectChildCommandHandler
       orgId: command.orgId,
     });
     if (!project || project.isDeleted) return null;
+
+    if (command.kind === "task") {
+      await assertBlockingTask(
+        this.tasks,
+        command.orgId,
+        command.childId,
+        command.input.blockedByNodeId
+      );
+    }
 
     project.updateChild(command.kind, command.childId, command.input);
     return this.projects.save(project, {

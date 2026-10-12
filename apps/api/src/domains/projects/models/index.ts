@@ -14,7 +14,7 @@ import type { DecisionNode } from "../../decisions/models/index.js";
 import type { IdeaNode } from "../../ideas/models/index.js";
 import type { NoteNode } from "../../notes/models/index.js";
 import type { ResourceNode } from "../../resources/models/index.js";
-import type { TaskNode } from "../../tasks/models/index.js";
+import { parseTaskFollowUpAt, type TaskNode } from "../../tasks/models/index.js";
 import type { ProjectChildKind, IUpdateProjectChildInput } from "./child.js";
 import {
   assertProjectTargetCoversTaskDues,
@@ -437,6 +437,12 @@ export class ProjectNode extends DomainNode<"project"> {
                 : undefined,
             estimatedMinutes: input.estimatedMinutes,
             assigneePersonNodeId: input.assigneePersonNodeId,
+            blockedByNodeId: input.blockedByNodeId,
+            waitingNote: input.waitingNote,
+            followUpAt:
+              input.followUpAt !== undefined
+                ? parseTaskFollowUpAt(input.followUpAt)
+                : undefined,
           },
           now
         );

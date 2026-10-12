@@ -31,11 +31,15 @@ export interface ITaskResponse {
   deletedAt: string | null;
   project: ITaskProjectResponse | null;
   assignee: IPersonResponse | null;
+  blockedBy: ITaskProjectResponse | null;
   details: {
     emoji: string | null;
     dueDate: string | null;
     completedAt: string | null;
     isBlocked: boolean;
+    blockedByNodeId: string | null;
+    followUpAt: string | null;
+    waitingNote: string | null;
     estimatedMinutes: number | null;
     assigneePersonNodeId: string | null;
     tags: string[];
@@ -70,12 +74,16 @@ export class TaskResponseMapper
       assignee: domain.assignee
         ? this.personMapper.toRepresentation(domain.assignee)
         : null,
+      blockedBy: domain.blockedBy,
       details: domain.details
         ? {
             emoji: domain.details.emoji,
             dueDate: this.toDateOnly(domain.details.dueDate),
             completedAt: domain.details.completedAt?.toISOString() ?? null,
             isBlocked: domain.details.isBlocked,
+            blockedByNodeId: domain.details.blockedByNodeId,
+            followUpAt: domain.details.followUpAt?.toISOString() ?? null,
+            waitingNote: domain.details.waitingNote,
             estimatedMinutes: domain.details.estimatedMinutes,
             assigneePersonNodeId: domain.details.assigneePersonNodeId,
             tags: domain.details.tags,

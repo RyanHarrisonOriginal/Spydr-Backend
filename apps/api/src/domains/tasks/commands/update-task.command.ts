@@ -2,7 +2,8 @@ import type { ICommand, ICommandHandler } from "../../shared/application/command
 import type { IPersonRepository } from "../../people/repository.js";
 import type { IProjectRepository } from "../../projects/repository.js";
 import type { ITaskUpdateModelInput } from "../mappers/index.js";
-import type { ITaskUpdateInput } from "../models/index.js";
+import { parseTaskFollowUpAt, type ITaskUpdateInput } from "../models/index.js";
+import type { TaskNode } from "../models/index.js";
 import type { ITaskRepository } from "../repository.js";
 import type { ITaskListItem, ITaskViews } from "../views.js";
 
@@ -19,8 +20,28 @@ function hasTaskFieldUpdates(input: ITaskUpdateModelInput): boolean {
     input.dueDate !== undefined ||
     input.estimatedMinutes !== undefined ||
     input.assigneePersonNodeId !== undefined ||
-    input.emoji !== undefined
+    input.emoji !== undefined ||
+    input.blockedByNodeId !== undefined ||
+    input.followUpAt !== undefined ||
+    input.waitingNote !== undefined
   );
+}
+
+export async function assertBlockingTask(
+  tasks: ITaskRepository,
+  orgId: string,
+  taskId: string | null,
+  blockedByNodeId: string | null | undefined
+): Promise<TaskNode | null> {
+  if (!blockedByNodeId) return null;
+  if (taskId && blockedByNodeId === taskId) {
+    throw new Error("Invalid task status: a task cannot block itself");
+  }
+  const blocker = await tasks.get({ id: blockedByNodeId, orgId });
+  if (!blocker || blocker.isDeleted) {
+    throw new Error("Invalid blocking task");
+  }
+  return blocker;
 }
 
 function parseTaskDueDate(value: string | null | undefined): Date | null {
@@ -43,8 +64,14 @@ function toDomainUpdateInput(input: ITaskUpdateModelInput): ITaskUpdateInput {
     estimatedMinutes: input.estimatedMinutes,
     assigneePersonNodeId: input.assigneePersonNodeId,
     emoji: input.emoji,
+    blockedByNodeId: input.blockedByNodeId,
+    waitingNote: input.waitingNote,
     dueDate:
       input.dueDate !== undefined ? parseTaskDueDate(input.dueDate) : undefined,
+    followUpAt:
+      input.followUpAt !== undefined
+        ? parseTaskFollowUpAt(input.followUpAt)
+        : undefined,
   };
 }
 
@@ -90,6 +117,13 @@ export class UpdateTaskCommandHandler
         throw new Error("Person not found");
       }
     }
+
+    await assertBlockingTask(
+      this.tasks,
+      command.orgId,
+      command.taskId,
+      taskInput.blockedByNodeId
+    );
 
     const dueDateChanging = taskInput.dueDate !== undefined;
     const projectChanging = projectNodeId !== undefined;

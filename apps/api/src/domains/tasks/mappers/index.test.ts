@@ -27,6 +27,9 @@ function baseTask(overrides?: Partial<ConstructorParameters<typeof TaskNode>[0]>
       dueDate: null,
       completedAt: null,
       isBlocked: false,
+      blockedByNodeId: null,
+      followUpAt: null,
+      waitingNote: null,
       estimatedMinutes: null,
       assigneePersonNodeId: null,
       tags: [],
@@ -78,6 +81,9 @@ describe("TaskNode applyUpdate completedAt invariant", () => {
         dueDate: null,
         completedAt: earlier,
         isBlocked: false,
+        blockedByNodeId: null,
+        followUpAt: null,
+        waitingNote: null,
         estimatedMinutes: null,
         assigneePersonNodeId: null,
         tags: [],
@@ -99,6 +105,9 @@ describe("TaskNode applyUpdate completedAt invariant", () => {
         dueDate: null,
         completedAt: null,
         isBlocked: false,
+        blockedByNodeId: null,
+        followUpAt: null,
+        waitingNote: null,
         estimatedMinutes: null,
         assigneePersonNodeId: null,
         tags: [],
@@ -119,6 +128,9 @@ describe("TaskNode applyUpdate completedAt invariant", () => {
         dueDate: null,
         completedAt: earlier,
         isBlocked: false,
+        blockedByNodeId: null,
+        followUpAt: null,
+        waitingNote: null,
         estimatedMinutes: null,
         assigneePersonNodeId: null,
         tags: [],
@@ -139,5 +151,61 @@ describe("TaskNode applyUpdate completedAt invariant", () => {
 
     expect(task.status).toBe("completed");
     expect(task.details?.completedAt).toEqual(now);
+  });
+});
+
+describe("TaskNode status context", () => {
+  const followUpAt = new Date("2026-09-12T15:00:00.000Z");
+
+  it("requires a blocker when entering blocked and clears it when leaving", () => {
+    const task = baseTask();
+
+    expect(() => task.applyUpdate({ status: "blocked" }, now)).toThrow(
+      "Invalid task status: a blocking task is required"
+    );
+
+    task.applyUpdate({ status: "blocked", blockedByNodeId: "task-2" }, now);
+    expect(task.details?.isBlocked).toBe(true);
+    expect(task.details?.blockedByNodeId).toBe("task-2");
+
+    task.applyUpdate({ status: "active" }, now);
+    expect(task.status).toBe("active");
+    expect(task.details?.isBlocked).toBe(false);
+    expect(task.details?.blockedByNodeId).toBeNull();
+  });
+
+  it("keeps a legacy blocked task valid when other fields change", () => {
+    const task = baseTask({ status: "blocked" });
+    task.applyUpdate({ title: "Still blocked" }, now);
+
+    expect(task.title).toBe("Still blocked");
+    expect(task.details?.blockedByNodeId).toBeNull();
+    expect(task.details?.isBlocked).toBe(true);
+  });
+
+  it("requires a follow-up time when entering waiting and stores an optional note", () => {
+    const task = baseTask();
+
+    expect(() => task.applyUpdate({ status: "waiting" }, now)).toThrow(
+      "Invalid task status: a follow-up time is required"
+    );
+
+    task.applyUpdate(
+      { status: "waiting", followUpAt, waitingNote: "  Waiting on legal  " },
+      now
+    );
+    expect(task.details?.followUpAt).toEqual(followUpAt);
+    expect(task.details?.waitingNote).toBe("Waiting on legal");
+
+    task.applyUpdate({ status: "active" }, now);
+    expect(task.details?.followUpAt).toBeNull();
+    expect(task.details?.waitingNote).toBeNull();
+  });
+
+  it("rejects a task blocking itself", () => {
+    const task = baseTask();
+    expect(() =>
+      task.applyUpdate({ status: "blocked", blockedByNodeId: "task-1" }, now)
+    ).toThrow("Invalid task status: a task cannot block itself");
   });
 });

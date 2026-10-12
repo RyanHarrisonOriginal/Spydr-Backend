@@ -1,6 +1,8 @@
 import type { IProjectRepository } from "../../projects/repository.js";
 import type { IPersonRepository } from "../../people/repository.js";
 import type { ISpydrNodeViews } from "../../nodes/views.js";
+import { assertBlockingTask } from "../../tasks/commands/update-task.command.js";
+import type { ITaskRepository } from "../../tasks/repository.js";
 import { TaskMapper } from "../../tasks/mappers/index.js";
 import type { TaskNode } from "../../tasks/models/index.js";
 import {
@@ -19,6 +21,9 @@ export interface IAddTaskToProjectInput {
   estimatedMinutes?: number | null;
   assigneePersonNodeId?: string | null;
   emoji?: string | null;
+  blockedByNodeId?: string | null;
+  followUpAt?: string | null;
+  waitingNote?: string | null;
 }
 
 export class AddTaskToProjectCommand implements ICommand<TaskNode | null> {
@@ -42,6 +47,7 @@ export class AddTaskToProjectCommandHandler
     private readonly projects: IProjectRepository,
     private readonly people: IPersonRepository,
     private readonly nodeViews: ISpydrNodeViews,
+    private readonly tasks: ITaskRepository,
     private readonly mapper = new TaskMapper()
   ) {}
 
@@ -68,15 +74,25 @@ export class AddTaskToProjectCommandHandler
       command.orgId,
       "task"
     );
+    const blocker = await assertBlockingTask(
+      this.tasks,
+      command.orgId,
+      null,
+      command.input.blockedByNodeId
+    );
     const task = this.mapper.toModel(command.input, {
       userId: command.userId,
       orgId: command.orgId,
       area: project.area,
       sortOrder,
     });
+    task.assertInitialStatusContext();
+    const created = blocker
+      ? task.withBlockedBy({ id: blocker.id, title: blocker.title })
+      : task;
     project.addTask(task);
 
     await this.projects.save(project);
-    return assignee ? task.withAssignee(assignee) : task;
+    return assignee ? created.withAssignee(assignee) : created;
   }
 }

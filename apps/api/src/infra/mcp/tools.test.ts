@@ -572,7 +572,7 @@ describe("SpydrMcpTools", () => {
     const tools = new SpydrMcpTools({ commandBus, queryBus, context });
 
     await tools.modifyTaskAssignee({ taskId: "task-1", personNodeId: "person-1" });
-    await tools.modifyTaskStatus({ taskId: "task-1", status: "waiting" });
+    await tools.modifyTaskStatus({ taskId: "task-1", status: "active" });
     await tools.modifyTaskEmoji({ taskId: "task-1", emoji: "🚀" });
     await tools.modifyTaskName({ taskId: "task-1", title: "Write launch brief" });
     await tools.modifyTaskDueDate({ taskId: "task-1", dueDate: "2026-10-01" });
@@ -585,10 +585,51 @@ describe("SpydrMcpTools", () => {
     const dueDate = vi.mocked(commandBus.execute).mock.calls[4][0] as UpdateTaskCommand;
     expect(assignee).toBeInstanceOf(UpdateTaskCommand);
     expect(assignee.input.assigneePersonNodeId).toBe("person-1");
-    expect(status.input.status).toBe("waiting");
+    expect(status.input.status).toBe("active");
     expect(emoji.input.emoji).toBe("🚀");
     expect(name.input.title).toBe("Write launch brief");
     expect(dueDate.input.dueDate).toBe("2026-10-01");
+  });
+
+  it("sets blocked and waiting through dedicated tools", async () => {
+    const { commandBus, queryBus } = mockBuses();
+    vi.mocked(commandBus.execute).mockResolvedValue({
+      task: task(),
+      project: { id: "project-1", title: "Launch" },
+    });
+    const tools = new SpydrMcpTools({ commandBus, queryBus, context });
+
+    await tools.setTaskBlocked({ taskId: "task-1", blockedByTaskId: "task-2" });
+    await tools.setTaskWaiting({
+      taskId: "task-1",
+      followUpAt: "2026-10-12T15:00:00.000Z",
+      waitingNote: "Waiting on legal",
+    });
+
+    const blocked = vi.mocked(commandBus.execute).mock.calls[0][0] as UpdateTaskCommand;
+    const waiting = vi.mocked(commandBus.execute).mock.calls[1][0] as UpdateTaskCommand;
+    expect(blocked.input).toEqual({ status: "blocked", blockedByNodeId: "task-2" });
+    expect(waiting.input).toEqual({
+      status: "waiting",
+      followUpAt: "2026-10-12T15:00:00.000Z",
+      waitingNote: "Waiting on legal",
+    });
+    const blockedRefusal = await tools.modifyTaskStatus({
+      taskId: "task-1",
+      status: "blocked",
+    });
+    const waitingRefusal = await tools.modifyTaskStatus({
+      taskId: "task-1",
+      status: "waiting",
+    });
+    expect(blockedRefusal.isError).toBe(true);
+    expect(blockedRefusal.content[0].text).toBe(
+      "Use set_task_blocked and provide blockedByTaskId"
+    );
+    expect(waitingRefusal.isError).toBe(true);
+    expect(waitingRefusal.content[0].text).toBe(
+      "Use set_task_waiting and provide followUpAt"
+    );
   });
 
   it("modifies project body and outcome", async () => {
