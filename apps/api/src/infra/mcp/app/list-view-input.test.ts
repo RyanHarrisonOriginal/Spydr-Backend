@@ -21,7 +21,7 @@ describe("list-view-input schemas", () => {
     (_name, schema) => {
       const props = advertisedProperties(schema);
       expect(Object.keys(props).sort()).toEqual(
-        ["assignee", "id", "limit", "offset", "orgId", "status"].sort()
+        ["assignee", "id", "limit", "offset", "orgId", "status", "ui"].sort()
       );
       expect(props.limit?.type).toBe("integer");
       expect(props.offset?.type).toBe("integer");

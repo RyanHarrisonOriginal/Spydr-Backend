@@ -45,6 +45,12 @@ export const listViewFilterFields = {
     .min(0)
     .optional()
     .describe("Rows to skip before returning results (default 0)."),
+  ui: z
+    .boolean()
+    .optional()
+    .describe(
+      "When true, attach the interactive Spydr list widget. When false, never attach it. Omit to auto-attach only for filtered or single-id results (not broad unfiltered dumps)."
+    ),
 };
 
 export const getProjectsInputSchema = z.object({

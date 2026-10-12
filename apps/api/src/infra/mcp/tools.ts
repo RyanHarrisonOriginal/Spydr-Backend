@@ -78,6 +78,7 @@ import {
   toProjectsListView,
   toTasksListView,
 } from "./app/list-view-mapper.js";
+import { shouldAttachListUi } from "./app/list-view-ui.js";
 import { runListViewTool, runTool, type IMcpToolResult } from "./result.js";
 
 export interface ISpydrMcpToolsDeps {
@@ -528,61 +529,89 @@ export class SpydrMcpTools {
     });
 
   getProjects = (input: GetProjectsInput = {}): Promise<IMcpToolResult> =>
-    runListViewTool(async () => {
-      const orgId = await this.resolveOrgId(input.orgId);
-      if (input.id) {
-        const project = await this.deps.queryBus.execute<
-          GetProjectQuery,
-          ProjectNode | null
-        >(new GetProjectQuery(this.userId, orgId, input.id));
-        if (!project) return null;
-        // List-view contract (no embedded children). Use get_tasks for tasks.
-        return toProjectsListView([this.projectSummary(project)]);
-      }
-
-      const projects = await this.deps.queryBus.execute<
-        ListProjectsQuery,
-        ProjectNode[]
-      >(new ListProjectsQuery(this.userId, orgId));
-      return filterAndPageListView(
-        toProjectsListView(projects.map((project) => this.projectSummary(project))),
-        {
-          status: input.status,
-          assignee: input.assignee,
-          limit: input.limit,
-          offset: input.offset,
-        }
-      );
-    });
+    this.loadProjects(input, "text");
 
   getTasks = (input: GetTasksInput = {}): Promise<IMcpToolResult> =>
-    runListViewTool(async () => {
-      const orgId = await this.resolveOrgId(input.orgId);
-      if (input.id) {
-        const item = await this.deps.queryBus.execute<
-          GetTaskQuery,
-          ITaskListItem | null
-        >(new GetTaskQuery(this.userId, orgId, input.id));
-        if (!item) return null;
-        return toTasksListView([this.taskMapper.toListRepresentation(item)]);
-      }
+    this.loadTasks(input, "text");
 
-      const items = await this.deps.queryBus.execute<
-        ListTasksQuery,
-        ITaskListItem[]
-      >(new ListTasksQuery(this.userId, orgId));
-      return filterAndPageListView(
-        toTasksListView(
-          items.map((item) => this.taskMapper.toListRepresentation(item))
-        ),
-        {
-          status: input.status,
-          assignee: input.assignee,
-          limit: input.limit,
-          offset: input.offset,
+  /** Same data as get_projects, but opens the interactive list App. */
+  presentProjects = (input: GetProjectsInput = {}): Promise<IMcpToolResult> =>
+    this.loadProjects(input, "app");
+
+  /** Same data as get_tasks, but opens the interactive list App. */
+  presentTasks = (input: GetTasksInput = {}): Promise<IMcpToolResult> =>
+    this.loadTasks(input, "app");
+
+  private loadProjects = (
+    input: GetProjectsInput,
+    mode: "text" | "app"
+  ): Promise<IMcpToolResult> =>
+    runListViewTool(
+      async () => {
+        const orgId = await this.resolveOrgId(input.orgId);
+        if (input.id) {
+          const project = await this.deps.queryBus.execute<
+            GetProjectQuery,
+            ProjectNode | null
+          >(new GetProjectQuery(this.userId, orgId, input.id));
+          if (!project) return null;
+          // List-view contract (no embedded children). Use get_tasks for tasks.
+          return toProjectsListView([this.projectSummary(project)]);
         }
-      );
-    });
+
+        const projects = await this.deps.queryBus.execute<
+          ListProjectsQuery,
+          ProjectNode[]
+        >(new ListProjectsQuery(this.userId, orgId));
+        return filterAndPageListView(
+          toProjectsListView(
+            projects.map((project) => this.projectSummary(project))
+          ),
+          {
+            status: input.status,
+            assignee: input.assignee,
+            limit: input.limit ?? (mode === "app" ? 25 : undefined),
+            offset: input.offset,
+          }
+        );
+      },
+      (data) => shouldAttachListUi({ ...input, mode }, data)
+    );
+
+  private loadTasks = (
+    input: GetTasksInput,
+    mode: "text" | "app"
+  ): Promise<IMcpToolResult> =>
+    runListViewTool(
+      async () => {
+        const orgId = await this.resolveOrgId(input.orgId);
+        if (input.id) {
+          const item = await this.deps.queryBus.execute<
+            GetTaskQuery,
+            ITaskListItem | null
+          >(new GetTaskQuery(this.userId, orgId, input.id));
+          if (!item) return null;
+          return toTasksListView([this.taskMapper.toListRepresentation(item)]);
+        }
+
+        const items = await this.deps.queryBus.execute<
+          ListTasksQuery,
+          ITaskListItem[]
+        >(new ListTasksQuery(this.userId, orgId));
+        return filterAndPageListView(
+          toTasksListView(
+            items.map((item) => this.taskMapper.toListRepresentation(item))
+          ),
+          {
+            status: input.status,
+            assignee: input.assignee,
+            limit: input.limit ?? (mode === "app" ? 25 : undefined),
+            offset: input.offset,
+          }
+        );
+      },
+      (data) => shouldAttachListUi({ ...input, mode }, data)
+    );
 
   getNotes = (input: { id?: string; orgId?: string } = {}): Promise<IMcpToolResult> =>
     this.run(async () => {

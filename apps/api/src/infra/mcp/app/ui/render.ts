@@ -10,8 +10,10 @@ import {
   isTaskStatus,
   markTaskComplete,
   modifyTaskStatus,
+  refreshListView,
   sendFollowUp,
   taskStatusOptions,
+  type ListAppToolName,
   type TaskStatusOption,
 } from "./interactions.js";
 
@@ -19,12 +21,15 @@ export type UiState =
   | { status: "loading" }
   | { status: "empty"; kind: SpydrListViewKind }
   | { status: "error"; message: string }
-  | { status: "ready"; data: SpydrListViewResult };
+  | { status: "ready"; data: SpydrListViewResult; notice?: string | null };
 
-type RenderOptions = {
+export type RenderOptions = {
   app: App | null;
-  /** Re-render after optimistic local mutations. */
+  listToolName: ListAppToolName | null;
+  lastArgs: Record<string, unknown>;
   onItemsChange?: () => void;
+  onRefreshed?: (data: SpydrListViewResult) => void;
+  onNotice?: (message: string | null) => void;
 };
 
 const PROJECT_STATUS_ORDER = [
@@ -42,13 +47,10 @@ function statusDotClass(status: string): string {
 }
 
 function priorityClass(priority: string): string {
-  return `badge badge--${priority}`;
+  return `prio prio--${priority}`;
 }
 
-function groupKey(
-  item: SpydrListViewItem,
-  kind: SpydrListViewKind
-): string {
+function groupKey(item: SpydrListViewItem, kind: SpydrListViewKind): string {
   if (kind === "projects") return item.status || "unknown";
   return item.project?.name || "No project";
 }
@@ -80,22 +82,53 @@ function groupItems(
     .map(([key, group]) => ({ key, items: group }));
 }
 
-function renderState(state: Extract<UiState, { status: "loading" | "empty" | "error" }>): HTMLElement {
+function renderState(
+  state: Extract<UiState, { status: "loading" | "empty" | "error" }>
+): HTMLElement {
   if (state.status === "loading") {
-    return el("div", { className: "state", role: "status" }, ["Loading Spydr…"]);
+    return el("div", { className: "state", role: "status" }, ["Loading…"]);
   }
   if (state.status === "empty") {
     return el("div", { className: "state", role: "status" }, [
       el("div", { className: "state__title" }, [
         state.kind === "projects" ? "No projects" : "No tasks",
       ]),
-      "Nothing to show for this query.",
+      "Nothing matched this query.",
     ]);
   }
   return el("div", { className: "state state--error", role: "alert" }, [
     el("div", { className: "state__title" }, ["Something went wrong"]),
     state.message,
   ]);
+}
+
+function stop(event: Event): void {
+  event.preventDefault();
+  event.stopPropagation();
+}
+
+async function afterMutation(
+  options: RenderOptions,
+  fallback: () => void
+): Promise<void> {
+  if (options.app && options.listToolName) {
+    try {
+      const raw = await refreshListView(
+        options.app,
+        options.listToolName,
+        options.lastArgs
+      );
+      const next = listViewFromToolResult(raw as Parameters<typeof listViewFromToolResult>[0]);
+      if (next.status === "ready") {
+        options.onRefreshed?.(next.data);
+        return;
+      }
+    } catch (error) {
+      console.warn("refresh after mutation failed", error);
+    }
+  }
+  fallback();
+  options.onItemsChange?.();
 }
 
 function renderRow(
@@ -106,96 +139,135 @@ function renderRow(
 ): HTMLElement {
   const pending = pendingIds.has(item.id);
   const row = el("div", {
-    className: `row${INTERACTIONS_ENABLED ? " row--interactive" : ""}${pending ? " row--pending" : ""}`,
+    className: `row${pending ? " row--pending" : ""}`,
     role: "listitem",
   });
 
-  const main = el("div", { className: "row__main" }, [
+  const title = el("div", { className: "row__title" }, [
     el("span", { className: "row__emoji", "aria-hidden": "true" }, [
       item.emoji ?? "",
     ]),
     el("span", { className: "row__name", title: item.name }, [item.name]),
   ]);
 
-  const metaChildren: HTMLElement[] = [
-    el("span", { className: "pill" }, [
-      el("span", { className: statusDotClass(item.status), "aria-hidden": "true" }),
-      item.status.replace(/_/g, " "),
-    ]),
+  const metaBits: HTMLElement[] = [
     el("span", { className: priorityClass(item.priority) }, [item.priority]),
   ];
-
   if (item.assignee) {
-    metaChildren.push(el("span", { className: "meta", title: item.assignee }, [item.assignee]));
+    metaBits.push(
+      el("span", { className: "meta", title: item.assignee }, [item.assignee])
+    );
   }
   if (kind === "projects" && item.target) {
-    metaChildren.push(el("span", { className: "meta" }, [`target ${item.target}`]));
+    metaBits.push(el("span", { className: "meta" }, [`→ ${item.target}`]));
   }
   if (kind === "tasks" && item.dueDate) {
-    metaChildren.push(el("span", { className: "meta" }, [`due ${item.dueDate}`]));
+    metaBits.push(el("span", { className: "meta" }, [`due ${item.dueDate}`]));
   }
   if (kind === "tasks" && item.project) {
-    metaChildren.push(
-      el("span", { className: "meta", title: item.project.name }, [item.project.name])
+    metaBits.push(
+      el("span", { className: "meta", title: item.project.name }, [
+        item.project.name,
+      ])
     );
   }
 
-  const meta = el("div", { className: "row__meta" }, metaChildren);
-  row.append(main, meta);
+  const status = el("div", { className: "row__status" }, [
+    el("span", { className: statusDotClass(item.status), "aria-hidden": "true" }),
+    el("span", { className: "status-label" }, [
+      item.status.replace(/_/g, " "),
+    ]),
+  ]);
 
-  if (INTERACTIONS_ENABLED && kind === "tasks" && options.app) {
+  row.append(
+    title,
+    status,
+    el("div", { className: "row__meta" }, metaBits)
+  );
+
+  if (INTERACTIONS_ENABLED && options.app) {
     const app = options.app;
     const actions = el("div", { className: "actions" });
 
-    if (item.status !== "completed") {
-      const completeBtn = el("button", {
-        className: "btn btn--primary",
+    if (kind === "tasks") {
+      if (item.status !== "completed") {
+        const completeBtn = el(
+          "button",
+          {
+            className: "btn btn--primary",
+            type: "button",
+            disabled: pending,
+          },
+          ["Done"]
+        );
+        completeBtn.addEventListener("click", (event) => {
+          stop(event);
+          void runOptimistic(item, options, pendingIds, async () => {
+            await markTaskComplete(app, item.id);
+            await afterMutation(options, () => {
+              item.status = "completed";
+            });
+          });
+        });
+        actions.append(completeBtn);
+      }
+
+      const select = el("select", {
+        className: "select",
+        disabled: pending,
+        "aria-label": `Status for ${item.name}`,
+      }) as HTMLSelectElement;
+      for (const value of taskStatusOptions()) {
+        const option = el("option", { value }, [value]);
+        if (value === item.status) option.selected = true;
+        select.append(option);
+      }
+      select.addEventListener("mousedown", stop);
+      select.addEventListener("click", stop);
+      select.addEventListener("change", (event) => {
+        stop(event);
+        const next = select.value;
+        if (!isTaskStatus(next) || next === item.status) return;
+        const previous = item.status as TaskStatusOption;
+        void runOptimistic(
+          item,
+          options,
+          pendingIds,
+          async () => {
+            await modifyTaskStatus(app, item.id, next);
+            await afterMutation(options, () => {
+              item.status = next;
+            });
+          },
+          () => {
+            item.status = previous;
+            select.value = previous;
+          }
+        );
+      });
+      actions.append(select);
+    }
+
+    const askBtn = el(
+      "button",
+      {
+        className: "btn",
         type: "button",
         disabled: pending,
-      }, ["Complete"]);
-      completeBtn.addEventListener("click", (event) => {
-        event.stopPropagation();
-        void runOptimistic(item, options, pendingIds, async () => {
-          await markTaskComplete(app, item.id);
-          item.status = "completed";
-        });
-      });
-      actions.append(completeBtn);
-    }
-
-    const select = el("select", {
-      className: "select",
-      disabled: pending,
-      "aria-label": `Status for ${item.name}`,
-    }) as HTMLSelectElement;
-    for (const status of taskStatusOptions()) {
-      const option = el("option", { value: status }, [status]);
-      if (status === item.status) option.selected = true;
-      select.append(option);
-    }
-    select.addEventListener("click", (event) => event.stopPropagation());
-    select.addEventListener("change", () => {
-      const next = select.value;
-      if (!isTaskStatus(next) || next === item.status) return;
-      const previous = item.status as TaskStatusOption;
-      void runOptimistic(item, options, pendingIds, async () => {
-        await modifyTaskStatus(app, item.id, next);
-        item.status = next;
-      }, () => {
-        item.status = previous;
-        select.value = previous;
+        title: kind === "projects" ? "Ask about this project" : "Ask about this task",
+      },
+      ["Ask"]
+    );
+    askBtn.addEventListener("click", (event) => {
+      stop(event);
+      void sendFollowUp(app, item, kind).catch((error) => {
+        options.onNotice?.(
+          error instanceof Error ? error.message : "Could not send follow-up"
+        );
       });
     });
-    actions.append(select);
+    actions.append(askBtn);
     row.append(actions);
-  }
-
-  if (INTERACTIONS_ENABLED && options.app) {
-    row.addEventListener("click", () => {
-      void sendFollowUp(options.app!, item, kind).catch((error) => {
-        console.warn("sendFollowUp failed", error);
-      });
-    });
   }
 
   return row;
@@ -209,13 +281,16 @@ async function runOptimistic(
   rollback?: () => void
 ): Promise<void> {
   pendingIds.add(item.id);
+  options.onNotice?.(null);
   options.onItemsChange?.();
   try {
     await action();
   } catch (error) {
     rollback?.();
     console.error(error);
-    window.alert(error instanceof Error ? error.message : "Action failed");
+    options.onNotice?.(
+      error instanceof Error ? error.message : "Action failed"
+    );
   } finally {
     pendingIds.delete(item.id);
     options.onItemsChange?.();
@@ -235,28 +310,57 @@ export function renderApp(
     return;
   }
 
-  const { data } = state;
+  const { data, notice } = state;
   if (data.items.length === 0) {
     root.append(renderState({ status: "empty", kind: data.kind }));
     return;
   }
 
-  const app = el("div", { className: "app", role: "list" });
-  for (const group of groupItems(data.items, data.kind)) {
-    const section = el("section", { className: "group" }, [
-      el("div", { className: "group__header" }, [
-        group.key.replace(/_/g, " "),
-        el("span", { className: "group__count" }, [`(${group.items.length})`]),
+  const noun = data.kind === "projects" ? "projects" : "tasks";
+  const total = data.totalMatched ?? data.items.length;
+  const shell = el("div", { className: "app" });
+
+  shell.append(
+    el("header", { className: "header" }, [
+      el("div", { className: "header__title" }, [
+        data.kind === "projects" ? "Projects" : "Tasks",
       ]),
-      el(
-        "div",
-        { className: "rows" },
-        group.items.map((item) => renderRow(item, data.kind, options, pendingIds))
-      ),
-    ]);
-    app.append(section);
+      el("div", { className: "header__count" }, [
+        total === data.items.length
+          ? `${data.items.length} ${noun}`
+          : `${data.items.length} of ${total}`,
+      ]),
+    ])
+  );
+
+  if (notice) {
+    shell.append(el("div", { className: "notice", role: "alert" }, [notice]));
   }
-  root.append(app);
+
+  const list = el("div", { className: "list", role: "list" });
+  for (const group of groupItems(data.items, data.kind)) {
+    list.append(
+      el("section", { className: "group" }, [
+        el("div", { className: "group__header" }, [
+          el("span", { className: "group__label" }, [
+            group.key.replace(/_/g, " "),
+          ]),
+          el("span", { className: "group__count" }, [
+            String(group.items.length),
+          ]),
+        ]),
+        el(
+          "div",
+          { className: "rows" },
+          group.items.map((item) =>
+            renderRow(item, data.kind, options, pendingIds)
+          )
+        ),
+      ])
+    );
+  }
+  shell.append(list);
+  root.append(shell);
 }
 
 export function listViewFromToolResult(result: {
@@ -279,8 +383,7 @@ export function listViewFromToolResult(result: {
     "items" in structured &&
     Array.isArray((structured as SpydrListViewResult).items)
   ) {
-    const data = structured as SpydrListViewResult;
-    return { status: "ready", data };
+    return { status: "ready", data: structured as SpydrListViewResult };
   }
 
   return {

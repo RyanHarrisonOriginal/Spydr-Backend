@@ -685,8 +685,7 @@ export function createSpydrMcpServer(
   const listProjectsConfig = {
     title: "Get projects",
     description:
-      "List projects in an organization, or fetch one project by id. Supports status/assignee filters and limit/offset pagination (default page size 50). Returns a concise text summary plus structured list data.",
-    // Same Zod object the handler validates — SDK advertises tools/list from it.
+      "List projects as text (no interactive widget). Prefer status/assignee filters over unfiltered dumps (default page size 50). For an interactive list UI, use present_projects instead.",
     inputSchema: getProjectsInputSchema,
     annotations: { readOnlyHint: true },
   };
@@ -694,39 +693,66 @@ export function createSpydrMcpServer(
   const listTasksConfig = {
     title: "Get tasks",
     description:
-      "List tasks in an organization, or fetch one task by id. Supports status/assignee filters and limit/offset pagination (default page size 50). Prefer filters over dumping the full org list.",
-    // Same Zod object the handler validates — SDK advertises tools/list from it.
+      "List tasks as text (no interactive widget). Prefer status/assignee filters over unfiltered dumps (default page size 50). For an interactive list UI, use present_tasks instead.",
     inputSchema: getTasksInputSchema,
     annotations: { readOnlyHint: true },
   };
 
-  // Plan B: do not advertise MCP Apps UI unless MCP_APPS_ENABLED=true.
-  // Claude currently shows a broken "Unable to reach Spydr" chip for our HTTP Apps.
+  const presentProjectsConfig = {
+    title: "Present projects",
+    description:
+      "Open the interactive Spydr project list widget. Use only when a focused, browsable list helps (filters, a single id, or the user asks to see/manage projects in the UI). Prefer status/assignee filters — avoid dumping the whole org. For plain text answers use get_projects.",
+    inputSchema: getProjectsInputSchema,
+    annotations: { readOnlyHint: true },
+  };
+
+  const presentTasksConfig = {
+    title: "Present tasks",
+    description:
+      "Open the interactive Spydr task list widget. Use only when a focused, browsable list helps (filters, a single id, or the user asks to see/manage tasks in the UI). Prefer status/assignee filters — avoid dumping the whole org. For plain text answers use get_tasks.",
+    inputSchema: getTasksInputSchema,
+    annotations: { readOnlyHint: true },
+  };
+
+  // Text tools stay quiet. Interactive App tools are separate so hosts that
+  // render UI whenever a tool declares `_meta.ui` only do so when the model
+  // deliberately chooses present_*.
+  server.registerTool(
+    "get_projects",
+    listProjectsConfig,
+    bindTool(tools.getProjects)
+  );
+  server.registerTool(
+    "get_tasks",
+    listTasksConfig,
+    bindTool(tools.getTasks)
+  );
+
   if (mcpAppsEnabled()) {
     registerSpydrAppTool(
       server,
-      "get_projects",
+      "present_projects",
       {
-        ...listProjectsConfig,
+        ...presentProjectsConfig,
         _meta: { ui: { resourceUri: SPYDR_LIST_VIEW_RESOURCE_URI } },
       },
-      bindTool(tools.getProjects)
+      bindTool(tools.presentProjects)
     );
     registerSpydrAppTool(
       server,
-      "get_tasks",
+      "present_tasks",
       {
-        ...listTasksConfig,
+        ...presentTasksConfig,
         _meta: { ui: { resourceUri: SPYDR_LIST_VIEW_RESOURCE_URI } },
       },
-      bindTool(tools.getTasks)
+      bindTool(tools.presentTasks)
     );
     registerSpydrAppResource(
       server,
       "Spydr list view",
       SPYDR_LIST_VIEW_RESOURCE_URI,
       {
-        description: "Interactive Spydr-styled project and task list",
+        description: "Interactive Spydr project and task list",
         mimeType: RESOURCE_MIME_TYPE,
       },
       async () => {
@@ -741,17 +767,6 @@ export function createSpydrMcpServer(
           ],
         };
       }
-    );
-  } else {
-    server.registerTool(
-      "get_projects",
-      listProjectsConfig,
-      bindTool(tools.getProjects)
-    );
-    server.registerTool(
-      "get_tasks",
-      listTasksConfig,
-      bindTool(tools.getTasks)
     );
   }
 

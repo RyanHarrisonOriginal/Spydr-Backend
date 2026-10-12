@@ -33,12 +33,37 @@ describe("listViewResult without apps", () => {
 
   it("omits ui _meta when apps are disabled", () => {
     delete process.env.MCP_APPS_ENABLED;
-    const result = listViewResult({
+    const result = listViewResult(
+      {
+        version: 1,
+        kind: "tasks",
+        items: [],
+      },
+      { attachUi: true }
+    );
+    expect(result._meta).toBeUndefined();
+    expect(result.structuredContent).toBeDefined();
+  });
+
+  it("attaches ui _meta only when attachUi is requested and apps enabled", () => {
+    process.env.MCP_APPS_ENABLED = "true";
+    const without = listViewResult({
       version: 1,
       kind: "tasks",
       items: [],
     });
-    expect(result._meta).toBeUndefined();
-    expect(result.structuredContent).toBeDefined();
+    expect(without._meta).toBeUndefined();
+
+    const withUi = listViewResult(
+      {
+        version: 1,
+        kind: "tasks",
+        items: [],
+      },
+      { attachUi: true }
+    );
+    expect(withUi._meta?.ui).toEqual({
+      resourceUri: "ui://spydr/list-view",
+    });
   });
 });

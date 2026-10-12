@@ -1,7 +1,5 @@
 /**
- * Phase-2 interaction seam.
- *
- * All write actions go through existing MCP server tools via the host proxy.
+ * Write actions go through existing MCP server tools via the host proxy.
  * The iframe never holds credentials.
  */
 import type { App } from "@modelcontextprotocol/ext-apps";
@@ -56,13 +54,41 @@ export async function sendFollowUp(
 ): Promise<void> {
   const text =
     kind === "projects"
-      ? `Show tasks for project ${item.name}`
-      : `Show details for task ${item.name}`;
+      ? `Show tasks for project "${item.name}" (id ${item.id})`
+      : `Show details for task "${item.name}" (id ${item.id})`;
 
   await app.sendMessage({
     role: "user",
     content: [{ type: "text", text }],
   });
+}
+
+export type ListAppToolName =
+  | "present_projects"
+  | "present_tasks"
+  | "get_projects"
+  | "get_tasks";
+
+export async function refreshListView(
+  app: App,
+  toolName: ListAppToolName,
+  args: Record<string, unknown>
+): Promise<unknown> {
+  // Prefer present_* so in-app refreshes keep the widget open.
+  const name =
+    toolName === "get_projects"
+      ? "present_projects"
+      : toolName === "get_tasks"
+        ? "present_tasks"
+        : toolName;
+  const result = await app.callServerTool({
+    name,
+    arguments: { ...args, ui: true },
+  });
+  if (result.isError) {
+    throw new Error(textFromToolResult(result) || "Failed to refresh list");
+  }
+  return result;
 }
 
 function textFromToolResult(result: {

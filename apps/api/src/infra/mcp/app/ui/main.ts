@@ -5,7 +5,7 @@ import {
   applyHostFonts,
   applyHostStyleVariables,
 } from "@modelcontextprotocol/ext-apps";
-import { isSpydrListViewResult, type SpydrListViewResult } from "@contract";
+import type { SpydrListViewResult } from "@contract";
 import { clear } from "./dom.js";
 import { listViewFromToolResult, renderApp, type UiState } from "./render.js";
 import "./styles.css";
@@ -18,19 +18,43 @@ if (!root) {
 let state: UiState = { status: "loading" };
 const pendingIds = new Set<string>();
 let latestData: SpydrListViewResult | null = null;
+let notice: string | null = null;
+let lastArgs: Record<string, unknown> = {};
+let listToolName:
+  | "present_projects"
+  | "present_tasks"
+  | "get_projects"
+  | "get_tasks"
+  | null = null;
 
-const app = new App({ name: "spydr-list-view", version: "1.0.0" });
+const app = new App({ name: "spydr-list-view", version: "1.1.0" });
 
 function paint(): void {
   clear(root!);
+  const paintState: UiState =
+    state.status === "ready"
+      ? { ...state, notice }
+      : state;
   renderApp(
     root!,
-    state,
+    paintState,
     {
       app,
+      listToolName,
+      lastArgs,
       onItemsChange: () => {
         if (latestData) {
-          state = { status: "ready", data: latestData };
+          state = { status: "ready", data: latestData, notice };
+        }
+        paint();
+      },
+      onRefreshed: (data) => {
+        acceptResult(data);
+      },
+      onNotice: (message) => {
+        notice = message;
+        if (latestData) {
+          state = { status: "ready", data: latestData, notice };
         }
         paint();
       },
@@ -46,6 +70,7 @@ function applyHostContext(ctx: {
     css?: { fonts?: string };
   };
   safeAreaInsets?: { top: number; right: number; bottom: number; left: number };
+  toolInfo?: { tool?: { name?: string } };
 }): void {
   if (ctx.theme) applyDocumentTheme(ctx.theme);
   if (ctx.styles?.variables) applyHostStyleVariables(ctx.styles.variables);
@@ -54,6 +79,15 @@ function applyHostContext(ctx: {
     const { top, right, bottom, left } = ctx.safeAreaInsets;
     document.body.style.padding = `${top}px ${right}px ${bottom}px ${left}px`;
   }
+  const name = ctx.toolInfo?.tool?.name;
+  if (
+    name === "present_projects" ||
+    name === "present_tasks" ||
+    name === "get_projects" ||
+    name === "get_tasks"
+  ) {
+    listToolName = name;
+  }
 }
 
 function acceptResult(data: SpydrListViewResult): void {
@@ -61,11 +95,17 @@ function acceptResult(data: SpydrListViewResult): void {
     ...data,
     items: data.items.map((item) => ({ ...item })),
   };
-  state = { status: "ready", data: latestData };
+  notice = null;
+  state = { status: "ready", data: latestData, notice };
   paint();
 }
 
-app.ontoolinput = () => {
+app.ontoolinput = (params) => {
+  lastArgs = { ...(params.arguments ?? {}) };
+  if (typeof lastArgs.ui === "undefined") {
+    // Keep the widget open across in-app refreshes.
+    lastArgs.ui = true;
+  }
   state = { status: "loading" };
   paint();
 };
@@ -74,6 +114,10 @@ app.ontoolresult = (result) => {
   const next = listViewFromToolResult(result);
   if (next.status === "ready") {
     acceptResult(next.data);
+    return;
+  }
+  // Ignore non-list results (e.g. write-tool echoes) so controls don't wipe the UI.
+  if (latestData && !result.isError) {
     return;
   }
   state = next;
@@ -100,5 +144,3 @@ void (async () => {
     paint();
   }
 })();
-
-void isSpydrListViewResult;

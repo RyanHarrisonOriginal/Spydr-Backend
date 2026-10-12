@@ -18,11 +18,15 @@ export function jsonResult(data: unknown): IMcpToolResult {
   };
 }
 
-export function listViewResult(data: SpydrListViewResult): IMcpToolResult {
+export function listViewResult(
+  data: SpydrListViewResult,
+  options: { attachUi?: boolean } = {}
+): IMcpToolResult {
+  const attachUi = Boolean(options.attachUi) && mcpAppsEnabled();
   return {
     content: [{ type: "text", text: summarizeListView(data) }],
     structuredContent: data as unknown as Record<string, unknown>,
-    ...(mcpAppsEnabled()
+    ...(attachUi
       ? {
           _meta: {
             ui: { resourceUri: SPYDR_LIST_VIEW_RESOURCE_URI },
@@ -56,14 +60,15 @@ export async function runTool(
 }
 
 export async function runListViewTool(
-  fn: () => Promise<SpydrListViewResult | null>
+  fn: () => Promise<SpydrListViewResult | null>,
+  decideUi?: (data: SpydrListViewResult) => boolean
 ): Promise<IMcpToolResult> {
   try {
     const data = await fn();
     if (data === null) {
       return errorResult("Not found");
     }
-    return listViewResult(data);
+    return listViewResult(data, { attachUi: decideUi?.(data) ?? false });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected error";
     return errorResult(message);

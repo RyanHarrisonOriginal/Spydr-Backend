@@ -479,6 +479,7 @@ describe("SpydrMcpTools", () => {
     expect(result.content[0].text).toContain("1 project:");
     expect(result.content[0].text).toContain("id project-1");
     expect(result.content[0].text).toContain("Launch");
+    expect(result._meta).toBeUndefined();
     expect(result.structuredContent).toEqual({
       version: 1,
       kind: "projects",
@@ -494,6 +495,25 @@ describe("SpydrMcpTools", () => {
       limit: 50,
       offset: 0,
     });
+  });
+
+  it("present_projects attaches ui meta when apps are enabled", async () => {
+    const previous = process.env.MCP_APPS_ENABLED;
+    process.env.MCP_APPS_ENABLED = "true";
+    try {
+      const { commandBus, queryBus } = mockBuses();
+      vi.mocked(queryBus.execute).mockResolvedValue([project()]);
+      const tools = new SpydrMcpTools({ commandBus, queryBus, context });
+
+      const result = await tools.presentProjects({ status: "active" });
+
+      expect(result._meta?.ui).toEqual({
+        resourceUri: "ui://spydr/list-view",
+      });
+    } finally {
+      if (previous === undefined) delete process.env.MCP_APPS_ENABLED;
+      else process.env.MCP_APPS_ENABLED = previous;
+    }
   });
 
   it("returns not found when a get-by-id lookup misses", async () => {
