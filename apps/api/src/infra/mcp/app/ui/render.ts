@@ -318,6 +318,11 @@ export function renderApp(
 
   const noun = data.kind === "projects" ? "projects" : "tasks";
   const total = data.totalMatched ?? data.items.length;
+  // Claude inline cards auto-fit content and clip nested scroll — cap rows so
+  // documentElement height stays honest and visible.
+  const INLINE_ROW_CAP = 12;
+  const visibleItems = data.items.slice(0, INLINE_ROW_CAP);
+  const hiddenCount = Math.max(0, data.items.length - visibleItems.length);
   const shell = el("div", { className: "app" });
 
   shell.append(
@@ -327,8 +332,8 @@ export function renderApp(
       ]),
       el("div", { className: "header__count" }, [
         total === data.items.length
-          ? `${data.items.length} ${noun}`
-          : `${data.items.length} of ${total}`,
+          ? `${visibleItems.length}${hiddenCount ? `+` : ""} ${noun}`
+          : `${visibleItems.length} of ${total}`,
       ]),
     ])
   );
@@ -338,7 +343,7 @@ export function renderApp(
   }
 
   const list = el("div", { className: "list", role: "list" });
-  for (const group of groupItems(data.items, data.kind)) {
+  for (const group of groupItems(visibleItems, data.kind)) {
     list.append(
       el("section", { className: "group" }, [
         el("div", { className: "group__header" }, [
@@ -360,6 +365,16 @@ export function renderApp(
     );
   }
   shell.append(list);
+
+  if (hiddenCount > 0 || (data.items.length < total && total > data.items.length)) {
+    const remaining = Math.max(hiddenCount, total - visibleItems.length);
+    shell.append(
+      el("div", { className: "footer" }, [
+        `${remaining} more not shown — ask for the next page (raise offset).`,
+      ])
+    );
+  }
+
   root.append(shell);
 }
 
