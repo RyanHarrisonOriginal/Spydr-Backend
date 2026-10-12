@@ -27,7 +27,36 @@ let listToolName:
   | "get_tasks"
   | null = null;
 
-const app = new App({ name: "spydr-list-view", version: "1.1.0" });
+// Disable SDK autoResize: its max-content measurement collapses common layouts
+ // inside Claude's iframe (~1px height). We report size manually after paint.
+const app = new App(
+  { name: "spydr-list-view", version: "1.1.0" },
+  {},
+  { autoResize: false }
+);
+
+const MIN_HOST_HEIGHT = 180;
+const MAX_HOST_HEIGHT = 420;
+
+function reportSize(): void {
+  const width = Math.max(
+    document.documentElement.scrollWidth,
+    document.body.scrollWidth,
+    root!.scrollWidth
+  );
+  const contentHeight = Math.max(
+    document.documentElement.scrollHeight,
+    document.body.scrollHeight,
+    root!.scrollHeight
+  );
+  const height = Math.min(
+    MAX_HOST_HEIGHT,
+    Math.max(MIN_HOST_HEIGHT, contentHeight)
+  );
+  void app.sendSizeChanged({ width, height }).catch(() => {
+    /* host may not be connected yet */
+  });
+}
 
 function paint(): void {
   clear(root!);
@@ -61,6 +90,8 @@ function paint(): void {
     },
     pendingIds
   );
+  // Defer so layout has settled before telling the host our height.
+  requestAnimationFrame(() => reportSize());
 }
 
 function applyHostContext(ctx: {
