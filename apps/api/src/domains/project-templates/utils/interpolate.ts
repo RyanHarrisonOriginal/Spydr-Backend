@@ -72,6 +72,39 @@ export function collectTemplateParamKeys(template: {
 }
 
 /**
+ * Parameter specs required to invoke a template.
+ * Tokens used in template text are required when they are not declared.
+ */
+export function invokeParameterSpecs(template: {
+  titleTemplate: string;
+  bodyTemplate: string;
+  outcomeTemplate?: string | null;
+  tags?: string[];
+  parameters: Array<{
+    key: string;
+    required: boolean;
+    defaultValue: string | null;
+  }>;
+  tasks: Array<{
+    titleTemplate: string;
+    bodyTemplate: string;
+    tags?: string[];
+  }>;
+}): Array<{ key: string; required: boolean; defaultValue: string | null }> {
+  const declared = new Map(
+    template.parameters.map((param) => [param.key, param])
+  );
+  return collectTemplateParamKeys(template).map((key) => {
+    const param = declared.get(key);
+    return {
+      key,
+      required: param?.required ?? true,
+      defaultValue: param?.defaultValue ?? null,
+    };
+  });
+}
+
+/**
  * Values to merge onto a spawned project for keys it does not already store.
  * Empty provided values fall back to UNSPECIFIED so sync can interpolate.
  */

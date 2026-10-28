@@ -8,6 +8,7 @@ import { TaskMapper } from "../../tasks/mappers/index.js";
 import type { ProjectNode } from "../../projects/models/index.js";
 import {
   assertFullyRendered,
+  invokeParameterSpecs,
   renderTemplate,
   validateParamValues,
 } from "../utils/interpolate.js";
@@ -57,11 +58,7 @@ export class InvokeProjectTemplateCommandHandler
     }
 
     const params = validateParamValues(
-      template.parameters.map((p) => ({
-        key: p.key,
-        required: p.required,
-        defaultValue: p.defaultValue,
-      })),
+      invokeParameterSpecs(template),
       command.input.parameters ?? {}
     );
 

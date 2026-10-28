@@ -4,6 +4,7 @@ import {
   collectTemplateParamKeys,
   extractTemplateKeys,
   fillMissingParamValues,
+  invokeParameterSpecs,
   renderTemplate,
   UNSPECIFIED_PARAM_VALUE,
   validateParamValues,
@@ -66,6 +67,39 @@ describe("project template interpolate", () => {
         ],
       })
     ).toEqual(["NEW_COMPANY_NAME", "UNUSED_FLAG", "REGION", "CONTACT"]);
+  });
+
+  it("requires tokens used in template text that are not declared", () => {
+    const specs = invokeParameterSpecs({
+      titleTemplate: "{{NEW_COMPANY_NAME}} Go Live",
+      bodyTemplate: "",
+      tags: [],
+      parameters: [
+        {
+          key: "NEW_COMPANY_NAME",
+          required: true,
+          defaultValue: null,
+        },
+      ],
+      tasks: [
+        {
+          titleTemplate: "{{NEW_COMPANY_NAME}} {{ERP}} data",
+          bodyTemplate: "",
+          tags: [],
+        },
+      ],
+    });
+
+    expect(specs.map((spec) => spec.key)).toEqual([
+      "NEW_COMPANY_NAME",
+      "ERP",
+    ]);
+    expect(() => validateParamValues(specs, { NEW_COMPANY_NAME: "Acme" })).toThrow(
+      /Missing required parameter: ERP/
+    );
+    expect(
+      validateParamValues(specs, { NEW_COMPANY_NAME: "Acme", ERP: "NetSuite" })
+    ).toEqual({ NEW_COMPANY_NAME: "Acme", ERP: "NetSuite" });
   });
 
   it("fills missing spawned param values with UNSPECIFIED", () => {
