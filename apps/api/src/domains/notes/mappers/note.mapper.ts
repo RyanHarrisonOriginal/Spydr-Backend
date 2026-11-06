@@ -9,12 +9,12 @@ import {
 } from "../../shared/models/shared.js";
 
 export interface INoteUpdateModelInput {
-  title?: string;
+  title?: string | null;
   body?: string;
 }
 
 export interface INoteCreateModelInput {
-  title?: string;
+  title?: string | null;
   body?: string;
   status?: SpydrNodeStatus;
   priority?: SpydrPriority;
@@ -33,7 +33,7 @@ export class NoteMapper {
     context: INoteCreateModelContext,
     now = new Date()
   ): NoteNode {
-    const title = resolveNoteTitle(input.title, now);
+    const title = resolveNoteTitle(input.title);
 
     return new NoteNode({
       id: randomUUID(),

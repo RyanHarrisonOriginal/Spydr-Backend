@@ -1,12 +1,21 @@
+import type { IIdeaListItem } from "../../../domains/ideas/views.js";
 import type { IdeaNode } from "../../../domains/ideas/models/index.js";
 import type { IRepresentationMapper } from "../../../domains/shared/mappers/mapper.js";
 import type { IIdeaResponse } from "./project-response.mapper.js";
 import { nodeLifecycleResponse } from "./node-lifecycle-response.js";
 
+export interface IIdeaProjectResponse {
+  id: string;
+  title: string;
+}
+
 export class IdeaResponseMapper
   implements IRepresentationMapper<IdeaNode, IIdeaResponse>
 {
-  toRepresentation(domain: IdeaNode): IIdeaResponse {
+  toRepresentation(
+    domain: IdeaNode,
+    project: IIdeaProjectResponse | null = null
+  ): IIdeaResponse {
     return {
       id: domain.id,
       userId: domain.userId,
@@ -23,6 +32,7 @@ export class IdeaResponseMapper
       updatedAt: domain.updatedAt.toISOString(),
       archivedAt: domain.archivedAt?.toISOString() ?? null,
       ...nodeLifecycleResponse(domain),
+      project,
       details: domain.details
         ? {
             confidence: domain.details.confidence,
@@ -33,5 +43,9 @@ export class IdeaResponseMapper
           }
         : null,
     };
+  }
+
+  toListRepresentation(item: IIdeaListItem): IIdeaResponse {
+    return this.toRepresentation(item.idea, item.project);
   }
 }

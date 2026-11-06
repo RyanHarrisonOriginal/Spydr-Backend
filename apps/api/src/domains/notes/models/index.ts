@@ -5,7 +5,7 @@ import type { INoteNodeProps } from "./interfaces.js";
 export type { INoteNodeProps } from "./interfaces.js";
 
 export interface INoteUpdateInput {
-  title?: string;
+  title?: string | null;
   body?: string;
 }
 
@@ -35,7 +35,7 @@ export class NoteNode extends DomainNode<"note"> {
 
   applyUpdate(input: INoteUpdateInput, now = new Date()): void {
     if (input.title !== undefined) {
-      this.title = resolveNoteTitle(input.title, now);
+      this.title = resolveNoteTitle(input.title);
     }
     if (input.body !== undefined) {
       this.body = input.body;

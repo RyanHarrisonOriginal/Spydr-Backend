@@ -10,7 +10,7 @@ import { nextCollectionSortOrder } from "../../shared/utils/collection-sort-orde
 import type { ICommand, ICommandHandler } from "../../shared/application/command.js";
 
 export interface IAddNoteToProjectInput {
-  title?: string;
+  title?: string | null;
   body?: string;
   linkToTaskId?: string;
   status?: SpydrNodeStatus;

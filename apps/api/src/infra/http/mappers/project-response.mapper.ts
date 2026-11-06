@@ -87,6 +87,7 @@ export interface IIdeaResponse {
   archivedAt: string | null;
   isDeleted: boolean;
   deletedAt: string | null;
+  project?: { id: string; title: string } | null;
   details: {
     confidence: number | null;
     potentialValue: string;

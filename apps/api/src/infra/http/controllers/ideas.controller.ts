@@ -4,7 +4,7 @@ import type { ICommandBus } from "../../../domains/shared/application/index.js";
 import { DeleteIdeaCommand } from "../../../domains/ideas/commands/index.js";
 import type { IQueryBus } from "../../../domains/shared/application/index.js";
 import { ListIdeasQuery } from "../../../domains/shared/application/index.js";
-import type { IdeaNode } from "../../../domains/ideas/models/index.js";
+import type { IIdeaListItem } from "../../../domains/ideas/views.js";
 import { IdeaResponseMapper } from "../mappers/idea-response.mapper.js";
 
 export class IdeasController {
@@ -19,13 +19,13 @@ export class IdeasController {
       const ctx = getOrgContext(req, res);
       if (!ctx) return;
 
-      const ideas = await this.queryBus.execute<ListIdeasQuery, IdeaNode[]>(
+      const ideas = await this.queryBus.execute<ListIdeasQuery, IIdeaListItem[]>(
         new ListIdeasQuery(ctx.userId, ctx.orgId)
       );
       if (process.env.NODE_ENV !== "production") {
         console.log(`[ideas.list] org=${ctx.orgId} count=${ideas.length}`);
       }
-      res.json(ideas.map((idea) => this.mapper.toRepresentation(idea)));
+      res.json(ideas.map((idea) => this.mapper.toListRepresentation(idea)));
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Failed to list ideas" });
